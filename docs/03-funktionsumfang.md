@@ -57,6 +57,14 @@ Tabs Systeminfo (Seriennummer, Firmware, Module), Batterie-Details (SOH, Zyklen,
 
 Verbindung (Lokal, Bridge, Cloud-Fallback, Assistent), Dashboard-Sortierung, Anlage (kWp, kWh, Ausrichtungen), Tarif und Kosten, Benachrichtigungen, Widgets und Watch, Über. Phase 3–4.
 
+### 7a · Anlage einrichten (Schritt 4 im Assistenten, später Einstellungen › Anlage)
+
+Was das S10 per RSCP liefert, ist vorbelegt: Modell und Firmware, installierte Spitzenleistung (`EMS_INSTALLED_PEAK_POWER`), genutzte und maximale Strings (`PVI_USED_STRING_COUNT`, `PVI_DC_MAX_STRING_COUNT`), Batterie (Module, Kapazität), max. AC-Leistung des Wechselrichters und die Postleitzahl der Anlagenadresse (`INFO_REQ_GET_FACILITY`; Name, Straße, Telefon und E-Mail werden nicht verwendet).
+
+Manuell je Tracker: Name, Ausrichtung (Kompass, 0° = Nord, ziehen oder ±5°), Neigung (0–90°), Leistung in kWp. Die Summe muss die Spitzenleistung des S10 ergeben; ein Vorschlag teilt nach dem Lebenszeit-Ertrag der Strings (`PVI_DC_STRING_ENERGY_ALL`) auf. Die Live-Leistung je Tracker hilft bei der Zuordnung zur Dachfläche. Standort aus der Postleitzahl, optional per GPS verfeinert.
+
+Verwendung: Kürzel auf der Solarkarte (SO, NW …) und Prognose je Tracker über forecast.solar (Azimut dort 0 = Süd, −90 = Ost, 90 = West; die App rechnet um). Phase 2–3.
+
 ### 8 · Benachrichtigungen (Bridge)
 
 SOC unter x %, Netzbezug über x kW für n Minuten, Anlage offline, Temperatur, Wallbox fertig. Versand per ntfy (Stufe 1) oder APNs (Stufe 2). Phase 4.

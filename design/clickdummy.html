@@ -358,6 +358,23 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .toolbar button{border-radius:50%;width:40px;height:40px}
 .toolbar button[aria-current="true"]{background:var(--c-solar);color:#1c1407}
 .toolbar .st{font-family:var(--font-app)}
+
+/* ===== Batterie-Details als Overlay auf der Karte ===== */
+.cc.batt{cursor:pointer}
+.cc .tap{font:inherit;font-size:12px;font-weight:600;color:var(--on);background:var(--c-sub);border:1px solid var(--c-sub2);border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.cc .tap svg{width:12px;height:12px}
+.bover{position:absolute;inset:0;padding:14px;z-index:1;display:flex;flex-direction:column;gap:10px;
+  background:linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,.18)),var(--c-batt);
+  opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .2s ease,transform .2s ease,visibility 0s linear .2s;cursor:default}
+.cc.batt.open .bover{opacity:1;visibility:visible;transform:none;transition:opacity .2s ease,transform .2s ease}
+.bover .bclose{width:30px;height:30px;border-radius:50%;border:1px solid var(--c-sub2);background:var(--c-sub);color:var(--on);display:grid;place-items:center;cursor:pointer;flex:none}
+.bover .bclose svg{width:14px;height:14px}
+.bover .st .v{font-size:20px}
+.bover .hint2{font-size:12px;color:var(--on-dim);margin-top:auto}
+@media (prefers-reduced-motion:reduce){.bover,.cc.batt.open .bover{transition:none}}
+/* ===== Energiefluss mit Hauskraftwerk als Mitte ===== */
+.hub .trk{fill:none;stroke:color-mix(in srgb,var(--app-fg) 9%,transparent);stroke-width:10;stroke-linecap:round}
+.hub .hubt{font-family:var(--font-disp);font-weight:600;font-size:13px;fill:#fff}
 </style>
 
 <div class="page">
@@ -369,6 +386,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button type="button" id="th-dark" aria-pressed="false">Dunkel</button>
       <button type="button" id="th-sys" aria-pressed="true">System</button>
     </div>
+    <div class="group" style="margin-top:14px">
+      <div class="label">Demo</div>
+      <div class="toggles" style="margin-top:6px"><button type="button" id="demoWb" aria-pressed="false">System meldet Wallbox: nein</button></div>
+    </div>
     <div class="group">
       <div class="label">Screens</div>
       <nav class="nav" id="screenNav">
@@ -377,7 +398,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <button type="button" data-go="flow"><span class="k">3</span>Energiefluss</button>
         <button type="button" data-go="smart"><span class="k">4</span>Smart-Funktionen</button>
         <button type="button" data-go="more"><span class="k">5</span>Einstellungen</button>
-        <button type="button" data-sheet="wallbox"><span class="k">W</span>Sheet: Wallbox-Steuerung</button>
+        <button type="button" data-sheet="wallbox" data-wb><span class="k">W</span>Sheet: Wallbox-Steuerung</button>
         <button type="button" data-sheet="battery"><span class="k">B</span>Sheet: Systemstatistik &amp; Info</button>
         <button type="button" data-sheet="setup"><span class="k">V</span>Sheet: Verbindung einrichten</button>
       </nav>
@@ -429,9 +450,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                 <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>
               </button>
 
-              <!-- Batterie -->
-              <div class="cc batt">
-                <div class="hd"><h3>Batterie</h3></div>
+              <!-- Batterie: Details als Overlay -->
+              <div class="cc batt" id="battCard">
+                <div class="hd"><h3>Batterie</h3><button type="button" class="tap" id="battTap" aria-expanded="false" aria-controls="battOver">Details<svg class="svgicon" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
                 <div class="battrow">
                   <div class="ring"><svg viewBox="0 0 104 104"><circle class="bg" cx="52" cy="52" r="44" stroke-dasharray="207 276"/><circle class="fg" cx="52" cy="52" r="44" stroke-dasharray="141 276"/></svg><div style="text-align:center"><div class="rv">68<small>%</small></div><div class="rl">8,8 kWh</div></div></div>
                   <div><div class="big">+2,41<small>kW</small></div><div class="lab">Ladung aus Solar</div><div class="eta">Voll gegen 11:25 · Autarkie heute 97 %</div></div>
@@ -439,14 +460,20 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                 <div class="sub" style="margin-top:12px">
                   <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16V8M8 12l4-4 4 4"/></svg>Heute geladen</div><div class="v">4,80<small>kWh</small></div></div>
                   <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>Heute entladen</div><div class="v">3,20<small>kWh</small></div></div>
-                  <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><path d="M10 4v10a3 3 0 1 0 4 0V4a2 2 0 0 0-4 0z"/></svg>Temperatur</div><div class="v">23,4 – 24,8<small>°C</small></div></div>
-                  <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Batteriezustand</div><div class="v">96,1<small>%</small></div></div>
-                </div>
-                <div class="sub" style="margin-top:10px">
-                  <button type="button" class="cbtn" data-sheet="battery"><svg class="svgicon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Statistik &amp; Info</button>
-                  <button type="button" class="cbtn" data-go="smart"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Smart-Funktionen</button>
                 </div>
                 <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M6 10v4M9 10v4M12 10v4"/></svg></span>
+                <div class="bover" id="battOver" aria-hidden="true">
+                  <div class="hd"><h3>Batterie · Details</h3><button type="button" class="bclose" aria-label="Details schließen"><svg class="svgicon" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+                  <div class="sub">
+                    <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><path d="M10 4v10a3 3 0 1 0 4 0V4a2 2 0 0 0-4 0z"/></svg>Temperatur</div><div class="v">23,4 – 24,8<small>°C</small></div></div>
+                    <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Batteriezustand</div><div class="v">96,1<small>%</small></div></div>
+                  </div>
+                  <div class="sub">
+                    <button type="button" class="cbtn" data-sheet="battery"><svg class="svgicon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Statistik &amp; Info</button>
+                    <button type="button" class="cbtn" data-go="smart"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Smart-Funktionen</button>
+                  </div>
+                  <div class="hint2">4 Module · 906 Zyklen · Tippen außerhalb schließt</div>
+                </div>
               </div>
 
               <!-- Netz + Haus -->
@@ -466,7 +493,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               </div>
 
               <!-- Wallbox (kompakt) -->
-              <div class="cc wb" style="padding:12px 14px">
+              <div class="cc wb" style="padding:12px 14px" data-wb>
                 <div class="hd"><h3>Wallbox</h3></div>
                 <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:4px">
                   <div style="min-width:0"><div class="big">0<small>W</small></div><div class="lab">bereit · Sonnenmodus · 3 Phasen · 8 A</div><div class="lab" style="margin-top:2px">Heute 2,49 kWh geladen, 99 % Solar</div></div>
@@ -502,7 +529,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                 <div class="chart" id="monthMini"></div>
               </div>
 
-              <div class="footline">Ausgeblendet, bis konfiguriert: Ext. Verbrauch · Ext. Quellen · Börsenstrompreise</div>
+              <div class="footline" id="hiddenLine">Ausgeblendet, bis vorhanden oder konfiguriert: Wallbox · Ext. Verbrauch · Ext. Quellen · Börsenstrompreise</div>
               <div class="footline" style="margin-top:0">S10 E · 9,9 kWp · 13 kWh · Firmware S10_2025_04 · letzte Daten 09:41:07</div>
             </div>
           </section>
@@ -596,6 +623,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <div class="slider"><div class="lbl"><span>Reserve</span><b id="resVal">20 % · 2,6 kWh</b></div><input type="range" id="res" min="0" max="100" step="5" value="20"></div>
               <div class="hint">Erst „Übernehmen“ sendet die Werte an das Hauskraftwerk (RSCP-Setter). Danach liest die App den Wert zurück und bestätigt.</div>
             </div>
+            <div class="wc" style="margin-top:10px" data-wb>
+              <div class="hd"><h3>Wallbox</h3><span class="pill good">bereit</span></div>
+              <div class="list"><div class="row"><div class="l">Sonnenmodus · 3 Phasen · 8 A</div><div class="v"><button type="button" class="pill warn" data-sheet="wallbox">Steuerung ›</button></div></div></div>
+            </div>
             <button type="button" class="btn primary" id="applyBtn">Änderungen übernehmen</button>
           </section>
 
@@ -610,6 +641,16 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                 <div class="row"><div class="l"><span class="ic" style="background:#9fb0ba"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><span>E3/DC Cloud (Fallback)<small>Cloud-Registry-Key · 15 Sek. / 15 Min.</small></span></div><div class="v">›</div></div>
                 <div class="row"><div class="l">Verbindung neu einrichten</div><div class="v"><button type="button" class="pill warn" data-sheet="setup">Assistent ›</button></div></div>
               </div>
+            </div>
+            <div class="card">
+              <h3>Geräte am Hauskraftwerk</h3>
+              <div class="list"><div class="row"><div class="l"><span>Wallbox<small id="wbStatus">Automatisch: keine Wallbox gemeldet</small></span></div></div></div>
+              <div class="seg" id="wbSeg">
+                <button type="button" data-wbmode="auto" aria-pressed="true">Automatisch</button>
+                <button type="button" data-wbmode="on" aria-pressed="false">Anzeigen</button>
+                <button type="button" data-wbmode="off" aria-pressed="false">Ausblenden</button>
+              </div>
+              <div class="hint">„Automatisch“ fragt beim Verbinden den Gerätestatus der Wallbox ab (verbunden, in Betrieb). Meldet das System keine, verschwindet die Wallbox aus Dashboard, Energiefluss und Steuerung.</div>
             </div>
             <div class="card">
               <h3>Dashboard</h3>
@@ -684,9 +725,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   try{const s=localStorage.getItem('wattbury-theme'); if(s) setTheme(s)}catch(e){}
   /* ---------- notes ---------- */
   const notes={
-    monitor:`<p><b>Energiemonitor</b>: gestapelte Farbkarten mit eigener Handschrift.</p><ul><li><b>Farbwelt „Signal“</b> nach RAL: Signalgelb, Signalgrün, Verkehrsrot, Signalblau, Signalviolett, Anthrazitgrau. Diagrammfarben auf Farbfehlsichtigkeit geprüft.</li><li>Weiße Schrift auf allen Karten, auch auf Gelb.</li><li><b>Fase:</b> jede Karte hat eine abgeschrägte Ecke oben rechts.</li><li><b>Sonnenbogen</b> zeigt den Tagesverlauf der Sonne, der <b>Ring</b> den Ladezustand.</li><li>Große, blasse Wasserzeichen-Icons unten rechts statt kleiner Ecken-Icons.</li><li>Zahlen und Titel in Sora, Fließtext in der Systemschrift.</li><li>Ext. Verbrauch, Ext. Quellen und Börsenpreise erscheinen erst, wenn konfiguriert.</li></ul>`,
+    monitor:`<p><b>Energiemonitor</b>: gestapelte Farbkarten mit eigener Handschrift.</p><ul><li><b>Farbwelt „Signal“</b> nach RAL: Signalgelb, Signalgrün, Verkehrsrot, Signalblau, Signalviolett, Anthrazitgrau. Diagrammfarben auf Farbfehlsichtigkeit geprüft.</li><li>Weiße Schrift auf allen Karten, auch auf Gelb.</li><li><b>Fase:</b> jede Karte hat eine abgeschrägte Ecke oben rechts.</li><li><b>Sonnenbogen</b> zeigt den Tagesverlauf der Sonne, der <b>Ring</b> den Ladezustand.</li><li>Große, blasse Wasserzeichen-Icons unten rechts statt kleiner Ecken-Icons.</li><li>Zahlen und Titel in Sora, Fließtext in der Systemschrift.</li><li><b>Batterie:</b> Tippen öffnet ein Overlay auf der Karte mit Temperatur, Zustand, Statistik und Smart-Funktionen.</li><li><b>Wallbox</b> erscheint nur, wenn das System eine meldet (oder in den Einstellungen erzwungen). Links unter „Demo“ umschaltbar.</li><li>Ext. Verbrauch, Ext. Quellen und Börsenpreise erscheinen erst, wenn konfiguriert.</li></ul>`,
     history:`<p><b>Diagramme</b>: Zeitraum (Tag/Woche/Monat/Jahr), gestapelte Balken. Oben Quellen (Solar, Netzbezug, Batterie entladen), unten Senken (Verbrauch, Einspeisung, Batterie laden).</p><ul><li>Legende blendet Serien aus, Tooltip per Tap.</li><li>Bilanz mit Pastell-KPIs wie in der Monatsstatistik, plus Kosten-Zeilen.</li></ul>`,
-    flow:`<p><b>Energiefluss</b> als Kreuz: Haus in der Mitte, Solar oben, Batterie unten, Netz links, Wallbox rechts. Jeder Knoten trägt seinen Wert in seiner Kartenfarbe.</p><ul><li>Aktive Verbindungen sind dick, in der Farbe der Quelle, mit laufenden Punkten in Flussrichtung. Ruhende sind dünn und grau.</li><li>Liniendicke folgt der Leistung.</li><li>„Heute“ als zwei Bilanzbalken: wohin die Sonne ging, woher der Verbrauch kam.</li></ul>`,
+    flow:`<p><b>Energiefluss</b> mit dem Hauskraftwerk als Mitte: Solar oben, Batterie unten, Netz links, Haus rechts, Wallbox unten rechts (nur wenn vorhanden).</p><ul><li>Jede Leitung hat genau einen Wert und eine Richtung. Wandernde Pfeile in der Farbe des Teilnehmers zeigen sie an, schneller bei mehr Leistung.</li><li>Ruhende Leitungen bleiben als graue Spur.</li><li>„Heute“ als zwei Bilanzbalken: wohin die Sonne ging, woher der Verbrauch kam.</li></ul>`,
     smart:`<p><b>Smart-Funktionen</b> (nur mit RSCP): Sperrzeiten, Lade-/Entladeleistung, Notstromreserve. Wallbox-Steuerung als eigenes Sheet.</p><ul><li>Änderungen werden gesammelt und mit „Übernehmen“ gesendet, danach zurückgelesen.</li><li>Ohne RSCP ist der Bereich deaktiviert und erklärt warum.</li></ul>`,
     more:`<p><b>Einstellungen</b>: Verbindungsarten, Dashboard-Sortierung, Anlage, Tarif, Benachrichtigungen, Widgets.</p><ul><li>Benachrichtigungen brauchen die Bridge, da iOS-Apps nicht dauerhaft im Hintergrund pollen dürfen.</li></ul>`,
     wallbox:`<p><b>Wallbox-Steuerung</b> wie my4E: Sonnen-/Mischmodus, Phasen, Ladestrom, Priorität, Batterie-Entladung in die Wallbox, Laden starten/stoppen.</p>`,
@@ -850,35 +891,73 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     batt:'<rect x="-7" y="-4" width="12" height="8" rx="1.5"/><path d="M6-1v2"/>',
     netz:'<path d="M0-7l-4 14M0-7l4 14M-4-2h8M-5 3h10"/>',
     wb:'<path d="M-7 2l1.5-5h9l1.5 5v3h-12z"/><circle cx="-4" cy="5" r="1.2"/><circle cx="3" cy="5" r="1.2"/>'};
+  const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let movers=[], rafOn=false;
+  function sampleArm(a,rev){
+    let P;
+    if(a.seg){ P=[a.seg[0],a.seg[1]]; }
+    else { const [p0,p1,p2,p3]=a.bez; P=[]; for(let i=0;i<=40;i++){ const t=i/40,u=1-t;
+      P.push([u*u*u*p0[0]+3*u*u*t*p1[0]+3*u*t*t*p2[0]+t*t*t*p3[0], u*u*u*p0[1]+3*u*u*t*p1[1]+3*u*t*t*p2[1]+t*t*t*p3[1]]); } }
+    if(rev) P=P.slice().reverse();
+    let d=0; return P.map((p,i)=>{ if(i) d+=Math.hypot(p[0]-P[i-1][0],p[1]-P[i-1][1]); return {x:p[0],y:p[1],d}; });
+  }
+  function pointAt(pts,s){
+    for(let i=1;i<pts.length;i++){ if(pts[i].d>=s){ const a=pts[i-1],b=pts[i],f=(s-a.d)/((b.d-a.d)||1);
+      return {x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,ang:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI}; } }
+    const b=pts[pts.length-1],a=pts[pts.length-2]; return {x:b.x,y:b.y,ang:Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI};
+  }
+  function tick(t){
+    const s=t/1000;
+    movers.forEach(m=>{ const off=reduceMotion?m.spacing/2:(s*m.speed)%m.spacing;
+      m.items.forEach((el,i)=>{ const d=off+i*m.spacing; if(d>m.L){ el.setAttribute('opacity',0); return; }
+        const p=pointAt(m.pts,d), o=Math.max(0,Math.min(1,Math.min(d,m.L-d)/8));
+        el.setAttribute('transform',`translate(${p.x.toFixed(2)},${p.y.toFixed(2)}) rotate(${p.ang.toFixed(1)})`); el.setAttribute('opacity',o.toFixed(2)); }); });
+    if(!reduceMotion) requestAnimationFrame(tick);
+  }
+  /* Hauskraftwerk als Mitte. Jeder Arm hat eine Grundrichtung (Solar und Netz zur Mitte, die anderen von ihr weg);
+     ein negativer Wert dreht die Pfeile um. Netz: + Bezug, − Einspeisung. Batterie: + Laden, − Entladen. */
   function hub(el){
     const cs=getComputedStyle(document.documentElement); const c=k=>cs.getPropertyValue(k).trim();
-    const W=360,H=320, NW=92,NH=66, R=16;
-    const N={solar:[180,40],haus:[180,160],batt:[180,280],netz:[50,160],wb:[310,160]};
-    const col={solar:c('--c-solar'),haus:c('--c-house'),batt:c('--c-batt'),netz:c('--c-grid'),wb:c('--c-wb')};
-    const f=(v,d)=>fmt(Math.abs(v),d);
+    const NW=92,NH=62, showWb=wbVisible();
+    const P={solar:[180,44],batt:[180,288],netz:[52,166],haus:[308,166],wb:[308,288],hub:[180,166]};
+    const COL={solar:'--c-solar',haus:'--c-house',batt:'--c-batt',netz:'--c-grid',wb:'--c-wb'};
+    const pw=kw=>{ const a=Math.abs(kw); return a>=1?{v:fmt(a,2),u:'kW'}:{v:fmt(a*1000,0),u:'W'}; };
     const nodes={
-      solar:{l:'Solar',v:f(live.solar,2),u:'kW',s:'2 Tracker'},
-      haus:{l:'Haus',v:f(live.haus*1000,0),u:'W',s:'Verbrauch'},
-      batt:{l:'Batterie',v:f(live.batt,2),u:'kW',s:(live.batt>=0?'lädt · ':'entlädt · ')+live.soc+' %'},
-      netz:{l:'Netz',v:f(live.netz*1000,0),u:'W',s:live.netz<0?'Einspeisung':'Bezug'},
-      wb:{l:'Wallbox',v:f(live.wb*1000,0),u:'W',s:live.wb>0?'lädt':'bereit'}};
-    /* Kanten: [von, nach, Leistung kW, Farbe]; Richtung = Flussrichtung */
-    const E=[];
-    E.push(['solar','haus',live.solar,col.solar]);
-    if(live.batt>=0) E.push(['haus','batt',live.batt,col.batt]); else E.push(['batt','haus',-live.batt,col.batt]);
-    if(live.netz<=0) E.push(['haus','netz',-live.netz,col.netz]); else E.push(['netz','haus',live.netz,col.netz]);
-    E.push(['haus','wb',live.wb,col.wb]);
-    const maxv=Math.max(...E.map(e=>e[2]),0.001);
-    const anchor=(a,b)=>{ const [ax,ay]=N[a],[bx,by]=N[b]; const dx=Math.sign(bx-ax),dy=Math.sign(by-ay);
-      return [[ax+dx*NW/2,ay+dy*NH/2],[bx-dx*NW/2,by-dy*NH/2]]; };
-    let edges='',dots='',nodesSvg='';
-    E.forEach(([a,b,v,colr],i)=>{ const [[x1,y1],[x2,y2]]=anchor(a,b); const on=v>0.01; const w=on?3+6*v/maxv:2; const d=`M${x1} ${y1}L${x2} ${y2}`;
-      edges+=`<path class="edge ${on?'':'off'}" d="${d}" stroke="${on?colr:''}" stroke-width="${w.toFixed(1)}"/>`;
-      if(on){ for(let k=0;k<2;k++) dots+=`<circle class="dot" r="${(w/2+1.5).toFixed(1)}" fill="${colr}" stroke="var(--card)" stroke-width="1.5"><animateMotion dur="1.8s" begin="${(-0.9*k).toFixed(1)}s" repeatCount="indefinite" path="${d}"/></circle>`; } });
-    Object.entries(nodes).forEach(([k,n])=>{ const [x,y]=N[k]; nodesSvg+=`<g transform="translate(${x-NW/2},${y-NH/2})"><rect width="${NW}" height="${NH}" rx="${R}" fill="${col[k]}"/>
-      <g class="ni" transform="translate(16,16)">${ICON[k]}</g><text class="nl" x="28" y="20">${n.l}</text>
-      <text class="nv" x="10" y="46">${n.v}<tspan dx="2">${n.u}</tspan></text><text class="ns" x="10" y="59">${n.s}</text></g>`; });
-    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Energiefluss jetzt: Solar ${nodes.solar.v} kW, Haus ${nodes.haus.v} W, Batterie lädt ${nodes.batt.v} kW, Einspeisung ${nodes.netz.v} W">${edges}${dots}${nodesSvg}</svg>`;
+      solar:{l:'Solar',...pw(live.solar),s:live.solar>0.01?'2 Tracker':'keine Sonne'},
+      haus:{l:'Haus',...pw(live.haus),s:'Verbrauch'},
+      batt:{l:'Batterie',...pw(live.batt),s:(live.batt>0.01?'lädt':live.batt<-0.01?'entlädt':'Ruhe')+' · '+live.soc+' %'},
+      netz:{l:'Netz',...pw(live.netz),s:live.netz<-0.01?'Einspeisung':live.netz>0.01?'Bezug':'ausgeglichen'},
+      wb:{l:'Wallbox',...pw(live.wb),s:live.wb>0.01?'lädt':'bereit'}};
+    const ARM={
+      solar:{seg:[[180,75],[180,136]],kw:live.solar},
+      netz:{seg:[[98,166],[150,166]],kw:live.netz},
+      batt:{seg:[[180,196],[180,257]],kw:live.batt},
+      haus:{seg:[[210,166],[262,166]],kw:live.haus},
+      wb:{bez:[[201,187],[230,216],[232,288],[262,288]],kw:live.wb}};
+    const keys=['solar','netz','batt','haus'].concat(showWb?['wb']:[]);
+    const dOf=a=>a.seg?`M${a.seg[0]}L${a.seg[1]}`:`M${a.bez[0]} C${a.bez[1]} ${a.bez[2]} ${a.bez[3]}`;
+    let h='';
+    keys.forEach(k=>{ const a=ARM[k]; h+=`<path class="trk" d="${dOf(a)}"/>`;
+      if(Math.abs(a.kw)>0.01) h+=`<path d="${dOf(a)}" fill="none" stroke="${c(COL[k])}" stroke-width="10" stroke-linecap="round" opacity=".22"/>`; });
+    h+='<g class="chevs"></g>';
+    keys.forEach(k=>{ const [x,y]=P[k], n=nodes[k];
+      h+=`<g transform="translate(${x-NW/2},${y-NH/2})"><rect width="${NW}" height="${NH}" rx="16" fill="var(${COL[k]})"/>`+
+         `<g class="ni" transform="translate(16,15)">${ICON[k]}</g><text class="nl" x="28" y="19">${n.l}</text>`+
+         `<text class="nv" x="10" y="43">${n.v}<tspan dx="2">${n.u}</tspan></text><text class="ns" x="10" y="55">${n.s}</text></g>`; });
+    const [hx,hy]=P.hub;
+    h+=`<circle cx="${hx}" cy="${hy}" r="30" fill="var(--c-info)"/><circle cx="${hx}" cy="${hy}" r="25" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/><text class="hubt" x="${hx}" y="${hy+4.5}" text-anchor="middle">S10 E</text>`;
+    const aria='Energiefluss jetzt: '+keys.map(k=>`${nodes[k].l} ${nodes[k].v} ${nodes[k].u} ${nodes[k].s}`).join(', ');
+    el.innerHTML=`<svg viewBox="0 0 360 332" role="img" aria-label="${aria}">${h}</svg>`;
+    const g=el.querySelector('.chevs'), SVGNS='http://www.w3.org/2000/svg';
+    movers=[];
+    keys.forEach(k=>{ const a=ARM[k]; if(Math.abs(a.kw)<=0.01) return;
+      const pts=sampleArm(a,a.kw<0), L=pts[pts.length-1].d, spacing=15, items=[];
+      for(let i=0;i<=Math.floor(L/spacing);i++){ const e=document.createElementNS(SVGNS,'path');
+        e.setAttribute('d','M-2.5 -3.6 L1.8 0 L-2.5 3.6'); e.setAttribute('fill','none'); e.setAttribute('stroke',c(COL[k]));
+        e.setAttribute('stroke-width','2.2'); e.setAttribute('stroke-linecap','round'); e.setAttribute('stroke-linejoin','round'); e.setAttribute('opacity','0');
+        g.appendChild(e); items.push(e); }
+      movers.push({pts,L,items,spacing,speed:Math.min(70,18+Math.abs(a.kw)*12)}); });
+    if(reduceMotion) tick(0); else if(!rafOn){ rafOn=true; requestAnimationFrame(tick); }
   }
   /* ---------- Heute: Bilanzbalken ---------- */
   const today={solarTo:[['Haus',5.2,'--c-house'],['Batterie',4.8,'--c-batt'],['Netz',4.2,'--c-grid']], hausFrom:[['Solar',5.2,'--c-solar'],['Batterie',3.2,'--c-batt'],['Netz',0.3,'--c-grid']]};
@@ -889,7 +968,36 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   }
   function drawFlows(){ $$('[data-flow="now"]').forEach(hub); $$('[data-flow="today"]').forEach(ledger); }
 
+  /* ---------- Wallbox nur, wenn vorhanden ---------- */
+  let wbMode='auto', wbDetected=false;
+  try{ wbMode=localStorage.getItem('wattbury-wbmode')||'auto'; }catch(e){}
+  function wbVisible(){ return wbMode==='on' || (wbMode==='auto' && wbDetected); }
+  function applyWb(){
+    const v=wbVisible();
+    $$('[data-wb]').forEach(el=>{ el.hidden=!v; });
+    $$('#wbSeg button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.wbmode===wbMode)));
+    $('#wbStatus').textContent = wbMode==='auto' ? (wbDetected?'Automatisch: Wallbox 1 gemeldet, verbunden':'Automatisch: keine Wallbox gemeldet') : (wbMode==='on'?'Immer anzeigen':'Immer ausblenden');
+    const hid=['Ext. Verbrauch','Ext. Quellen','Börsenstrompreise']; if(!v) hid.unshift('Wallbox');
+    $('#hiddenLine').textContent='Ausgeblendet, bis vorhanden oder konfiguriert: '+hid.join(' · ');
+    const d=$('#demoWb'); d.setAttribute('aria-pressed',String(wbDetected)); d.textContent='System meldet Wallbox: '+(wbDetected?'ja':'nein');
+    drawFlows();
+  }
+  /* ---------- Batterie-Overlay ---------- */
+  function setBatt(open){ const c=$('#battCard'); c.classList.toggle('open',open); $('#battTap').setAttribute('aria-expanded',String(open)); $('#battOver').setAttribute('aria-hidden',String(!open)); }
+  document.addEventListener('click',e=>{
+    const m=e.target.closest('[data-wbmode]'); if(m){ wbMode=m.dataset.wbmode; try{localStorage.setItem('wattbury-wbmode',wbMode)}catch(err){} applyWb(); return; }
+    if(e.target.closest('#demoWb')){ wbDetected=!wbDetected; applyWb(); return; }
+    const card=e.target.closest('#battCard');
+    if(!card){ if($('#battCard').classList.contains('open')) setBatt(false); return; }
+    if(e.target.closest('.bclose')){ setBatt(false); return; }
+    if(e.target.closest('#battOver [data-sheet], #battOver [data-go]')){ setBatt(false); return; }
+    if(e.target.closest('#battOver')) return;
+    setBatt(!card.classList.contains('open'));
+  });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') setBatt(false); });
+
   function drawAll(){ drawMonthMini(); drawHist(); drawFlows(); }
+  applyWb();
   drawAll();
   if(/^#(monitor|history|flow|smart|more)$/.test(location.hash)) go(location.hash.slice(1));
 })();

@@ -1,0 +1,308 @@
+<title>Energiefluss Varianten</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600&display=swap">
+<style>
+/* Layout: Kopf mit Szenario-Umschalter, darunter vier gleich gebaute Karten im Raster (2 Spalten Desktop, 1 Spalte Phone).
+   Farben = Wattbury-Farbwelt „Signal“ (RAL), Knoten identisch zum Click-Dummy, nur die Verbindungen unterscheiden sich. */
+:root{
+  --bg:#eef0ea; --card:#ffffff; --fg:#1b1f22; --muted:#5d646a; --line:rgba(27,31,34,.10); --track:#dde1e4;
+  --solar:#e69500; --batt:#237f52; --house:#c1121c; --grid:#1f4e8c; --wb:#924e7d; --info:#383e42;
+  --accent:#1f4e8c; --accent-fg:#ffffff;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --disp:"Sora","IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101214; --card:#1a1d20; --fg:#eceef0; --muted:#9aa1a7; --line:rgba(236,238,240,.10); --track:#2c3135;
+  --solar:#d99400; --batt:#1f7049; --house:#a8141c; --grid:#1d4a85; --wb:#82466f; --info:#3a4045;
+  --accent:#7aa3dc; --accent-fg:#0d1622; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101214; --card:#1a1d20; --fg:#eceef0; --muted:#9aa1a7; --line:rgba(236,238,240,.10); --track:#2c3135;
+  --solar:#d99400; --batt:#1f7049; --house:#a8141c; --grid:#1d4a85; --wb:#82466f; --info:#3a4045;
+  --accent:#7aa3dc; --accent-fg:#0d1622; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--disp);font-weight:600;font-size:clamp(24px,4vw,32px);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lead{color:var(--muted);max-width:68ch;margin:8px 0 0}
+.bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:22px 0 18px}
+.bar .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{font:inherit;font-size:14px;border:0;background:none;color:var(--fg);padding:7px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);font-weight:600}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.state{font-size:14px;color:var(--muted);flex-basis:100%}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card .hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .no{font-family:var(--disp);font-weight:600;font-size:13px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--fg);color:var(--card);flex:none;align-self:center}
+.card h2{font-family:var(--disp);font-weight:600;font-size:19px;letter-spacing:-.01em;margin:0}
+.card .rec{font-size:12px;font-weight:600;color:var(--accent);border:1px solid currentColor;border-radius:999px;padding:1px 9px;margin-left:auto}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.card svg{width:100%;height:auto;display:block;max-width:100%}
+.pc{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin:2px 0 0}
+.pc dt{font-weight:600}
+.pc dd{margin:0;color:var(--muted)}
+/* SVG text */
+.nl{font-family:var(--font);font-size:10.5px;fill:rgba(255,255,255,.88)}
+.nv{font-family:var(--disp);font-size:17px;font-weight:600;fill:#fff}
+.nv tspan{font-size:10px;font-weight:500}
+.ns{font-family:var(--font);font-size:9.5px;fill:rgba(255,255,255,.82)}
+.ni{stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hubt{font-family:var(--disp);font-weight:600;font-size:13px;fill:#fff}
+.hubs{font-family:var(--font);font-size:8.5px;fill:rgba(255,255,255,.8)}
+</style>
+
+<div class="wrap">
+  <h1>Energiefluss: vier Arten, die Verbindungen zu zeigen</h1>
+  <p class="lead">Knoten, Farben und Werte sind in allen vier Varianten gleich. Unterschiedlich ist nur, wie Leitung, Richtung und Stärke dargestellt werden. Das Szenario oben lässt sich umschalten, damit du siehst, wie sich die Darstellung verhält, wenn sich Richtung und Leistung ändern. Alle Werte sind Beispiele.</p>
+
+  <div class="bar">
+    <span class="lbl">Szenario</span>
+    <div class="seg" id="scen">
+      <button type="button" data-s="mittag" aria-pressed="true">Mittag · Überschuss</button>
+      <button type="button" data-s="auto" aria-pressed="false">Mittag · Auto lädt</button>
+      <button type="button" data-s="abend" aria-pressed="false">Abend · Batterie versorgt</button>
+    </div>
+    <div class="state" id="stateText"></div>
+  </div>
+
+  <div class="grid">
+    <article class="card">
+      <div class="hd"><span class="no">1</span><h2>Lauflicht</h2></div>
+      <svg id="v1" viewBox="0 0 360 332" role="img" aria-label="Variante 1, Lauflicht"></svg>
+      <p>Feine Leitungen wie im Schaltplan. Ein heller Impuls läuft in Flussrichtung, schneller und dichter bei mehr Leistung. Ruhende Leitungen bleiben als graue Spur stehen.</p>
+      <dl class="pc"><dt>Stärke</dt><dd>Ruhig und edel, wirkt im Dunkelmodus besonders gut.</dd><dt>Schwäche</dt><dd>Das Haus bleibt in der Mitte, Solar zur Batterie läuft optisch durch das Haus.</dd></dl>
+    </article>
+    <article class="card">
+      <div class="hd"><span class="no">2</span><h2>Direkte Kurven</h2></div>
+      <svg id="v2" viewBox="0 0 360 332" role="img" aria-label="Variante 2, direkte Kurven"></svg>
+      <p>Jeder Fluss ist eine eigene Kurve von der Quelle zum Ziel. Die Breite entspricht der Leistung, die Farbe verläuft von Quelle zu Ziel, Punkte wandern mit.</p>
+      <dl class="pc"><dt>Stärke</dt><dd>Zeigt ehrlich, wohin die Sonne geht, auch Solar direkt in die Batterie.</dd><dt>Schwäche</dt><dd>Mit vielen gleichzeitigen Flüssen wird es lebhafter.</dd></dl>
+    </article>
+    <article class="card">
+      <div class="hd"><span class="no">3</span><h2>Hauskraftwerk als Mitte</h2><span class="rec">Empfehlung</span></div>
+      <svg id="v3" viewBox="0 0 360 332" role="img" aria-label="Variante 3, Hauskraftwerk als Mitte"></svg>
+      <p>Das S10 sitzt als eigener Knoten in der Mitte, alle Teilnehmer hängen an ihm. Jede Leitung hat genau einen Wert und eine Richtung, wandernde Pfeile zeigen sie an.</p>
+      <dl class="pc"><dt>Stärke</dt><dd>Entspricht der echten Verschaltung, jede Leitung ist eindeutig, bleibt in allen Szenarien aufgeräumt.</dd><dt>Schwäche</dt><dd>Ein Knoten mehr, das Haus rückt an den Rand.</dd></dl>
+    </article>
+    <article class="card">
+      <div class="hd"><span class="no">4</span><h2>Förderband</h2></div>
+      <svg id="v4" viewBox="0 0 360 332" role="img" aria-label="Variante 4, Förderband"></svg>
+      <p>Breite, weiche Bänder, in denen Pfeile wie auf einem Förderband laufen. Die Richtung ist sofort klar, auch aus dem Augenwinkel.</p>
+      <dl class="pc"><dt>Stärke</dt><dd>Maximale Lesbarkeit, eignet sich auch für Widgets.</dd><dt>Schwäche</dt><dd>Wirkt verspielter und braucht mehr Fläche.</dd></dl>
+    </article>
+  </div>
+</div>
+
+<script>
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fmt=(v,d)=>v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const COL={solar:'--solar',haus:'--house',batt:'--batt',netz:'--grid',wb:'--wb'};
+
+  const SCEN={
+    mittag:{solar:3.42,haus:0.612,batt:2.41,netz:-0.398,wb:0,soc:68,
+      direct:[['solar','haus',0.612],['solar','batt',2.41],['solar','netz',0.398]],
+      text:'Die Sonne liefert 3,42 kW. Das Haus braucht 612 W, die Batterie lädt mit 2,41 kW, 398 W gehen ins Netz.'},
+    auto:{solar:6.80,haus:0.60,batt:1.50,netz:-0.60,wb:4.10,soc:74,
+      direct:[['solar','haus',0.60],['solar','wb',4.10],['solar','batt',1.50],['solar','netz',0.60]],
+      text:'Die Sonne liefert 6,8 kW. Das Auto lädt mit 4,1 kW, die Batterie mit 1,5 kW, je 600 W gehen an Haus und Netz.'},
+    abend:{solar:0,haus:1.10,batt:-1.10,netz:0,wb:0,soc:23,
+      direct:[['batt','haus',1.10]],
+      text:'Keine Sonne mehr. Die Batterie versorgt das Haus mit 1,1 kW, das Netz bleibt bei null.'}
+  };
+
+  const ICON={
+    solar:'<circle cx="0" cy="0" r="3.2"/><path d="M0-7v2M0 5v2M-7 0h2M5 0h2M-5-5l1.4 1.4M3.6 3.6L5 5M-5 5l1.4-1.4M3.6-3.6L5-5"/>',
+    haus:'<path d="M-7 0l7-6 7 6v6h-14z"/><path d="M-2 6v-4h4v4"/>',
+    batt:'<rect x="-7" y="-4" width="12" height="8" rx="1.5"/><path d="M6-1v2"/>',
+    netz:'<path d="M0-7l-4 14M0-7l4 14M-4-2h8M-5 3h10"/>',
+    wb:'<path d="M-7 2l1.5-5h9l1.5 5v3h-12z"/><circle cx="-4" cy="5" r="1.2"/><circle cx="3" cy="5" r="1.2"/>'};
+
+  const NW=92,NH=62;
+  const CROSS={solar:[180,44],haus:[180,166],batt:[180,288],netz:[52,166],wb:[308,166]};
+  const HUBL={solar:[180,44],batt:[180,288],netz:[52,166],haus:[308,166],wb:[308,288],hub:[180,166]};
+
+  const pw=kw=>kw>=1?{v:fmt(kw,2),u:'kW'}:{v:fmt(kw*1000,0),u:'W'};
+  function labels(sc){
+    const a=Math.abs;
+    return {
+      solar:{l:'Solar',v:fmt(sc.solar,2),u:'kW',s:sc.solar>0?'2 Tracker':'keine Sonne'},
+      haus:{l:'Haus',...pw(sc.haus),s:'Verbrauch'},
+      batt:{l:'Batterie',v:fmt(a(sc.batt),2),u:'kW',s:(sc.batt>0.01?'lädt':sc.batt<-0.01?'entlädt':'Ruhe')+' · '+sc.soc+' %'},
+      netz:{l:'Netz',...pw(a(sc.netz)),s:sc.netz<-0.01?'Einspeisung':sc.netz>0.01?'Bezug':'ausgeglichen'},
+      wb:{l:'Wallbox',...pw(sc.wb),s:sc.wb>0.01?'lädt':'bereit'}};
+  }
+  function nodeSvg(k,x,y,n){
+    return `<g transform="translate(${x-NW/2},${y-NH/2})"><rect width="${NW}" height="${NH}" rx="16" fill="var(${COL[k]})"/>`+
+      `<g class="ni" transform="translate(16,15)">${ICON[k]}</g><text class="nl" x="28" y="19">${n.l}</text>`+
+      `<text class="nv" x="10" y="43">${n.v}<tspan dx="2">${n.u}</tspan></text><text class="ns" x="10" y="55">${n.s}</text></g>`;
+  }
+  /* Arme bei Haus in der Mitte: [von, nach, kW] in Flussrichtung */
+  function crossArms(sc){
+    const E=[];
+    E.push(sc.solar>0.01?['solar','haus',sc.solar]:['solar','haus',0]);
+    E.push(sc.batt>=0?['haus','batt',sc.batt]:['batt','haus',-sc.batt]);
+    E.push(sc.netz<=0?['haus','netz',-sc.netz]:['netz','haus',sc.netz]);
+    E.push(['haus','wb',sc.wb]);
+    return E;
+  }
+  function crossLine(a,b){
+    const [ax,ay]=CROSS[a],[bx,by]=CROSS[b]; const dx=Math.sign(bx-ax),dy=Math.sign(by-ay);
+    return `M${ax+dx*NW/2} ${ay+dy*NH/2}L${bx-dx*NW/2} ${by-dy*NH/2}`;
+  }
+
+  /* ---------- Bewegung: Punkte oder Pfeile entlang eines Pfads ---------- */
+  let movers=[], pulses=[];
+  function addMover(svg,path,opt){
+    const L=path.getTotalLength(); const g=document.createElementNS(NS,'g'); svg.appendChild(g);
+    const n=Math.floor(L/opt.spacing)+1; const items=[];
+    for(let i=0;i<n;i++){
+      let el;
+      if(opt.kind==='dot'){ el=document.createElementNS(NS,'circle'); el.setAttribute('r',opt.r); el.setAttribute('fill',opt.color); }
+      else { el=document.createElementNS(NS,'path'); el.setAttribute('d',`M${-opt.r*.7} ${-opt.r} L${opt.r*.5} 0 L${-opt.r*.7} ${opt.r}`); el.setAttribute('fill','none'); el.setAttribute('stroke',opt.color); el.setAttribute('stroke-width',opt.sw||2); el.setAttribute('stroke-linecap','round'); el.setAttribute('stroke-linejoin','round'); }
+      g.appendChild(el); items.push(el);
+    }
+    movers.push({path,L,items,spacing:opt.spacing,speed:opt.speed,fade:opt.fade??10});
+  }
+  function frame(t){
+    const s=t/1000;
+    for(const m of movers){
+      const off=reduce?m.spacing*0.5:(s*m.speed)%m.spacing;
+      m.items.forEach((el,i)=>{
+        const d=off+i*m.spacing;
+        if(d>m.L){ el.setAttribute('opacity',0); return; }
+        const p=m.path.getPointAtLength(d), q=m.path.getPointAtLength(Math.min(m.L,d+0.5)), q0=m.path.getPointAtLength(Math.max(0,d-0.5));
+        const ang=Math.atan2(q.y-q0.y,q.x-q0.x)*180/Math.PI;
+        const edge=Math.min(d,m.L-d); const o=Math.max(0,Math.min(1,edge/m.fade));
+        el.setAttribute('transform',`translate(${p.x.toFixed(2)},${p.y.toFixed(2)}) rotate(${ang.toFixed(1)})`);
+        el.setAttribute('opacity',o.toFixed(2));
+      });
+    }
+    if(!reduce) requestAnimationFrame(frame);
+  }
+  const speedFor=kw=>Math.min(70,18+kw*12);
+
+  /* ---------- Variante 1: Lauflicht ---------- */
+  function v1(svg,sc,lab){
+    let h='';
+    const arms=crossArms(sc);
+    arms.forEach(([a,b])=>{ h+=`<path d="${crossLine(a,b)}" fill="none" stroke="var(--track)" stroke-width="3" stroke-linecap="round"/>`; });
+    arms.forEach(([a,b,kw],i)=>{ if(kw>0.01){ const k=a==='haus'?b:a; h+=`<path class="p1" data-kw="${kw}" d="${crossLine(a,b)}" fill="none" stroke="var(${COL[k]})" stroke-width="3" stroke-linecap="round" opacity=".35"/><path class="pulse" data-kw="${kw}" d="${crossLine(a,b)}" fill="none" stroke="var(${COL[k]})" stroke-width="4" stroke-linecap="round"/>`; } });
+    Object.entries(CROSS).forEach(([k,[x,y]])=>h+=nodeSvg(k,x,y,lab[k]));
+    svg.innerHTML=h;
+    svg.querySelectorAll('.pulse').forEach(p=>{
+      const kw=+p.dataset.kw, seg=16, gap=Math.max(26,70-kw*10);
+      p.setAttribute('stroke-dasharray',`${seg} ${gap}`);
+      if(!reduce) pulses.push(p.animate([{strokeDashoffset:0},{strokeDashoffset:-(seg+gap)}],{duration:(seg+gap)/speedFor(kw)*1000,iterations:Infinity}));
+    });
+  }
+  /* ---------- Variante 2: direkte Kurven ---------- */
+  const DP={
+    'solar-haus':['M180 75 L180 135',[180,75],[180,135]],
+    'solar-batt':['M150 75 C 92 120, 92 212, 150 257',[150,75],[150,257]],
+    'solar-netz':['M134 44 C 80 44, 52 80, 52 135',[134,44],[52,135]],
+    'solar-wb':['M226 44 C 280 44, 308 80, 308 135',[226,44],[308,135]],
+    'batt-haus':['M180 257 L180 197',[180,257],[180,197]],
+    'netz-haus':['M98 166 L134 166',[98,166],[134,166]],
+    'haus-netz':['M134 166 L98 166',[134,166],[98,166]],
+    'haus-wb':['M226 166 L262 166',[226,166],[262,166]],
+    'batt-wb':['M226 288 C 280 288, 308 252, 308 197',[226,288],[308,197]],
+    'netz-batt':['M52 197 C 52 252, 80 288, 134 288',[52,197],[134,288]],
+    'batt-netz':['M134 288 C 80 288, 52 252, 52 197',[134,288],[52,197]]};
+  function v2(svg,sc,lab){
+    const max=Math.max(...sc.direct.map(f=>f[2]),0.1);
+    let defs='',paths='';
+    sc.direct.forEach(([a,b,kw],i)=>{
+      const [d,p0,p1]=DP[a+'-'+b]; const w=3+11*kw/max; const id='g2_'+i;
+      defs+=`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${p0[0]}" y1="${p0[1]}" x2="${p1[0]}" y2="${p1[1]}"><stop offset="0" stop-color="${css(COL[a])}"/><stop offset="1" stop-color="${css(COL[b])}"/></linearGradient>`;
+      paths+=`<path class="m2" data-kw="${kw}" data-to="${b}" d="${d}" fill="none" stroke="url(#${id})" stroke-width="${w.toFixed(1)}" stroke-linecap="round" opacity=".55"/>`;
+    });
+    let h=`<defs>${defs}</defs>${paths}<g id="n2">`;
+    Object.entries(CROSS).forEach(([k,[x,y]])=>h+=nodeSvg(k,x,y,lab[k]));
+    svg.innerHTML=h+'</g>';
+    svg.querySelectorAll('.m2').forEach(p=>{ const kw=+p.dataset.kw; addMover(svg,p,{kind:'dot',r:2.6,color:'#ffffff',spacing:24,speed:speedFor(kw)}); });
+    svg.appendChild(svg.querySelector('#n2')); /* Knoten über die Punkte legen */
+  }
+  /* ---------- Variante 3: Hauskraftwerk als Mitte ---------- */
+  function hubArm(k){
+    const [hx,hy]=HUBL.hub, R=30, [x,y]=HUBL[k];
+    if(k==='solar') return [`M${hx} ${y+NH/2}L${hx} ${hy-R}`, true];
+    if(k==='batt') return [`M${hx} ${hy+R}L${hx} ${y-NH/2}`, false];
+    if(k==='netz') return [`M${x+NW/2} ${hy}L${hx-R} ${hy}`, true];
+    if(k==='haus') return [`M${hx+R} ${hy}L${x-NW/2} ${hy}`, false];
+    if(k==='wb') return [`M${hx+21} ${hy+21} C ${hx+50} ${hy+50}, ${x-NW/2-30} ${y}, ${x-NW/2} ${y}`, false];
+  }
+  function reversePath(d){ /* einfache Umkehr für M..L.. und M..C.. mit drei Punkten */
+    const n=d.match(/-?\d+(\.\d+)?/g).map(Number);
+    if(n.length===4) return `M${n[2]} ${n[3]}L${n[0]} ${n[1]}`;
+    return `M${n[6]} ${n[7]} C ${n[4]} ${n[5]}, ${n[2]} ${n[3]}, ${n[0]} ${n[1]}`;
+  }
+  function v3(svg,sc,lab){
+    /* kW je Arm, positiv = in Pfeilrichtung des Grundpfads */
+    const arm={solar:sc.solar, batt:sc.batt, netz:sc.netz, haus:sc.haus, wb:sc.wb};
+    /* Grundpfade: solar und netz zeigen zur Mitte (Quelle), die anderen von der Mitte weg */
+    let h='', act=[];
+    Object.keys(arm).forEach(k=>{
+      let [d]=hubArm(k); const kw=arm[k];
+      h+=`<path d="${d}" fill="none" stroke="var(--track)" stroke-width="10" stroke-linecap="round"/>`;
+      if(Math.abs(kw)>0.01){
+        if(kw<0) d=reversePath(d);
+        h+=`<path d="${d}" fill="none" stroke="var(${COL[k]})" stroke-width="10" stroke-linecap="round" opacity=".22"/>`;
+        act.push([d,k,Math.abs(kw)]);
+      }
+    });
+    const [hx,hy]=HUBL.hub;
+    h+=`<g id="hubnodes">`;
+    Object.entries(HUBL).forEach(([k,[x,y]])=>{ if(k!=='hub') h+=nodeSvg(k,x,y,lab[k]); });
+    h+=`<circle cx="${hx}" cy="${hy}" r="30" fill="var(--info)"/><circle cx="${hx}" cy="${hy}" r="25" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/>`+
+       `<text class="hubt" x="${hx}" y="${hy+4.5}" text-anchor="middle">S10 E</text></g>`;
+    svg.innerHTML=h;
+    act.forEach(([d,k,kw])=>{
+      const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke','none');
+      svg.insertBefore(p,svg.querySelector('#hubnodes'));
+      addMover(svg,p,{kind:'chev',r:3.6,sw:2.2,color:css(COL[k]),spacing:15,speed:speedFor(kw),fade:8});
+    });
+    svg.appendChild(svg.querySelector('#hubnodes'));
+  }
+  /* ---------- Variante 4: Förderband ---------- */
+  function v4(svg,sc,lab){
+    let h='', act=[];
+    crossArms(sc).forEach(([a,b,kw])=>{
+      const d=crossLine(a,b); const k=a==='haus'?b:a;
+      if(kw>0.01){ h+=`<path d="${d}" fill="none" stroke="var(${COL[k]})" stroke-width="22" stroke-linecap="round" opacity=".18"/>`; act.push([d,k,kw]); }
+      else h+=`<path d="${d}" fill="none" stroke="var(--track)" stroke-width="22" stroke-linecap="round" opacity=".55"/>`;
+    });
+    h+='<g id="n4">'; Object.entries(CROSS).forEach(([k,[x,y]])=>h+=nodeSvg(k,x,y,lab[k])); h+='</g>';
+    svg.innerHTML=h;
+    act.forEach(([d,k,kw])=>{
+      const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke','none');
+      svg.insertBefore(p,svg.querySelector('#n4'));
+      addMover(svg,p,{kind:'chev',r:5,sw:2.6,color:css(COL[k]),spacing:11,speed:speedFor(kw)*0.8,fade:6});
+    });
+    svg.appendChild(svg.querySelector('#n4'));
+  }
+
+  let cur='mittag', raf=false;
+  function draw(){
+    movers=[]; pulses.forEach(a=>a.cancel()); pulses=[];
+    const sc=SCEN[cur], lab=labels(sc);
+    v1(document.getElementById('v1'),sc,lab);
+    v2(document.getElementById('v2'),sc,lab);
+    v3(document.getElementById('v3'),sc,lab);
+    v4(document.getElementById('v4'),sc,lab);
+    document.getElementById('stateText').textContent=sc.text;
+    if(reduce) frame(0); else if(!raf){ raf=true; requestAnimationFrame(frame); }
+  }
+  document.querySelectorAll('#scen button').forEach(b=>b.addEventListener('click',()=>{
+    cur=b.dataset.s; document.querySelectorAll('#scen button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))); draw();
+  }));
+  if(window.matchMedia){ const mq=matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener&&mq.addEventListener('change',draw); }
+  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  draw();
+})();
+</script>

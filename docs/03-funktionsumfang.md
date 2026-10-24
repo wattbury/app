@@ -11,10 +11,10 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 | Karte | Inhalt | Quelle | Phase |
 |---|---|---|---|
 | Solar + Prognose | Karussell: Produktion (gesamt, je Tracker, heute kWh) · Ertrag je kWp · Tracker-Details. Darunter Prognose heute/morgen mit Fortschrittsbalken, Wetter-Chip, Buttons Diagramm/Analyse | EMS_POWER_PV, PVI; forecast.solar | 1–2 |
-| Batterie | SOC %, Lade-/Entladeleistung, Verlaufsbalken, 6 Unterkacheln (heute geladen/entladen, verfügbare Energie, nutzbare Kapazität, Temperatur, Batteriezustand), Autarkie heute/7 Tage, Prognose voll/leer um, Buttons Systemstatistik und Smart-Funktionen | EMS, BAT, DB | 1–2 |
+| Batterie | Ring mit SOC und kWh, Lade-/Entladeleistung, „voll/leer gegen“, Autarkie heute, heute geladen/entladen. **Tippen öffnet ein Overlay auf der Karte** mit Temperatur, Batteriezustand (SOH) und den Buttons Statistik & Info sowie Smart-Funktionen | EMS, BAT, DB | 1–2 |
 | Netz | Leistung mit Richtung, heute Bezug/Einspeisung | EMS_POWER_GRID, PM | 1 |
 | Haus | Leistung, heute Direkt/Gesamt | EMS_POWER_HOME | 1 |
-| Wallbox | Leistung gesamt/solar, Solaranteil, heute geladen Netz/Solar, Button Steuerung. **Nur sichtbar, wenn eine Wallbox erkannt wird** (bei der Testanlage keine). | WB | 2 |
+| Wallbox | Leistung gesamt/solar, Solaranteil, heute geladen Netz/Solar, Button Steuerung. **Nur sichtbar, wenn das System eine Wallbox meldet** (`WB_DEVICE_STATE` verbunden oder App-Software-Version, `openrscp` `detectWallboxes()`); gilt für Dashboard, Energiefluss, Smart-Funktionen und Sheets. Einstellung „Geräte am Hauskraftwerk“: Automatisch / Anzeigen / Ausblenden. Bei der eigenen Anlage wird keine gemeldet. | WB | 2 |
 | Ext. Verbrauch / Ext. Quellen | Leistung, heute, Geräteliste | PM, EMS_POWER_ADD | 2 |
 | Börsenstrompreise | aktuelle/nächste Stunde, Tagestief, Details | Tibber/aWATTar | 4 |
 | Monatsstatistik | Pastell-KPIs (Autarkie, Direktverbrauch, Solar, Netzbezug, Einspeisung), Tagesproduktion als Mini-Balken mit Ø/Max | Bridge-Store | 2 |
@@ -33,7 +33,7 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 
 ### 3 · Energiefluss (live)
 
-Kreuz-Layout: Haus in der Mitte, Solar oben, Batterie unten, Netz links, Wallbox rechts. Jeder Knoten ist eine kleine Karte in seiner Farbe mit Icon, Wert und Zustand (z. B. „lädt · 68 %“, „Einspeisung“). Aktive Verbindungen sind dick, in der Farbe der Quelle, mit laufenden Punkten in Flussrichtung; die Dicke folgt der Leistung. Ruhende Verbindungen sind dünn und grau. Werte stehen nur in den Knoten, nie auf den Linien. Darüber ein Satz, der den Zustand erklärt. „Heute“ als zwei Bilanzbalken: wohin die Sonne ging (Haus, Batterie, Netz) und woher der Verbrauch kam (Solar, Batterie, Netz), dazu Autarkie, Eigenverbrauch, „Batterie voll um“ und Phasenwerte. Phase 3.
+Das Hauskraftwerk (S10 E) ist der Mittelpunkt, an dem alle Teilnehmer hängen: Solar oben, Batterie unten, Netz links, Haus rechts, Wallbox unten rechts (nur wenn vorhanden). Jeder Knoten ist eine kleine Karte in seiner Farbe mit Icon, Wert und Zustand. Jede Leitung hat genau einen Wert und eine Richtung; wandernde Pfeile in der Farbe des Teilnehmers zeigen die Richtung, ihre Geschwindigkeit die Leistung. Ruhende Leitungen bleiben als graue Spur. Darüber ein Satz, der den Zustand erklärt. „Heute“ als zwei Bilanzbalken (wohin die Sonne ging, woher der Verbrauch kam), dazu Autarkie, Eigenverbrauch, „Batterie voll um“ und Phasenwerte. Entschieden aus vier Varianten, siehe [design/energiefluss-varianten.html](../design/energiefluss-varianten.html). Phase 3.
 
 ### 4 · Smart-Funktionen (nur mit RSCP)
 

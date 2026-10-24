@@ -53,6 +53,19 @@ Stolperfallen, die beim Test aufgefallen sind: PyPI-Version 0.10.0 kann das Rela
 
 Der Unterschied kommt daher, dass openrscp alle zehn Live-Tags in **einem** Frame schickt, python-e3dc dagegen jedes Tag einzeln mit eigenem Rundlauf über das Relay. Ein 1-s-Intervall erzeugt damit nur etwa 5 % Auslastung der Verbindung. Gemessen: Produktionsdatum KW29 2022, Abregelung bei 100 % / 10.740 W (keine Begrenzung), Tagesbilanz bis 22:42 Solar 18,75 kWh, Haus 21,03 kWh, Bezug 7,66 kWh, Einspeisung 1,43 kWh, Autarkie 64 %.
 
+### Anlagendaten per RSCP (`openrscp` `example/system_probe.dart`, 25.10.2026)
+
+| Bereich | Ergebnis |
+|---|---|
+| Spitzenleistung | `EMS_INSTALLED_PEAK_POWER` 10.740 W |
+| Systemkennwerte (`EMS_REQ_GET_SYS_SPECS`) | Batteriekapazität 13.107 Wh, max. AC 12.000 W, Laden/Entladen max. 4.500 W, empfohlene Mindestgrenzen 2.200 / 1.100 W, Hybridmodus ja; `maxPvPower` nicht verfügbar |
+| Wechselrichter | **1 genutzter String von 2**, 3 Phasen, max. 4.000 VA je Phase |
+| String 1 | Spannung, Strom, Leistung live; max. 6.000 W; Lebenszeit-Ertrag 30.882 kWh |
+| Batterie | 4 Module, Nennkapazität 256 Ah, nutzbar 202,8 Ah |
+| Anlagenadresse (`INFO_REQ_GET_FACILITY`) | Postleitzahl, Ort, Land, Name, Straße, Hausnummer, Telefon und E-Mail vorhanden. Die App nutzt nur Postleitzahl, Ort und Land. |
+
+Folgerungen: Anzahl der Strings, Spitzenleistung, Batterie und Wechselrichter kommen aus dem S10. Ausrichtung, Neigung und kWp je String sowie der genaue Standort sind manuell. Eine Aufteilung der kWp nach Lebenszeit-Ertrag scheidet aus, weil Strings zu unterschiedlichen Zeiten angeschlossen sein können. Wenn das S10 nur einen String meldet, auf dem Dach aber mehrere Flächen liegen (z. B. Ost und West parallel), braucht die Prognose mehrere Dachflächen je String.
+
 ## Selbst testen
 
 Im Projekt liegt ein reines Lese-Skript, das die Tunnelverbindung mit deinen Portal-Zugangsdaten aufbaut und Live-Werte, Systeminfo, Batterie, PV, Leistungseinstellungen, Wallbox und einen DB-Tageswert abfragt:

@@ -61,7 +61,7 @@ Verbindung (Lokal, Bridge, Cloud-Fallback, Assistent), Dashboard-Sortierung, Anl
 
 Was das S10 per RSCP liefert, ist vorbelegt: Modell und Firmware, installierte Spitzenleistung (`EMS_INSTALLED_PEAK_POWER`), genutzte und maximale Strings (`PVI_USED_STRING_COUNT`, `PVI_DC_MAX_STRING_COUNT`), Batterie (Module, Kapazität), max. AC-Leistung des Wechselrichters und die Postleitzahl der Anlagenadresse (`INFO_REQ_GET_FACILITY`; Name, Straße, Telefon und E-Mail werden nicht verwendet).
 
-Manuell je Tracker: Name, Ausrichtung (Kompass, 0° = Nord, ziehen oder ±5°), Neigung (0–90°), Leistung in kWp. Die Summe muss die Spitzenleistung des S10 ergeben; ein Vorschlag teilt nach dem Lebenszeit-Ertrag der Strings (`PVI_DC_STRING_ENERGY_ALL`) auf. Die Live-Leistung je Tracker hilft bei der Zuordnung zur Dachfläche. Standort aus der Postleitzahl, optional per GPS verfeinert.
+Manuell je String: Name, Ausrichtung (Kompass, 0° = Nord, ziehen, ±1° oder als Zahl), Neigung (0–90°, Schieberegler in 1°-Schritten oder als Zahl), Leistung in kWp als Zahl. Die Summe muss die Spitzenleistung des S10 ergeben; die Anzeige nennt die Differenz. Eine automatische Aufteilung nach Lebenszeit-Ertrag gibt es bewusst nicht, weil Strings zu unterschiedlichen Zeiten angeschlossen worden sein können. Die Live-Leistung je Tracker hilft bei der Zuordnung zur Dachfläche. Standort aus der Postleitzahl, optional per GPS verfeinert.
 
 Verwendung: Kürzel auf der Solarkarte (SO, NW …) und Prognose je Tracker über forecast.solar (Azimut dort 0 = Süd, −90 = Ost, 90 = West; die App rechnet um). Phase 2–3.
 

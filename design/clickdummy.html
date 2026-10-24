@@ -324,6 +324,20 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .cc .hr b{color:var(--on);font-weight:600}
 svg.scurve{width:100%;height:auto;display:block;margin-top:8px;overflow:visible}
 svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,255,.85)}
+.cc.solar .kpi{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto auto;margin-top:12px}
+.cc.solar .kpi .c{display:grid;grid-template-rows:subgrid;grid-row:span 4;row-gap:4px;padding-right:14px;min-width:0}
+.cc.solar .kpi .c+.c{padding-right:0;padding-left:14px;border-left:1px solid var(--c-sub2)}
+.cc.solar .kpi .big{font-size:36px}
+.cc.solar .ey{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dim)}
+.cc.solar .meter{display:flex;height:6px;border-radius:3px;overflow:hidden;gap:2px;background:rgba(255,255,255,.26);margin-top:6px}
+.cc.solar .meter i{display:block;height:100%;background:#fff}
+.cc.solar .meter i.b{background:rgba(255,255,255,.6)}
+.cc.solar .meter.split2{background:none}
+.cc.solar .cap{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--on-dim);font-variant-numeric:tabular-nums}
+.cc.solar .cap b{color:var(--on);font-weight:600}
+.cc.solar .sect{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:1px solid var(--c-sub2)}
+.cc.solar .sect .v{font-size:12px;color:var(--on-dim);font-variant-numeric:tabular-nums}
+.cc.solar .sect .v b{color:var(--on);font-weight:600}
 .solar .line1{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--c-sub2);font-variant-numeric:tabular-nums}
 .solar .line1 .l{color:var(--on-dim)}
 .solar .line1 b{font-weight:600}
@@ -431,12 +445,25 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
           <section class="view active" id="v-monitor">
             <div class="cards">
 
-              <!-- Solar: Tageskurve mit Prognose -->
+              <!-- Solar: festes Raster (Jetzt | Heute), Tagesverlauf, morgen -->
               <button type="button" class="cc solar" data-sheet="pv">
-                <div class="hd"><h3>Solar</h3><span class="hr"><b>14,2</b> von ≈ 31,4 kWh</span></div>
-                <div class="big">3,42<small>kW</small></div>
-                <div class="trkrow"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span><span>Spitze heute <b>4,92 kW</b></span></div>
-                <svg class="scurve" id="solarCurve" viewBox="0 0 332 80" role="img" aria-label="Solarleistung heute bis jetzt und Prognose bis Sonnenuntergang"></svg>
+                <div class="hd"><h3>Solar</h3></div>
+                <div class="kpi">
+                  <div class="c">
+                    <div class="ey">Jetzt</div>
+                    <div class="big">3,42<small>kW</small></div>
+                    <div class="meter split2" role="img" aria-label="Aufteilung auf Tracker 1 mit 1,81 kW und Tracker 2 mit 1,61 kW"><i style="width:52.9%"></i><i class="b" style="width:47.1%"></i></div>
+                    <div class="cap"><span>SO <b>1,81</b></span><span>NW <b>1,61</b></span></div>
+                  </div>
+                  <div class="c">
+                    <div class="ey">Heute</div>
+                    <div class="big">14,2<small>kWh</small></div>
+                    <div class="meter" role="img" aria-label="45 Prozent der erwarteten Tagesmenge"><i style="width:45%"></i></div>
+                    <div class="cap"><span><b>45 %</b></span><span>von ≈ <b>31,4</b></span></div>
+                  </div>
+                </div>
+                <div class="sect"><span class="ey">Tagesverlauf</span><span class="v">Spitze <b id="solarPeak"></b></span></div>
+                <svg class="scurve" id="solarCurve" viewBox="0 0 332 80" role="img" aria-label="Solarleistung heute bis jetzt und Prognose bis Sonnenuntergang" style="margin-top:6px"></svg>
                 <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
                 <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>
               </button>
@@ -716,7 +743,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   try{const s=localStorage.getItem('wattbury-theme'); if(s) setTheme(s)}catch(e){}
   /* ---------- notes ---------- */
   const notes={
-    monitor:`<p><b>Energiemonitor</b>: gestapelte Farbkarten mit eigener Handschrift.</p><ul><li><b>Farbwelt „Signal“</b> nach RAL: Signalgelb, Signalgrün, Verkehrsrot, Signalblau, Signalviolett, Anthrazitgrau. Diagrammfarben auf Farbfehlsichtigkeit geprüft.</li><li>Weiße Schrift auf allen Karten, auch auf Gelb.</li><li><b>Fase:</b> jede Karte hat eine abgeschrägte Ecke oben rechts.</li><li><b>Solarkarte:</b> Tageskurve mit der Leistung von heute (Fläche) und der Prognose bis Sonnenuntergang (gestrichelt), oben rechts „erzeugt von erwartet“, darunter eine Zeile für morgen. Der <b>Ring</b> zeigt den Ladezustand der Batterie.</li><li>Große, blasse Wasserzeichen-Icons unten rechts statt kleiner Ecken-Icons.</li><li>Zahlen und Titel in Sora, Fließtext in der Systemschrift.</li><li><b>Batterie:</b> Tippen öffnet ein Overlay auf der Karte mit Temperatur, Zustand, Statistik und Smart-Funktionen.</li><li><b>Wallbox</b> erscheint nur, wenn das System eine meldet (oder in den Einstellungen erzwungen). Links unter „Demo“ umschaltbar.</li><li>Ext. Verbrauch, Ext. Quellen und Börsenpreise erscheinen erst, wenn konfiguriert.</li></ul>`,
+    monitor:`<p><b>Energiemonitor</b>: gestapelte Farbkarten mit eigener Handschrift.</p><ul><li><b>Farbwelt „Signal“</b> nach RAL: Signalgelb, Signalgrün, Verkehrsrot, Signalblau, Signalviolett, Anthrazitgrau. Diagrammfarben auf Farbfehlsichtigkeit geprüft.</li><li>Weiße Schrift auf allen Karten, auch auf Gelb.</li><li><b>Fase:</b> jede Karte hat eine abgeschrägte Ecke oben rechts.</li><li><b>Solarkarte:</b> festes Raster mit zwei gleich gebauten Spalten. „Jetzt“ zeigt die Leistung und ihre Aufteilung auf die Tracker, „Heute“ den Ertrag und den Fortschritt zur Prognose. Darunter der Tagesverlauf mit Spitze in der Kopfzeile und eine Zeile für morgen. Der <b>Ring</b> zeigt den Ladezustand der Batterie.</li><li>Große, blasse Wasserzeichen-Icons unten rechts statt kleiner Ecken-Icons.</li><li>Zahlen und Titel in Sora, Fließtext in der Systemschrift.</li><li><b>Batterie:</b> Tippen öffnet ein Overlay auf der Karte mit Temperatur, Zustand, Statistik und Smart-Funktionen.</li><li><b>Wallbox</b> erscheint nur, wenn das System eine meldet (oder in den Einstellungen erzwungen). Links unter „Demo“ umschaltbar.</li><li>Ext. Verbrauch, Ext. Quellen und Börsenpreise erscheinen erst, wenn konfiguriert.</li></ul>`,
     history:`<p><b>Diagramme</b>: Zeitraum (Tag/Woche/Monat/Jahr), gestapelte Balken. Oben Quellen (Solar, Netzbezug, Batterie entladen), unten Senken (Verbrauch, Einspeisung, Batterie laden).</p><ul><li>Legende blendet Serien aus, Tooltip per Tap.</li><li>Bilanz mit Pastell-KPIs wie in der Monatsstatistik, plus Kosten-Zeilen.</li></ul>`,
     flow:`<p><b>Energiefluss</b> mit dem Hauskraftwerk als Mitte: Solar oben, Batterie unten, Netz links, Haus rechts, Wallbox unten rechts (nur wenn vorhanden).</p><ul><li>Jede Leitung hat genau einen Wert und eine Richtung. Wandernde Pfeile in der Farbe des Teilnehmers zeigen sie an, schneller bei mehr Leistung.</li><li>Ruhende Leitungen bleiben als graue Spur.</li><li>„Heute“ als zwei Bilanzbalken: wohin die Sonne ging, woher der Verbrauch kam.</li></ul>`,
     smart:`<p><b>Smart-Funktionen</b> (nur mit RSCP): Sperrzeiten, Lade-/Entladeleistung, Notstromreserve. Wallbox-Steuerung als eigenes Sheet.</p><ul><li>Änderungen werden gesammelt und mit „Übernehmen“ gesendet, danach zurückgelesen.</li><li>Ohne RSCP ist der Bereich deaktiviert und erklärt warum.</li></ul>`,
@@ -998,6 +1025,9 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     const k=t=>0.9+0.08*Math.sin(t*2.3)-(t>12.6?0.35*((t-12.6)/0.75)**2:0);
     let done=0; for(let t=rise;t<now;t+=step) done+=fc(t)*Math.max(.2,k(t))*step;
     const act=t=>fc(t)*Math.max(.2,k(t))*14.2/done;
+    let pk=0, pkT=rise; for(let t=rise;t<=now;t+=0.01){ const v=act(t); if(v>pk){ pk=v; pkT=t; } }
+    const pm=Math.round(pkT*60/5)*5;
+    const pe=$('#solarPeak'); if(pe) pe.textContent=fmt(pk,2)+' kW · '+String(Math.floor(pm/60)).padStart(2,'0')+':'+String(pm%60).padStart(2,'0');
     const maxKw=Math.max(peak,6), X=t=>(t-t0)/(t1-t0)*W, Y=kw=>base-(kw/maxKw)*(base-top);
     let fcP='', actP='', areaP=`M${X(rise).toFixed(1)} ${base}`, last=[0,0];
     for(let t=now;t<=set+1e-6;t+=0.05) fcP+=(fcP?'L':'M')+X(t).toFixed(1)+' '+Y(fc(t)).toFixed(1);
@@ -1010,7 +1040,8 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
       `<path d="${fcP}" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-dasharray="3 4"/>`+
       `<line x1="${last[0].toFixed(1)}" x2="${last[0].toFixed(1)}" y1="${top}" y2="${base}" stroke="rgba(255,255,255,.5)"/>`+
       `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" fill="#fff" stroke="rgba(0,0,0,.15)"/>`+
-      `<text x="${(last[0]+6).toFixed(1)}" y="${top+8}">jetzt</text><text x="${W}" y="${top+8}" text-anchor="end">Prognose</text>`+ticks;
+      `<text x="${(last[0]+6).toFixed(1)}" y="${top+8}">jetzt</text><text x="${W}" y="${top+8}" text-anchor="end">Prognose</text>`+ticks+
+      `<circle cx="${X(pkT).toFixed(1)}" cy="${Y(pk).toFixed(1)}" r="3" fill="none" stroke="#fff" stroke-width="1.5"/>`;
   }
 
   function drawAll(){ drawMonthMini(); drawHist(); drawFlows(); drawSolarCurve(); }

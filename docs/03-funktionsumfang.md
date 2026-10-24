@@ -10,7 +10,7 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 
 | Karte | Inhalt | Quelle | Phase |
 |---|---|---|---|
-| Solar + Prognose | Leistung gesamt und je Tracker, Tagesspitze, oben rechts „erzeugt von erwartet“ (z. B. 14,2 von ≈ 31,4 kWh). **Tageskurve:** Leistung von heute als Fläche, Prognose bis Sonnenuntergang gestrichelt, Markierung „jetzt“. Darunter eine Zeile mit der Prognose für morgen. Entschieden aus vier Varianten, siehe [design/solarkarte-varianten.html](../design/solarkarte-varianten.html) | EMS_POWER_PV, PVI, DB (Tagesverlauf); forecast.solar | 1–2 |
+| Solar + Prognose | Festes Raster mit zwei gleich gebauten Spalten (Beschriftung, Wert, Balken, Unterschrift): **Jetzt** mit Leistung und geteiltem Balken der Tracker (SO/NW), **Heute** mit Ertrag und Fortschritt zur Tagesprognose (z. B. 45 % von ≈ 31,4 kWh). Darunter **Tagesverlauf** mit Kopfzeile „Spitze 4,44 kW · 12:00“, Kurve (Ist als Fläche, Prognose gestrichelt, „jetzt“, Spitze als Kreis) und eine Zeile für morgen. Entwürfe: [design/solarkarte-varianten.html](../design/solarkarte-varianten.html), [design/solarkarte-kopf-v2.html](../design/solarkarte-kopf-v2.html) | EMS_POWER_PV, PVI, DB (Tagesverlauf); forecast.solar | 1–2 |
 | Batterie | Ring mit SOC und kWh, Lade-/Entladeleistung, „voll/leer gegen“, Autarkie heute, heute geladen/entladen. **Tippen öffnet ein Overlay auf der Karte** mit Temperatur, Batteriezustand (SOH) und den Buttons Statistik & Info sowie Smart-Funktionen | EMS, BAT, DB | 1–2 |
 | Netz | Leistung mit Richtung, heute Bezug/Einspeisung | EMS_POWER_GRID, PM | 1 |
 | Haus | Leistung, heute Direkt/Gesamt | EMS_POWER_HOME | 1 |

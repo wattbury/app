@@ -59,12 +59,13 @@ Der Unterschied kommt daher, dass openrscp alle zehn Live-Tags in **einem** Fram
 |---|---|
 | Spitzenleistung | `EMS_INSTALLED_PEAK_POWER` 10.740 W |
 | Systemkennwerte (`EMS_REQ_GET_SYS_SPECS`) | Batteriekapazität 13.107 Wh, max. AC 12.000 W, Laden/Entladen max. 4.500 W, empfohlene Mindestgrenzen 2.200 / 1.100 W, Hybridmodus ja; `maxPvPower` nicht verfügbar |
-| Wechselrichter | **1 genutzter String von 2**, 3 Phasen, max. 4.000 VA je Phase |
-| String 1 | Spannung, Strom, Leistung live; max. 6.000 W; Lebenszeit-Ertrag 30.882 kWh |
+| Wechselrichter | 2 DC-Eingänge (Tracker), 3 Phasen, max. 4.000 VA je Phase. `PVI_USED_STRING_COUNT` meldet **1**, obwohl beide belegt sind |
+| Tracker 1 | Leistung, Spannung, Strom live; max. 6.000 W; Lebenszeit-Ertrag 30.882 kWh; trägt zwei parallele Strings |
+| Tracker 2 | nachts 93 V Restspannung; max. 6.000 W; Lebenszeit-Ertrag 1.121 kWh (später nachgerüstet) |
 | Batterie | 4 Module, Nennkapazität 256 Ah, nutzbar 202,8 Ah |
 | Anlagenadresse (`INFO_REQ_GET_FACILITY`) | Postleitzahl, Ort, Land, Name, Straße, Hausnummer, Telefon und E-Mail vorhanden. Die App nutzt nur Postleitzahl, Ort und Land. |
 
-Folgerungen: Anzahl der Strings, Spitzenleistung, Batterie und Wechselrichter kommen aus dem S10. Ausrichtung, Neigung und kWp je String sowie der genaue Standort sind manuell. Eine Aufteilung der kWp nach Lebenszeit-Ertrag scheidet aus, weil Strings zu unterschiedlichen Zeiten angeschlossen sein können. Wenn das S10 nur einen String meldet, auf dem Dach aber mehrere Flächen liegen (z. B. Ost und West parallel), braucht die Prognose mehrere Dachflächen je String.
+Folgerungen: Anzahl der Strings, Spitzenleistung, Batterie und Wechselrichter kommen aus dem S10. Ausrichtung, Neigung und kWp je String sowie der genaue Standort sind manuell. Eine Aufteilung der kWp nach Lebenszeit-Ertrag scheidet aus: Die Anteile von 96,5 % zu 3,5 % spiegeln nur wider, dass Tracker 2 später dazukam. Belegte Tracker erkennt `openrscp` `pvTrackers()` an Messwerten (Ertrag, Leistung oder mindestens 20 V), nicht am gemeldeten Zähler. Parallele Strings an einem Tracker sieht das S10 nicht; sie werden im Schritt „Anlage“ als Module × Wp eingetragen.
 
 ## Selbst testen
 

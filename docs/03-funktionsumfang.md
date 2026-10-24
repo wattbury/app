@@ -10,7 +10,7 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 
 | Karte | Inhalt | Quelle | Phase |
 |---|---|---|---|
-| Solar + Prognose | Karussell: Produktion (gesamt, je Tracker, heute kWh) · Ertrag je kWp · Tracker-Details. Darunter Prognose heute/morgen mit Fortschrittsbalken, Wetter-Chip, Buttons Diagramm/Analyse | EMS_POWER_PV, PVI; forecast.solar | 1–2 |
+| Solar + Prognose | Leistung gesamt und je Tracker, Tagesspitze, oben rechts „erzeugt von erwartet“ (z. B. 14,2 von ≈ 31,4 kWh). **Tageskurve:** Leistung von heute als Fläche, Prognose bis Sonnenuntergang gestrichelt, Markierung „jetzt“. Darunter eine Zeile mit der Prognose für morgen. Entschieden aus vier Varianten, siehe [design/solarkarte-varianten.html](../design/solarkarte-varianten.html) | EMS_POWER_PV, PVI, DB (Tagesverlauf); forecast.solar | 1–2 |
 | Batterie | Ring mit SOC und kWh, Lade-/Entladeleistung, „voll/leer gegen“, Autarkie heute, heute geladen/entladen. **Tippen öffnet ein Overlay auf der Karte** mit Temperatur, Batteriezustand (SOH) und den Buttons Statistik & Info sowie Smart-Funktionen | EMS, BAT, DB | 1–2 |
 | Netz | Leistung mit Richtung, heute Bezug/Einspeisung | EMS_POWER_GRID, PM | 1 |
 | Haus | Leistung, heute Direkt/Gesamt | EMS_POWER_HOME | 1 |
@@ -84,7 +84,7 @@ Home-Screen „Energiefluss“, „Tagesdiagramm“, Lock-Screen „SOC“, Stan
 
 | | **Variante A** ([clickdummy.html](../design/clickdummy.html)) | **Variante B** ([clickdummy-b.html](../design/clickdummy-b.html)) |
 |---|---|---|
-| Vorbild | Struktur wie das neue my4E-Dashboard, eigene Palette und Formen (Fase, Sonnenbogen, Ring, Wasserzeichen) | eigenständig |
+| Vorbild | Struktur wie das neue my4E-Dashboard, eigene Palette und Formen (Fase, Tageskurve, Ring, Wasserzeichen) | eigenständig |
 | Fläche | Vollfarbige Karten in einer gedeckten, persönlichen Farbwelt (siehe unten) mit halbtransparenten Unterkacheln | Ruhige Papierfläche, Hairlines, Farbe nur in Datenmarken |
 | Hero | Solarkarte mit Tracker-Werten + Prognose | Ein großer Wert + Satz, dann der Energiefluss kompakt (Quellen links, Verwendung rechts) |
 | Messgrößen | Je Größe eine Karte, Autarkie/Eigenverbrauch nur einmal in „Heute“ | Liste mit 24-h-Sparkline je Zeile |

@@ -1,0 +1,215 @@
+<title>Solarkarte Varianten</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600&display=swap">
+<style>
+/* Layout: Kopf, darunter ein Raster aus Spalten in Telefonbreite (max. 360 px). Jede Spalte: Titel, Solarkarte im echten
+   Wattbury-Stil (Signalgelb, Fase, weiße Schrift), gemessene Kartenhöhe, kurze Bewertung. */
+:root{
+  --bg:#eef0ea; --app-bg:#f2f2f7; --fg:#1b1f22; --muted:#5d646a; --line:rgba(27,31,34,.10); --panel:#ffffff;
+  --c-solar:#e69500; --c-solar2:#f5ab00; --on:#ffffff; --on-dim:rgba(255,255,255,.84);
+  --c-sub:rgba(255,255,255,.16); --c-sub2:rgba(255,255,255,.30); --c-deep:rgba(0,0,0,.16);
+  --good:#0a7d0a; --accent:#1f4e8c;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --disp:"Sora","IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101214; --app-bg:#000000; --fg:#eceef0; --muted:#9aa1a7; --line:rgba(236,238,240,.10); --panel:#1a1d20;
+  --c-solar:#d99400; --c-solar2:#e5a600; --good:#3fbf3f; --accent:#7aa3dc; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101214; --app-bg:#000000; --fg:#eceef0; --muted:#9aa1a7; --line:rgba(236,238,240,.10); --panel:#1a1d20;
+  --c-solar:#d99400; --c-solar2:#e5a600; --good:#3fbf3f; --accent:#7aa3dc; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--disp);font-weight:600;font-size:clamp(24px,4vw,32px);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lead{color:var(--muted);max-width:70ch;margin:8px 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.col .ttl{display:flex;align-items:center;gap:10px}
+.col .no{font-family:var(--disp);font-weight:600;font-size:13px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--fg);color:var(--bg);flex:none}
+.col .no.ref{background:transparent;color:var(--muted);border:1.5px solid var(--muted)}
+.col h2{font-family:var(--disp);font-weight:600;font-size:17px;margin:0;letter-spacing:-.01em}
+.col .rec{font-size:12px;font-weight:600;color:var(--accent);border:1px solid currentColor;border-radius:999px;padding:1px 9px;margin-left:auto}
+.stage{background:var(--app-bg);border-radius:20px;padding:10px}
+.meas{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.meas b{color:var(--fg);font-weight:600}
+.meas .save{color:var(--good);font-weight:600}
+.col p{margin:0;font-size:14px;color:var(--muted)}
+
+/* ---------- Solarkarte (wie im Click-Dummy) ---------- */
+.cc{position:relative;overflow:hidden;border-radius:22px;padding:14px;color:var(--on);font-family:var(--font);
+  background:linear-gradient(160deg,var(--c-solar2),var(--c-solar) 70%);text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.cc::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 26px 26px 0;border-color:transparent var(--app-bg) transparent transparent}
+.cc .hd{display:flex;justify-content:space-between;align-items:baseline;padding-right:26px}
+.cc h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;letter-spacing:-.01em}
+.cc .hr{font-size:13px;color:var(--on-dim);font-variant-numeric:tabular-nums}
+.cc .hr b{color:var(--on);font-weight:600}
+.big{font-family:var(--disp);font-weight:500;font-size:42px;line-height:1.05;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.big small{font-size:18px;font-weight:400;margin-left:4px;letter-spacing:0}
+.trkrow{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--on-dim);margin-top:4px;font-variant-numeric:tabular-nums}
+.trkrow span{white-space:nowrap}
+.trkrow b{color:var(--on);font-weight:600}
+.fcblock{background:var(--c-deep);border-radius:14px;padding:10px 12px;margin-top:12px}
+.fc2{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;font-size:14px}
+.fc2 .h{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600}
+.fc2 .l{color:var(--on-dim)}
+.fc2 .t{height:6px;border-radius:3px;background:rgba(255,255,255,.3);overflow:hidden}
+.fc2 .t i{display:block;height:100%;border-radius:3px;background:#fff}
+.fc2 b{font-weight:600;font-variant-numeric:tabular-nums}
+.chip{font-size:12px;font-weight:500;background:var(--c-sub);border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:5px}
+.chip svg{width:14px;height:14px}
+.svgicon{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.line1{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--c-sub2);font-variant-numeric:tabular-nums}
+.line1 .l{color:var(--on-dim)}
+.line1 b{font-weight:600}
+svg.chart{width:100%;height:auto;display:block;margin-top:8px;overflow:visible}
+svg.chart text{font-family:var(--font);font-size:9.5px;fill:rgba(255,255,255,.85)}
+.prog{margin-top:12px}
+.prog .bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.22)}
+.prog .bar i{display:block;height:100%}
+.prog .bar .done{background:#fff}
+.prog .bar .rest{background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 4px,rgba(255,255,255,.2) 4px 8px)}
+.prog .cap{display:flex;justify-content:space-between;font-size:12.5px;color:var(--on-dim);margin-top:6px;font-variant-numeric:tabular-nums}
+.prog .cap b{color:var(--on);font-weight:600}
+.trk{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-top:12px;font-size:13px;font-variant-numeric:tabular-nums}
+.trk .n{color:var(--on-dim);white-space:nowrap}
+.trk .n b{color:var(--on);font-weight:600}
+.trk .b{height:8px;border-radius:4px;background:rgba(255,255,255,.25);overflow:hidden}
+.trk .b i{display:block;height:100%;background:#fff;border-radius:4px}
+.trk .v{font-weight:600}
+.sunarc{width:100%;height:auto;display:block;margin:6px 0 8px}
+.sunarc .tk{fill:none;stroke:currentColor;opacity:.4;stroke-width:2;stroke-dasharray:3 5}
+.sunarc .dn{fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round}
+.sunarc text{font-family:var(--font);font-size:9.5px;fill:currentColor;opacity:.85}
+</style>
+
+<div class="wrap">
+  <h1>Solarkarte: was statt des Sonnenbogens?</h1>
+  <p class="lead">Links die heutige Karte als Referenz, daneben vier Alternativen mit denselben Beispielwerten (13:20 Uhr, 3,42 kW, heute 14,2 kWh, Prognose ≈ 31,4 kWh). Unter jeder Karte steht ihre gemessene Höhe und wie viel Platz sie gegenüber heute spart.</p>
+
+  <div class="grid">
+    <section class="col" data-ref>
+      <div class="ttl"><span class="no ref">0</span><h2>Heute: Sonnenbogen</h2></div>
+      <div class="stage"><div class="cc" data-card>
+        <div class="hd"><h3>Solar</h3></div>
+        <svg class="sunarc" viewBox="0 0 330 72" aria-hidden="true"><path class="tk" d="M20 58 A260 260 0 0 1 310 58"/><path class="dn" d="M20 58 A260 260 0 0 1 190 33"/><circle cx="190" cy="33" r="5" fill="currentColor"/><text x="20" y="70">07:50</text><text x="165" y="9" text-anchor="middle">Mittag 12:55</text><text x="310" y="70" text-anchor="end">18:20</text></svg>
+        <div class="big">3,42<small>kW</small></div>
+        <div class="trkrow"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span><span>Heute <b>14,2 kWh</b></span></div>
+        <div class="fcblock"><div class="fc2">
+          <div class="h"><span>Prognose</span><span class="chip"><svg class="svgicon" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 18 18z"/></svg>leicht bewölkt</span></div>
+          <span class="l">Heute</span><span class="t"><i style="width:45%"></i></span><b>≈ 31,4 kWh</b>
+          <span class="l">Morgen</span><span class="t"><i style="width:68%"></i></span><b>≈ 42,0 kWh</b>
+        </div></div>
+      </div></div>
+      <div class="meas" data-meas></div>
+      <p>Zeigt nur die Uhrzeit des Sonnenstands. Die Information steckt sonst nirgends, ist aber auch selten gefragt.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">1</span><h2>Tageskurve mit Prognose</h2><span class="rec">Empfehlung</span></div>
+      <div class="stage"><div class="cc" data-card>
+        <div class="hd"><h3>Solar</h3><span class="hr"><b>14,2</b> von ≈ 31,4 kWh</span></div>
+        <div class="big">3,42<small>kW</small></div>
+        <div class="trkrow"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span><span>Spitze heute <b>4,92 kW</b></span></div>
+        <svg class="chart" id="curve" viewBox="0 0 332 80" role="img" aria-label="Solarleistung heute bis 13:20 und Prognose bis Sonnenuntergang"></svg>
+        <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
+      </div></div>
+      <div class="meas" data-meas></div>
+      <p>Der Platz zeigt echte Daten: was heute schon kam (Fläche) und was laut Prognose noch kommt (gestrichelt). Der Bogen der Sonne steckt in der Kurvenform. Der Prognoseblock schrumpft auf eine Zeile für morgen.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">2</span><h2>Fortschritt zum Tagesziel</h2></div>
+      <div class="stage"><div class="cc" data-card>
+        <div class="hd"><h3>Solar</h3><span class="hr">Sonne bis <b>18:20</b></span></div>
+        <div class="big">3,42<small>kW</small></div>
+        <div class="trkrow"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span></div>
+        <div class="prog">
+          <div class="bar" role="img" aria-label="14,2 von ungefähr 31,4 Kilowattstunden erzeugt"><i class="done" style="width:45.2%"></i><i class="rest" style="width:54.8%"></i></div>
+          <div class="cap"><span><b>14,2 kWh</b> erzeugt · 45 %</span><span>noch ≈ <b>17,2 kWh</b></span></div>
+        </div>
+        <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
+      </div></div>
+      <div class="meas" data-meas></div>
+      <p>Sehr kompakt und sofort lesbar: wie weit der Tag ist und was noch zu erwarten ist. Hilft bei der Frage, ob sich die Waschmaschine heute noch lohnt.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">3</span><h2>Tracker im Vergleich</h2></div>
+      <div class="stage"><div class="cc" data-card>
+        <div class="hd"><h3>Solar</h3><span class="hr">Heute <b>14,2 kWh</b></span></div>
+        <div class="big">3,42<small>kW</small></div>
+        <div class="trk">
+          <span class="n"><b>Tracker 1</b> · SO</span><span class="b"><i style="width:33.5%"></i></span><span class="v">1,81 kW</span>
+          <span class="n"><b>Tracker 2</b> · NW</span><span class="b"><i style="width:30.1%"></i></span><span class="v">1,61 kW</span>
+        </div>
+        <div class="trkrow" style="margin-top:8px"><span>Ertrag <b>319 W/kWp</b></span><span>Balken = Anteil an der Spitzenleistung</span></div>
+        <div class="line1"><span class="l">Prognose</span><span>heute <b>≈ 31,4</b> · morgen <b>≈ 42,0 kWh</b></span></div>
+      </div></div>
+      <div class="meas" data-meas></div>
+      <p>Für Technik-Interessierte: Ein schwacher String fällt sofort auf, wenn ein Balken deutlich hinter dem anderen liegt. Im Alltag weniger relevant.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">4</span><h2>Kompakt ohne Zusatz</h2></div>
+      <div class="stage"><div class="cc" data-card>
+        <div class="hd"><h3>Solar</h3><span class="hr">Heute <b>14,2 kWh</b></span></div>
+        <div class="big">3,42<small>kW</small></div>
+        <div class="trkrow"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span></div>
+        <div class="line1"><span class="l">Prognose</span><span>heute <b>≈ 31,4</b> · morgen <b>≈ 42,0 kWh</b></span></div>
+      </div></div>
+      <div class="meas" data-meas></div>
+      <p>Nur das Nötigste. Spart am meisten Platz, verschenkt aber die Chance, den Tagesverlauf auf einen Blick zu zeigen. Die Kurve gäbe es dann nur unter „Diagramme“.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ---------- Tageskurve: Prognose (gestrichelt) und Ist bis jetzt (Fläche) ---------- */
+  const rise=7+50/60, set=18+20/60, now=13+20/60;
+  const t0=7, t1=19, W=332, H=80, top=6, base=64;
+  const N=180; const step=(set-rise)/N;
+  const shape=t=>t<=rise||t>=set?0:Math.pow(Math.sin(Math.PI*(t-rise)/(set-rise)),1.4);
+  let area=0; for(let i=0;i<N;i++){ area+=shape(rise+(i+.5)*step)*step; }
+  const peakF=31.4/area;                                   /* kW Spitze der Prognose */
+  const fc=t=>peakF*shape(t);
+  const k=t=>0.9+0.08*Math.sin(t*2.3)-0.35*Math.max(0,(t-12.6)/0.75)**2*(t>12.6?1:0);
+  let a2=0; for(let t=rise;t<now;t+=step){ a2+=fc(t)*Math.max(.2,k(t))*step; }
+  const scale=14.2/a2;
+  const act=t=>fc(t)*Math.max(.2,k(t))*scale;
+  const maxKw=Math.max(peakF,6);
+  const X=t=>(t-t0)/(t1-t0)*W, Y=kw=>base-(kw/maxKw)*(base-top);
+  let fcPath='', actPath='', areaPath=`M${X(rise).toFixed(1)} ${base}`;
+  for(let t=now;t<=set+1e-6;t+=0.05){ fcPath+=(fcPath?'L':'M')+X(t).toFixed(1)+' '+Y(fc(t)).toFixed(1); }
+  let last=[0,0];
+  for(let t=rise;t<=now+1e-6;t+=0.05){ const p=[X(t),Y(act(t))]; actPath+=(actPath?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); areaPath+='L'+p[0].toFixed(1)+' '+p[1].toFixed(1); last=p; }
+  areaPath+=`L${last[0].toFixed(1)} ${base}Z`;
+  let ticks=''; [8,12,16].forEach(h=>{ ticks+=`<text x="${X(h).toFixed(1)}" y="${H-3}" text-anchor="middle">${String(h).padStart(2,'0')}</text>`; });
+  document.getElementById('curve').innerHTML=
+    `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="rgba(255,255,255,.35)" stroke-width="1"/>`+
+    `<path d="${areaPath}" fill="rgba(255,255,255,.28)"/>`+
+    `<path d="${actPath}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>`+
+    `<path d="${fcPath}" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-dasharray="3 4"/>`+
+    `<line x1="${last[0].toFixed(1)}" x2="${last[0].toFixed(1)}" y1="${top}" y2="${base}" stroke="rgba(255,255,255,.5)" stroke-width="1"/>`+
+    `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" fill="#fff" stroke="rgba(0,0,0,.15)"/>`+
+    `<text x="${(last[0]+6).toFixed(1)}" y="${top+8}">jetzt</text>`+
+    ticks+
+    `<text x="${W}" y="${top+8}" text-anchor="end">Prognose</text>`;
+
+  /* ---------- Höhen messen ---------- */
+  function measure(){
+    const cards=[...document.querySelectorAll('[data-card]')];
+    const ref=cards[0].getBoundingClientRect().height;
+    document.querySelectorAll('[data-meas]').forEach((m,i)=>{
+      const h=Math.round(cards[i].getBoundingClientRect().height);
+      const d=Math.round(ref-h);
+      m.innerHTML=i===0?`Kartenhöhe <b>${h} px</b> (Referenz)`:`Kartenhöhe <b>${h} px</b>`+(d>0?` · <span class="save">${d} px weniger</span>`:d<0?` · ${-d} px mehr`:` · gleich hoch`);
+    });
+  }
+  measure();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(measure);
+  window.addEventListener('resize',measure);
+})();
+</script>

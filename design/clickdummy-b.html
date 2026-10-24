@@ -1,0 +1,694 @@
+<title>my-e3 Variante B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Variante B: ruhige Fläche, Typografie führt, Farbe nur in den Daten.
+   Hero = Energiebilanz als zwei horizontale Balken (Quellen / Senken), darunter Messgrößen als Liste mit Sparklines. */
+:root{
+  --bg:#eceeea; --fg:#1d2320; --muted:#5f675f; --rail:#ffffff; --line:rgba(29,35,32,.12);
+  --paper:#f7f7f4; --surface:#ffffff; --ink:#151617; --ink2:#5d6166; --ink3:#9a9ea3; --hair:rgba(21,22,23,.10); --hair2:rgba(21,22,23,.05);
+  --s-solar:#eda100; --s-bezug:#1baf7a; --s-entl:#6250d6; --s-verbr:#e34948; --s-einsp:#2a78d6; --s-laden:#008300;
+  --grid:#e4e3dd; --axis:#c3c2b7;
+  --good:#0ca30c; --warn:#b8820a; --crit:#d03b3b;
+  --font:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font-page:"Figtree",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121413; --fg:#e8ebe6; --muted:#9aa39a; --rail:#1a1d1b; --line:rgba(232,235,230,.12);
+  --paper:#0f1011; --surface:#17181a; --ink:#ededeb; --ink2:#a9adb2; --ink3:#6f7378; --hair:rgba(237,237,235,.12); --hair2:rgba(237,237,235,.06);
+  --s-solar:#c98500; --s-bezug:#199e70; --s-entl:#9085e9; --s-verbr:#e66767; --s-einsp:#3987e5; --s-laden:#1f9a1f;
+  --grid:#26282b; --axis:#3a3d41; --warn:#fab219; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121413; --fg:#e8ebe6; --muted:#9aa39a; --rail:#1a1d1b; --line:rgba(232,235,230,.12);
+  --paper:#0f1011; --surface:#17181a; --ink:#ededeb; --ink2:#a9adb2; --ink3:#6f7378; --hair:rgba(237,237,235,.12); --hair2:rgba(237,237,235,.06);
+  --s-solar:#c98500; --s-bezug:#199e70; --s-entl:#9085e9; --s-verbr:#e66767; --s-einsp:#3987e5; --s-laden:#1f9a1f;
+  --grid:#26282b; --axis:#3a3d41; --warn:#fab219; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-page);font-size:14px;line-height:1.45}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+
+/* ---------- page chrome (same as variant A) ---------- */
+.page{min-height:100%;display:grid;grid-template-columns:320px 1fr}
+.rail{background:var(--rail);border-right:1px solid var(--line);padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:20px;overflow:auto;position:sticky;top:0;height:100vh;min-width:0}
+.rail h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.rail .sub{color:var(--muted);font-size:13px;margin-top:4px}
+.rail .group{margin-top:22px}
+.rail .label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px}
+.rail .nav{display:flex;flex-direction:column;gap:2px}
+.rail .nav button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;width:100%}
+.rail .nav button:hover{background:color-mix(in srgb,var(--fg) 6%,transparent)}
+.rail .nav button[aria-current="true"]{background:color-mix(in srgb,var(--fg) 10%,transparent);font-weight:600}
+.rail .nav .k{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:600;background:color-mix(in srgb,var(--fg) 8%,transparent);color:var(--muted);flex:none}
+.rail .note{font-size:13px;color:var(--muted);margin-top:8px;max-width:38ch}
+.rail .note b{color:var(--fg);font-weight:600}
+.rail .note p{margin:0 0 8px}
+.rail .note ul{margin:0;padding-left:18px}
+.stage{display:flex;align-items:flex-start;justify-content:center;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0}
+.toggles{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.toggles button{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px}
+.toggles button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* ---------- iPhone frame ---------- */
+.phone{width:393px;max-width:100%;height:852px;max-height:calc(100vh - 64px);background:#101214;border-radius:54px;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.35),0 0 0 2px #2a2d31 inset;position:relative;flex:none}
+.screen{width:100%;height:100%;border-radius:42px;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--font);position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:122px;height:36px;background:#000;border-radius:20px;z-index:5}
+.status{height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 6px;font-size:15px;font-weight:600;flex:none}
+.status .r{display:flex;gap:5px;align-items:center;font-size:12px}
+.status .bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;position:relative}
+.status .bat::after{content:"";position:absolute;inset:2px;right:4px;background:currentColor;border-radius:1px}
+
+/* ---------- app shell ---------- */
+.appbar{display:flex;align-items:flex-end;justify-content:space-between;padding:6px 20px 10px;flex:none;gap:10px}
+.appbar h2{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.appbar .meta{font-family:var(--mono);font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:6px;margin-top:6px;letter-spacing:.01em}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block}
+.textbtn{font-size:15px;font-weight:600;color:var(--ink);padding:6px 0;white-space:nowrap}
+.textbtn[disabled]{color:var(--ink3);cursor:default}
+.icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink);background:var(--hair2);flex:none}
+.icon-btn svg{width:20px;height:20px}
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;overflow:auto;padding:0 20px 24px;display:none;scrollbar-width:none}
+.view.active{display:block}
+.view::-webkit-scrollbar{display:none}
+.svgicon{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tabbar{flex:none;display:flex;justify-content:space-around;padding:8px 10px 24px;border-top:1px solid var(--hair);background:var(--paper)}
+.tabbar button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;color:var(--ink3);width:70px;font-weight:500}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-current="true"]{color:var(--ink)}
+
+/* ---------- typography blocks ---------- */
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);display:flex;justify-content:space-between;align-items:baseline}
+.sec{margin-top:26px}
+.sec:first-child{margin-top:4px}
+.num{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+/* ---------- hero: Energiebilanz ---------- */
+.hero{margin-top:10px}
+.hero .big{font-size:52px;font-weight:600;line-height:1;letter-spacing:-.04em;display:flex;align-items:baseline;gap:6px}
+.hero .big small{font-size:18px;font-weight:500;color:var(--ink2);letter-spacing:0}
+.hero .sub{font-size:14px;color:var(--ink2);margin-top:4px}
+.bal{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.bar{display:flex;gap:2px;height:14px;border-radius:7px;overflow:hidden}
+.bar i{display:block;height:100%}
+.bar i.ghost{background:var(--hair)}
+.keys{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink2)}
+.keys span{display:inline-flex;align-items:center;gap:6px}
+.keys b{color:var(--ink);font-weight:600}
+.sw{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.mid{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.mid::before,.mid::after{content:"";flex:1;height:1px;background:var(--hair)}
+
+/* ---------- metric list ---------- */
+.mlist{display:flex;flex-direction:column}
+.mrow{display:grid;grid-template-columns:22px 1fr auto;grid-template-rows:auto auto;column-gap:12px;align-items:center;padding:13px 0;border-top:1px solid var(--hair);width:100%}
+.mrow:first-child{border-top:0}
+.mrow .ic{grid-row:1/3;width:22px;height:22px;color:var(--ink2)}
+.mrow .ic svg{width:22px;height:22px}
+.mrow .n{font-size:15px;font-weight:500}
+.mrow .v{font-size:19px;font-weight:600;text-align:right}
+.mrow .v small{font-size:12px;font-weight:500;color:var(--ink2);margin-left:2px}
+.mrow .d{font-size:12.5px;color:var(--ink2);grid-column:2}
+.mrow .sp{grid-column:3;justify-self:end;width:92px;height:22px}
+.mrow .sp svg{width:100%;height:100%;display:block;overflow:visible}
+.prog{height:4px;border-radius:2px;background:var(--hair);overflow:hidden;width:92px;justify-self:end;grid-column:3;margin-top:6px}
+.prog i{display:block;height:100%;border-radius:2px}
+
+/* ---------- facts row ---------- */
+.facts{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:10px}
+.facts > div{padding:6px 0;border-left:1px solid var(--hair);padding-left:12px;min-width:0}
+.facts > div:first-child{border-left:0;padding-left:0}
+.facts .v{font-size:24px;font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.facts .v small{font-size:13px;color:var(--ink2);font-weight:500;letter-spacing:0;margin-left:1px}
+.facts .l{font-size:12px;color:var(--ink2);margin-top:2px}
+
+/* ---------- forecast ---------- */
+.fc{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.fc .r{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:12px;font-size:14px}
+.fc .r .t{height:6px;border-radius:3px;background:var(--hair);overflow:hidden}
+.fc .r .t i{display:block;height:100%;background:var(--s-solar);border-radius:3px}
+.fc .r b{font-weight:600}
+.fc .r .l{color:var(--ink2)}
+
+/* ---------- plain rows ---------- */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--hair);font-size:15px;width:100%}
+.row:first-child{border-top:0}
+.row .l{display:flex;align-items:center;gap:10px;min-width:0}
+.row .l small{display:block;font-size:12.5px;color:var(--ink2);font-weight:400}
+.row .r{color:var(--ink2);font-size:14px;display:flex;align-items:center;gap:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.row .r b{color:var(--ink);font-weight:600}
+.chev{color:var(--ink3);font-size:18px;line-height:1}
+.sw-toggle{width:44px;height:26px;border-radius:13px;background:var(--hair);position:relative;flex:none;transition:background .2s}
+.sw-toggle::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.sw-toggle[aria-checked="true"]{background:var(--ink)}
+.sw-toggle[aria-checked="true"]::after{transform:translateX(18px)}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--hair);border-radius:999px;overflow:hidden}
+.stepper button{width:32px;height:30px;display:grid;place-items:center;color:var(--ink);font-size:18px;font-weight:500}
+.stepper button:hover{background:var(--hair2)}
+.stepper b{min-width:72px;text-align:center;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;margin-top:8px}
+.chips button{width:34px;height:30px;border-radius:999px;border:1px solid var(--hair);font-size:12.5px;font-weight:500;text-align:center;color:var(--ink2)}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.pill{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--hair);color:var(--ink2);display:inline-flex;align-items:center;gap:5px}
+.pill.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent)}
+.pill.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+.hint{font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.45}
+.btn{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;font-size:15px;font-weight:600;margin-top:14px}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.sec{border:1px solid var(--hair);color:var(--ink)}
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--hair);margin-top:4px}
+.tabs button{padding:8px 0 10px;font-size:15px;color:var(--ink3);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-pressed="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+.segline{display:flex;gap:6px;margin-top:8px}
+.segline button{padding:6px 12px;border-radius:999px;border:1px solid var(--hair);font-size:13px;color:var(--ink2);font-weight:500}
+.segline button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* ---------- charts ---------- */
+.chart{position:relative;width:100%;margin-top:12px}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{font-family:var(--mono);font-size:9.5px;fill:var(--ink3)}
+.chart .gridl{stroke:var(--grid);stroke-width:1}
+.chart .base{stroke:var(--axis);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);font-size:11.5px;padding:6px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-110%);display:none;z-index:3;line-height:1.4}
+.tip b{font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2);margin-top:10px}
+.legend button{display:flex;align-items:center;gap:6px;color:inherit}
+.legend button[aria-pressed="false"]{opacity:.4;text-decoration:line-through}
+
+/* ---------- sankey ---------- */
+.sk{position:relative;margin-top:12px}
+.sk svg{width:100%;height:auto;display:block;overflow:visible}
+.sk .nm{font-family:var(--font);font-size:12.5px;font-weight:600;fill:var(--ink)}
+.sk .vl{font-family:var(--font);font-size:11.5px;fill:var(--ink2)}
+.sk .hd{font-family:var(--mono);font-size:9.5px;fill:var(--ink3);letter-spacing:.08em}
+.idle{font-size:12.5px;color:var(--ink3);margin-top:6px}
+/* ---------- flow (legacy) ---------- */
+.flow{position:relative;margin-top:14px}
+.flow svg{width:100%;height:auto;display:block}
+.flow .node{fill:var(--surface);stroke:var(--hair)}
+.flow .nl{font-family:var(--mono);font-size:10px;fill:var(--ink3);text-transform:uppercase;letter-spacing:.05em}
+.flow .nv{font-family:var(--font);font-size:15px;font-weight:600;fill:var(--ink)}
+.flow .ns{font-family:var(--font);font-size:10.5px;fill:var(--ink2)}
+.flow .edge{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:5 9;animation:dash 1.2s linear infinite}
+.flow .edge.rev{animation-direction:reverse}
+.flow .edge.idle{stroke-dasharray:none;opacity:.2;animation:none}
+.flow .ev{font-family:var(--font);font-size:11px;font-weight:600;fill:var(--ink)}
+.flow .evbg{fill:var(--paper)}
+@keyframes dash{to{stroke-dashoffset:-14}}
+@media (prefers-reduced-motion:reduce){.flow .edge{animation:none}}
+
+/* ---------- sheet ---------- */
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:8;display:none}
+.sheet-bg.open{display:block}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:24px 24px 0 0;z-index:9;max-height:88%;overflow:auto;padding:8px 20px 30px;transform:translateY(105%);transition:transform .25s ease}
+.sheet.open{transform:none}
+.sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--hair);margin:4px auto 14px}
+.sheet h2{font-size:24px;font-weight:700;letter-spacing:-.03em}
+.sheet .shd{display:flex;justify-content:space-between;align-items:center}
+@media (prefers-reduced-motion:reduce){.sheet{transition:none}}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .page{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .rail .note{max-width:none}
+  .stage{padding-block:16px}
+}
+@media (max-width:480px){
+  .phone{border-radius:0;padding:0;box-shadow:none;height:auto;max-height:none;width:100%}
+  .screen{border-radius:0;height:calc(100vh - 20px)}
+  .island,.status{display:none}
+  .stage{padding:0}
+  .rail .nav{display:none}
+}
+</style>
+
+<div class="page">
+  <aside class="rail">
+    <h1>my-e3 · Variante B</h1>
+    <div class="sub">Schlichte, eigenständige Gestaltung: ruhige Fläche, Typografie führt, Farbe nur in den Daten. Alle Werte sind Beispieldaten.</div>
+    <div class="toggles">
+      <button type="button" id="th-light" aria-pressed="false">Hell</button>
+      <button type="button" id="th-dark" aria-pressed="false">Dunkel</button>
+      <button type="button" id="th-sys" aria-pressed="true">System</button>
+    </div>
+    <div class="group">
+      <div class="label">Screens</div>
+      <nav class="nav" id="screenNav">
+        <button type="button" data-go="now" aria-current="true"><span class="k">1</span>Jetzt</button>
+        <button type="button" data-go="history"><span class="k">2</span>Verlauf</button>
+        <button type="button" data-go="flow"><span class="k">3</span>Energiefluss</button>
+        <button type="button" data-go="control"><span class="k">4</span>Steuern</button>
+        <button type="button" data-go="more"><span class="k">5</span>Mehr</button>
+        <button type="button" data-sheet="battery"><span class="k">B</span>Sheet: Batterie</button>
+        <button type="button" data-sheet="wallbox"><span class="k">W</span>Sheet: Wallbox</button>
+        <button type="button" data-sheet="setup"><span class="k">V</span>Sheet: Verbindung</button>
+      </nav>
+    </div>
+    <div class="group">
+      <div class="label">Hinweise zum Screen</div>
+      <div class="note" id="note"></div>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="phone">
+      <div class="screen" id="app">
+        <div class="island"></div>
+        <div class="status"><span>09:41</span><span class="r">●●●● <span class="bat"></span></span></div>
+
+        <div class="appbar">
+          <div><h2 id="appTitle">Jetzt</h2><div class="meta"><span class="dot"></span><span id="metaText">RSCP · 1 s · 09:41:07</span></div></div>
+          <div id="appAction"><button type="button" class="icon-btn" aria-label="Aktualisieren"><svg class="svgicon" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button></div>
+        </div>
+
+        <div class="views">
+          <!-- ===== Jetzt ===== -->
+          <section class="view active" id="v-now">
+            <div class="hero">
+              <div class="big num">3,42<small>kW Solar</small></div>
+              <div class="sub">Überschuss. Haus versorgt, Batterie lädt, Rest wird eingespeist.</div>
+              <div class="sk" data-sankey="now" data-h="132"></div>
+              <div class="idle">Nicht aktiv: Netzbezug · Batterie entladen · Wallbox</div>
+            </div>
+
+            <div class="sec">
+              <div class="eyebrow"><span>Live</span><span>24 h</span></div>
+              <div class="mlist">
+                <button type="button" class="mrow" data-sheet="pv"><span class="ic"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span><span class="n">Solar</span><span class="v num">3,42<small>kW</small></span><span class="d">Tracker 1,81 · 1,61 kW · heute 14,2 kWh</span><span class="sp" data-spark="pv"></span></button>
+                <button type="button" class="mrow" data-go="flow"><span class="ic"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M10 20v-5h4v5"/></svg></span><span class="n">Haus</span><span class="v num">612<small>W</small></span><span class="d">heute 8,7 kWh · davon 5,2 direkt</span><span class="sp" data-spark="haus"></span></button>
+                <button type="button" class="mrow" data-sheet="battery"><span class="ic"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2"/></svg></span><span class="n">Batterie</span><span class="v num">68<small>%</small></span><span class="d">lädt mit 2,41 kW · voll ca. 11:25</span><span class="prog"><i style="width:68%;background:var(--s-laden)"></i></span></button>
+                <button type="button" class="mrow" data-go="flow"><span class="ic"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 2l-6 20M12 2l6 20M6 9h12M7.5 15h9"/></svg></span><span class="n">Netz</span><span class="v num">−398<small>W</small></span><span class="d">heute ↓ 0,3 · ↑ 4,2 kWh</span><span class="sp" data-spark="netz"></span></button>
+                <button type="button" class="mrow" data-sheet="wallbox"><span class="ic"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 15l2-6h12l2 6v4H3z"/><circle cx="7" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/><path d="M19 9l3-3"/></svg></span><span class="n">Wallbox</span><span class="v num">0<small>W</small></span><span class="d">bereit · Sonnenmodus · 3 Ph · 8 A</span><span class="sp" style="text-align:right"><span class="pill good">bereit</span></span></button>
+              </div>
+            </div>
+
+            <div class="sec">
+              <div class="eyebrow"><span>Heute</span><span>Fr, 24. Okt</span></div>
+              <div class="facts">
+                <div><div class="v num">97<small>%</small></div><div class="l">Autarkie</div></div>
+                <div><div class="v num">70<small>%</small></div><div class="l">Eigenverbrauch</div></div>
+                <div><div class="v num">3,20<small>€</small></div><div class="l">Ersparnis</div></div>
+              </div>
+            </div>
+
+            <div class="sec">
+              <div class="eyebrow"><span>Prognose</span><span>forecast.solar</span></div>
+              <div class="fc">
+                <div class="r"><span class="l">Heute</span><span class="t"><i style="width:62%"></i></span><b class="num">≈ 31,4 kWh</b></div>
+                <div class="r"><span class="l">Morgen</span><span class="t"><i style="width:84%"></i></span><b class="num">≈ 42,0 kWh</b></div>
+              </div>
+            </div>
+
+            <div class="sec">
+              <div class="eyebrow"><span>7 Tage</span><button type="button" data-go="history" style="color:var(--ink2);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase">Verlauf ›</button></div>
+              <div class="chart" id="miniChart"></div>
+              <div class="legend" id="miniLegend"></div>
+            </div>
+
+            <div class="sec">
+              <div class="eyebrow"><span>Oktober</span><span>Monat</span></div>
+              <div class="rows">
+                <div class="row"><div class="l">Solarproduktion</div><div class="r"><b>412 kWh</b></div></div>
+                <div class="row"><div class="l">Autarkie</div><div class="r"><b>93,4 %</b></div></div>
+                <div class="row"><div class="l">Netzbezug · Einspeisung</div><div class="r"><b>17,2</b> · <b>198 kWh</b></div></div>
+                <div class="row"><div class="l">Ersparnis ggü. Vollbezug</div><div class="r"><b>84,10 €</b></div></div>
+              </div>
+            </div>
+            <div class="hint" style="font-family:var(--mono);font-size:10.5px;text-align:center;margin-top:20px">S10 E · 9,9 kWp · 13 kWh · S10_2025_04</div>
+          </section>
+
+          <!-- ===== Verlauf ===== -->
+          <section class="view" id="v-history">
+            <div class="tabs" id="rangeTabs">
+              <button type="button" aria-pressed="false" data-range="day">Tag</button>
+              <button type="button" aria-pressed="true" data-range="week">Woche</button>
+              <button type="button" aria-pressed="false" data-range="month">Monat</button>
+              <button type="button" aria-pressed="false" data-range="year">Jahr</button>
+            </div>
+            <div class="eyebrow" style="margin-top:16px"><span id="rangeTitle">18. – 24. Okt 2026</span><span>‹ &nbsp; ›</span></div>
+            <div class="chart" id="histChart"></div>
+            <div class="legend" id="histLegend"></div>
+
+            <div class="sec">
+              <div class="eyebrow"><span>Bilanz</span><span>kWh</span></div>
+              <div class="facts">
+                <div><div class="v num">118</div><div class="l">Solar</div></div>
+                <div><div class="v num">71</div><div class="l">Verbrauch</div></div>
+                <div><div class="v num">94<small>%</small></div><div class="l">Autarkie</div></div>
+              </div>
+              <div class="rows" style="margin-top:12px">
+                <div class="row"><div class="l"><span class="sw" style="background:var(--s-einsp)"></span>Einspeisung</div><div class="r">50,2 kWh · <b>4,07 €</b></div></div>
+                <div class="row"><div class="l"><span class="sw" style="background:var(--s-bezug)"></span>Netzbezug</div><div class="r">4,4 kWh · <b>1,37 €</b></div></div>
+                <div class="row"><div class="l"><span class="sw" style="background:var(--s-laden)"></span>Batterie geladen</div><div class="r"><b>38,6 kWh</b></div></div>
+                <div class="row"><div class="l"><span class="sw" style="background:var(--s-entl)"></span>Batterie entladen</div><div class="r"><b>34,9 kWh</b></div></div>
+                <div class="row"><div class="l">Ersparnis ggü. Vollbezug</div><div class="r"><b>20,80 €</b></div></div>
+              </div>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Mehr Ansichten</span></div>
+              <div class="rows">
+                <div class="row"><div class="l">Energiefluss für den Zeitraum</div><span class="chev">›</span></div>
+                <div class="row"><div class="l">Heatmap Stunde × Tag</div><span class="chev">›</span></div>
+                <div class="row"><div class="l">Vergleich mit Vorjahr</div><span class="chev">›</span></div>
+                <div class="row"><div class="l">Export CSV</div><span class="chev">›</span></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== Energiefluss ===== -->
+          <section class="view" id="v-flow">
+            <div class="eyebrow" style="margin-top:4px"><span>Jetzt</span><span>kW · 1 s</span></div>
+            <div class="hint" style="margin-top:8px;color:var(--ink)">Überschuss. Die Sonne liefert 3,42 kW, versorgt das Haus, lädt die Batterie und speist den Rest ein.</div>
+            <div class="sk" data-sankey="now" data-h="150"></div>
+            <div class="idle">Nicht aktiv: Netzbezug · Batterie entladen · Wallbox</div>
+            <div class="sec">
+              <div class="eyebrow"><span>Heute</span><span>kWh · seit 00:00</span></div>
+              <div class="sk" data-sankey="today" data-h="180"></div>
+              <div class="rows" style="margin-top:14px">
+                <div class="row"><div class="l">Autarkie</div><div class="r"><b>97 %</b></div></div>
+                <div class="row"><div class="l">Eigenverbrauch</div><div class="r"><b>70 %</b></div></div>
+                <div class="row"><div class="l">Batterie voll</div><div class="r"><b>ca. 11:25</b></div></div>
+                <div class="row"><div class="l">Phasen L1 · L2 · L3</div><div class="r">−0,21 · −0,09 · −0,10 kW</div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== Steuern ===== -->
+          <section class="view" id="v-control">
+            <div class="sec" style="margin-top:4px">
+              <div class="eyebrow"><span>Batterie</span><span>RSCP</span></div>
+              <div class="rows">
+                <div class="row"><div class="l">Max. Ladeleistung</div><div class="r"><span class="stepper"><button type="button" data-step="chg" data-d="-500">−</button><b id="chgVal">4.500 W</b><button type="button" data-step="chg" data-d="500">+</button></span></div></div>
+                <div class="row"><div class="l">Max. Entladeleistung</div><div class="r"><span class="stepper"><button type="button" data-step="dch" data-d="-500">−</button><b id="dchVal">6.000 W</b><button type="button" data-step="dch" data-d="500">+</button></span></div></div>
+                <div class="row"><div class="l">Wetterabhängiges Laden<small>Lädt langsamer, wenn viel Sonne erwartet wird</small></div><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Wetterabhängiges Laden"></button></div>
+                <div class="row"><div class="l">PowerSave</div><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="PowerSave"></button></div>
+                <div class="row"><div class="l">Notstromreserve</div><div class="r"><span class="stepper"><button type="button" data-step="res" data-d="-5">−</button><b id="resVal">20 %</b><button type="button" data-step="res" data-d="5">+</button></span></div></div>
+              </div>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Sperrzeiten</span><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Sperrzeiten aktiv" style="width:36px;height:21px"></button></div>
+              <div class="rows">
+                <div class="row"><div class="l"><span class="sw" style="background:var(--s-entl)"></span><span>Entladesperre<small>Mo – Fr · 00:00 – 06:00</small></span></div><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Entladesperre"></button></div>
+                <div class="row"><div class="l"><span class="sw" style="background:var(--s-laden)"></span><span>Ladesperre<small>Sa, So · 10:00 – 14:00</small></span></div><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Ladesperre"></button></div>
+              </div>
+              <div class="chips"><button type="button" aria-pressed="true">Mo</button><button type="button" aria-pressed="true">Di</button><button type="button" aria-pressed="true">Mi</button><button type="button" aria-pressed="true">Do</button><button type="button" aria-pressed="true">Fr</button><button type="button" aria-pressed="false">Sa</button><button type="button" aria-pressed="false">So</button></div>
+              <button type="button" class="btn sec">Sperrzeit hinzufügen</button>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Wallbox</span></div>
+              <div class="rows">
+                <button type="button" class="row" data-sheet="wallbox"><div class="l"><span>Sonnenmodus · 3 Phasen · 8 A<small>bereit · Wagen lädt nicht</small></span></div><span class="chev">›</span></button>
+              </div>
+            </div>
+            <div class="hint">Änderungen werden gesammelt und mit „Übernehmen“ oben rechts an das Hauskraftwerk gesendet. Die App liest den Wert danach zurück und zeigt erst dann den neuen Stand.</div>
+          </section>
+
+          <!-- ===== Mehr ===== -->
+          <section class="view" id="v-more">
+            <div class="sec" style="margin-top:4px">
+              <div class="eyebrow"><span>Verbindung</span></div>
+              <div class="rows">
+                <div class="row"><div class="l"><span class="dot"></span><span>Lokal · RSCP<small>192.168.178.40 · 1 s</small></span></div><div class="r">aktiv</div></div>
+                <div class="row"><div class="l"><span>Bridge unterwegs<small>bridge.home.example · Tailscale</small></span></div><span class="chev">›</span></div>
+                <div class="row"><div class="l"><span>E3/DC Cloud<small>Fallback, nur lesen · 15 s</small></span></div><span class="chev">›</span></div>
+                <button type="button" class="row" data-sheet="setup"><div class="l">Verbindung einrichten</div><span class="chev">›</span></button>
+              </div>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Anlage</span></div>
+              <div class="rows">
+                <div class="row"><div class="l">PV</div><div class="r">9,9 kWp · 2 Tracker</div></div>
+                <div class="row"><div class="l">Batterie</div><div class="r">13,0 kWh · 2 Module</div></div>
+                <div class="row"><div class="l">Ausrichtung<small>für die Prognose</small></div><div class="r">SO 35° · NW 35°</div></div>
+              </div>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Tarif</span></div>
+              <div class="rows">
+                <div class="row"><div class="l">Strompreis</div><div class="r">31,2 ct/kWh</div></div>
+                <div class="row"><div class="l">Einspeisevergütung</div><div class="r">8,1 ct/kWh</div></div>
+                <div class="row"><div class="l">Börsenpreise (Tibber / aWATTar)</div><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Börsenpreise"></button></div>
+              </div>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Benachrichtigungen</span><span>Bridge</span></div>
+              <div class="rows">
+                <div class="row"><div class="l"><span>Batterie unter<small>10 % · nur abends</small></span></div><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Batterie-Warnung"></button></div>
+                <div class="row"><div class="l"><span>Netzbezug über<small>2,0 kW länger als 10 min</small></span></div><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Netzbezug-Warnung"></button></div>
+                <div class="row"><div class="l">Anlage offline</div><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Offline-Warnung"></button></div>
+              </div>
+            </div>
+            <div class="sec">
+              <div class="eyebrow"><span>Darstellung</span></div>
+              <div class="rows">
+                <div class="row"><div class="l">Abschnitte sortieren &amp; ausblenden</div><span class="chev">›</span></div>
+                <div class="row"><div class="l">Widgets &amp; Watch</div><span class="chev">›</span></div>
+              </div>
+            </div>
+            <div class="hint" style="font-family:var(--mono);font-size:10.5px;text-align:center;margin-top:20px">my-e3 0.1 · Zugangsdaten nur im Schlüsselbund</div>
+          </section>
+        </div>
+
+        <nav class="tabbar" id="tabbar">
+          <button type="button" data-go="now" aria-current="true"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Jetzt</button>
+          <button type="button" data-go="history"><svg class="svgicon" viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-7M22 20H2"/></svg>Verlauf</button>
+          <button type="button" data-go="flow"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M12 11.5l-5.5 5M12 11.5l5.5 5"/></svg>Fluss</button>
+          <button type="button" data-go="control"><svg class="svgicon" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Steuern</button>
+          <button type="button" data-go="more"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>Mehr</button>
+        </nav>
+
+        <div class="sheet-bg" id="sheetBg"></div>
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const fmt=(n,d=1)=>n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const root=document.documentElement;
+  function setTheme(t){ if(t==='sys') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',t);
+    ['light','dark','sys'].forEach(k=>$('#th-'+k).setAttribute('aria-pressed',String(k===t)));
+    try{localStorage.setItem('mye3b-theme',t)}catch(e){} drawAll(); }
+  ['light','dark','sys'].forEach(k=>$('#th-'+k).addEventListener('click',()=>setTheme(k)));
+  try{const s=localStorage.getItem('mye3b-theme'); if(s) setTheme(s)}catch(e){}
+
+  const notes={
+    now:`<p><b>Jetzt</b>: Ein großer Wert und ein Satz sagen, was gerade passiert. Darunter der Energiefluss kompakt: Quellen links, Verwendung rechts, Bandbreite = Leistung.</p><ul><li>Die Messgrößen stehen in einer Liste mit 24-h-Sparkline, jede Zeile führt zum Detail.</li><li>Keine Kacheln, keine Farbflächen. Hairlines trennen, Farbe markiert nur Daten.</li><li>Abschnitte lassen sich sortieren und ausblenden (unter Mehr › Darstellung).</li></ul>`,
+    history:`<p><b>Verlauf</b>: Zeitraum als unterstrichene Text-Tabs. Gleicher Chart wie Variante A, aber in der ruhigen Umgebung. Bilanz als drei große Zahlen plus Liste.</p>`,
+    flow:`<p><b>Energiefluss</b> von links nach rechts: Quellen (Solar, Netzbezug, Batterie) links, Verwendung (Haus, Batterie, Einspeisung) rechts. Oben „Jetzt“ in kW, darunter „Heute“ in kWh mit demselben Bild.</p><ul><li>Was nicht fließt, steht als Textzeile.</li><li>Tipp auf ein Band zeigt den Einzelwert.</li></ul>`,
+    control:`<p><b>Steuern</b>: alles in einer Liste mit Steppern und Schaltern. „Übernehmen“ erscheint oben rechts, sobald sich etwas geändert hat.</p>`,
+    more:`<p><b>Mehr</b>: Verbindung, Anlage, Tarif, Benachrichtigungen, Darstellung. Gleiche Listen-Sprache wie überall.</p>`,
+    battery:`<p><b>Batterie-Sheet</b>: Ladezustand groß, dann Fakten als Liste und Module.</p>`,
+    wallbox:`<p><b>Wallbox-Sheet</b>: Modus und Phasen als Pillen, Ladestrom als Stepper, Start/Stopp als einziger gefüllter Button.</p>`,
+    setup:`<p><b>Verbindung</b>: drei Abschnitte Lokal · Bridge · Cloud, Zugangsdaten bleiben im Schlüsselbund.</p>`,
+    pv:`<p><b>Solar-Sheet</b>: Tracker, Spannung/Strom, Ertrag je kWp, Abregelung.</p>`
+  };
+  function note(k){ $('#note').innerHTML=notes[k]||''; }
+
+  const titles={now:'Jetzt',history:'Verlauf',flow:'Energiefluss',control:'Steuern',more:'Mehr'};
+  const metas={now:'RSCP · 1 s · 09:41:07',history:'Bridge-Speicher · 15 min',flow:'RSCP · 1 s · 09:41:07',control:'RSCP · Setter',more:'my-e3 0.1'};
+  const actions={control:'<button type="button" class="textbtn" id="applyBtn" disabled>Übernehmen</button>'};
+  const refresh='<button type="button" class="icon-btn" aria-label="Aktualisieren"><svg class="svgicon" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>';
+  let dirty=false;
+  function go(v){
+    $$('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
+    $$('#tabbar button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.go===v)));
+    $$('#screenNav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.go===v)));
+    $('#appTitle').textContent=titles[v]; $('#metaText').textContent=metas[v]; $('#appAction').innerHTML=actions[v]||refresh;
+    if(v==='control'&&dirty) $('#applyBtn').disabled=false;
+    note(v); closeSheet(); drawAll();
+  }
+  document.addEventListener('click',e=>{
+    const g=e.target.closest('[data-go]'); if(g){go(g.dataset.go);return;}
+    const s=e.target.closest('[data-sheet]'); if(s){openSheet(s.dataset.sheet);}
+  });
+  note('now');
+
+  const sheets={
+    battery:`<div class="grab"></div><div class="shd"><h2>Batterie</h2><span class="pill good">lädt · 2,41 kW</span></div>
+      <div class="facts" style="margin-top:14px"><div><div class="v num">68<small>%</small></div><div class="l">Ladezustand</div></div><div><div class="v num">8,8<small>kWh</small></div><div class="l">verfügbar</div></div><div><div class="v num">96<small>%</small></div><div class="l">Zustand (SOH)</div></div></div>
+      <div class="prog" style="width:100%;margin-top:12px"><i style="width:68%;background:var(--s-laden)"></i></div>
+      <div class="sec"><div class="eyebrow"><span>Fakten</span></div><div class="rows">
+        <div class="row"><div class="l">Temperatur min · max</div><div class="r"><b>23,4 · 24,8 °C</b></div></div>
+        <div class="row"><div class="l">Vollzyklen</div><div class="r"><b>812</b></div></div>
+        <div class="row"><div class="l">Spannung · Strom</div><div class="r"><b>51,2 V · 47,1 A</b></div></div>
+        <div class="row"><div class="l">Nutzbare Kapazität</div><div class="r"><b>≈ 12,0 kWh</b></div></div>
+        <div class="row"><div class="l">Voll um</div><div class="r"><b>ca. 11:25</b></div></div>
+      </div></div>
+      <div class="sec"><div class="eyebrow"><span>Heute</span><span>kWh</span></div><div class="rows">
+        <div class="row"><div class="l"><span class="sw" style="background:var(--s-laden)"></span>Geladen</div><div class="r"><b>4,80</b></div></div>
+        <div class="row"><div class="l"><span class="sw" style="background:var(--s-entl)"></span>Entladen</div><div class="r"><b>3,20</b></div></div>
+        <div class="row"><div class="l">Autarkie heute · 7 Tage</div><div class="r"><b>97 · 94 %</b></div></div>
+        <div class="row"><div class="l">Wirkungsgrad 30 Tage</div><div class="r"><b>91 %</b></div></div>
+      </div></div>
+      <div class="sec"><div class="eyebrow"><span>Module</span></div><div class="rows">
+        <div class="row"><div class="l">Modul 1</div><div class="r">6,5 kWh · 24,8 °C · SOH 96 %</div></div>
+        <div class="row"><div class="l">Modul 2</div><div class="r">6,5 kWh · 23,4 °C · SOH 97 %</div></div>
+      </div></div>`,
+    wallbox:`<div class="grab"></div><div class="shd"><h2>Wallbox</h2><span class="pill good">bereit</span></div>
+      <div class="sec"><div class="eyebrow"><span>Modus</span></div><div class="segline"><button type="button" aria-pressed="true">Sonnenmodus</button><button type="button" aria-pressed="false">Mischmodus</button></div>
+      <div class="eyebrow" style="margin-top:16px"><span>Phasen</span></div><div class="segline"><button type="button" aria-pressed="false">1</button><button type="button" aria-pressed="true">3</button><button type="button" aria-pressed="false">Auto</button></div></div>
+      <div class="sec"><div class="rows">
+        <div class="row"><div class="l">Ladestrom<small>≈ 5,5 kW bei 3 Phasen</small></div><div class="r"><span class="stepper"><button type="button" data-step="amp" data-d="-1">−</button><b id="ampVal">8 A</b><button type="button" data-step="amp" data-d="1">+</button></span></div></div>
+        <div class="row"><div class="l">Priorität Wallbox vor Hauskraftwerk</div><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Priorität Wallbox"></button></div>
+        <div class="row"><div class="l">Batterie entlädt in Wallbox<small>bis min. SOC 30 %</small></div><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Batterie entlädt in Wallbox"></button></div>
+        <div class="row"><div class="l">Heute geladen</div><div class="r">☀ 2,48 · ⚡ 0,01 kWh</div></div>
+      </div></div>
+      <button type="button" class="btn primary">Laden starten</button>
+      <div class="hint">Fahrzeugseitige Einstellungen können den Ladestart verhindern oder verzögern.</div>`,
+    setup:`<div class="grab"></div><div class="shd"><h2>Verbindung</h2></div>
+      <div class="sec"><div class="eyebrow"><span>1 · Lokal per RSCP</span><span class="pill good">empfohlen</span></div><div class="rows">
+        <div class="row"><div class="l">IP-Adresse des S10</div><div class="r">192.168.178.40</div></div>
+        <div class="row"><div class="l">Portal-Benutzer</div><div class="r">name@beispiel.de</div></div>
+        <div class="row"><div class="l">Portal-Passwort</div><div class="r">••••••••</div></div>
+        <div class="row"><div class="l">RSCP-Passwort<small>S10: Personalisieren › Benutzerprofil</small></div><div class="r">••••••</div></div>
+      </div><button type="button" class="btn primary">Verbindung testen</button></div>
+      <div class="sec"><div class="eyebrow"><span>2 · Bridge unterwegs</span><span>optional</span></div><div class="rows">
+        <div class="row"><div class="l">Bridge-URL</div><div class="r">https://bridge.home…</div></div>
+        <div class="row"><div class="l">Token</div><div class="r">••••••••</div></div>
+      </div><div class="hint">Die Bridge läuft zu Hause, hält die RSCP-Verbindung, speichert den Verlauf und sendet Benachrichtigungen.</div></div>
+      <div class="sec"><div class="eyebrow"><span>3 · E3/DC Cloud</span><span>optional · nur lesen</span></div><div class="rows">
+        <div class="row"><div class="l">Seriennummer</div><div class="r">S10-…</div></div>
+        <div class="row"><div class="l">Cloud-Registry-Key<small>my.e3dc.com › Rechteverwaltung</small></div><div class="r">••••••</div></div>
+      </div></div>`,
+    pv:`<div class="grab"></div><div class="shd"><h2>Solar</h2><span class="pill good">3,42 kW</span></div>
+      <div class="facts" style="margin-top:14px"><div><div class="v num">1,81<small>kW</small></div><div class="l">Tracker 1 · SO</div></div><div><div class="v num">1,61<small>kW</small></div><div class="l">Tracker 2 · NW</div></div><div><div class="v num">345<small>W/kWp</small></div><div class="l">Ertrag</div></div></div>
+      <div class="sec"><div class="rows">
+        <div class="row"><div class="l">Tracker 1</div><div class="r">412 V · 4,4 A</div></div>
+        <div class="row"><div class="l">Tracker 2</div><div class="r">398 V · 4,0 A</div></div>
+        <div class="row"><div class="l">Abregelung</div><div class="r"><b>keine</b></div></div>
+        <div class="row"><div class="l">Heute · Prognose</div><div class="r"><b>14,2</b> · 31,4 kWh</div></div>
+        <div class="row"><div class="l">Seit Inbetriebnahme</div><div class="r"><b>22.505 kWh</b></div></div>
+      </div></div>`
+  };
+  function openSheet(k){ const sh=$('#sheet'); sh.innerHTML=sheets[k]||''; sh.classList.add('open'); $('#sheetBg').classList.add('open'); note(k); }
+  function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheetBg').classList.remove('open'); }
+  $('#sheetBg').addEventListener('click',closeSheet);
+
+  const stepVals={chg:4500,dch:6000,res:20,amp:8};
+  const stepFmt={chg:v=>fmt(v,0)+' W',dch:v=>fmt(v,0)+' W',res:v=>v+' %',amp:v=>v+' A'};
+  const stepLim={chg:[500,6000],dch:[500,6000],res:[0,100],amp:[6,32]};
+  function markDirty(){ dirty=true; const b=$('#applyBtn'); if(b) b.disabled=false; }
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('.sw-toggle'); if(t){t.setAttribute('aria-checked',String(t.getAttribute('aria-checked')!=='true')); markDirty(); return;}
+    const st=e.target.closest('[data-step]'); if(st){ const k=st.dataset.step; stepVals[k]=Math.min(stepLim[k][1],Math.max(stepLim[k][0],stepVals[k]+ +st.dataset.d)); document.getElementById(k+'Val').textContent=stepFmt[k](stepVals[k]); markDirty(); return; }
+    const sb=e.target.closest('.segline button, .chips button'); if(sb){ if(sb.closest('.chips')) sb.setAttribute('aria-pressed',String(sb.getAttribute('aria-pressed')!=='true')); else sb.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===sb))); markDirty(); return; }
+    const tb=e.target.closest('#rangeTabs button'); if(tb){ tb.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===tb))); range=tb.dataset.range; drawHist(); return; }
+    const lg=e.target.closest('.legend button'); if(lg){ lg.setAttribute('aria-pressed',String(lg.getAttribute('aria-pressed')==='false')); hidden[lg.dataset.key]=lg.getAttribute('aria-pressed')==='false'; drawAll(); return; }
+    if(e.target.id==='applyBtn'){ e.target.textContent='Übernommen'; dirty=false; setTimeout(()=>{e.target.textContent='Übernehmen'; e.target.disabled=true;},1600); }
+  });
+
+  /* ---------- data (sample, same as variant A) ---------- */
+  const series=[
+    {key:'solar',label:'Solar',css:'--s-solar',sign:1},
+    {key:'bezug',label:'Netzbezug',css:'--s-bezug',sign:1},
+    {key:'entl',label:'Batterie entladen',css:'--s-entl',sign:1},
+    {key:'verbr',label:'Verbrauch',css:'--s-verbr',sign:-1},
+    {key:'einsp',label:'Einspeisung',css:'--s-einsp',sign:-1},
+    {key:'laden',label:'Batterie laden',css:'--s-laden',sign:-1}
+  ];
+  const hidden={};
+  const week=[
+    {l:'Sa',solar:22.4,bezug:0.4,entl:5.1,verbr:11.2,einsp:11.3,laden:5.4},
+    {l:'So',solar:9.8,bezug:1.9,entl:6.2,verbr:12.9,einsp:1.1,laden:3.8},
+    {l:'Mo',solar:17.6,bezug:0.6,entl:5.6,verbr:9.4,einsp:7.9,laden:6.3},
+    {l:'Di',solar:24.1,bezug:0.2,entl:4.9,verbr:10.1,einsp:13.0,laden:6.0},
+    {l:'Mi',solar:6.3,bezug:1.3,entl:5.8,verbr:9.8,einsp:0.4,laden:3.2},
+    {l:'Do',solar:23.6,bezug:0.1,entl:4.1,verbr:9.0,einsp:12.3,laden:6.5},
+    {l:'Fr',solar:14.2,bezug:0.3,entl:3.2,verbr:8.7,einsp:4.2,laden:4.8}
+  ];
+  function dayData(){ const out=[]; for(let h=0;h<24;h++){ const sun=Math.max(0,Math.sin((h-6)/13*Math.PI)); const pv=+(sun*3.6).toFixed(2); const cons=+(0.3+(h>=7&&h<=9?0.5:0)+(h>=18&&h<=22?0.9:0)).toFixed(2);
+      let rest=pv-cons, laden=0,einsp=0,entl=0,bezug=0; if(rest>0){laden=Math.min(rest,h<12?2.4:0.8); einsp=rest-laden;} else {entl=Math.min(-rest,h>=0&&h<6?0:1.5); bezug=-rest-entl;}
+      out.push({l:String(h).padStart(2,'0'),solar:pv,bezug:+bezug.toFixed(2),entl:+entl.toFixed(2),verbr:cons,einsp:+einsp.toFixed(2),laden:+laden.toFixed(2)}); } return out; }
+  function monthData(){ const out=[]; let seed=7; const r=()=>{seed=(seed*9301+49297)%233280; return seed/233280;};
+    for(let d=1;d<=31;d++){ const s=+(4+r()*20).toFixed(1); const v=+(8+r()*5).toFixed(1); const laden=+Math.min(6.5,Math.max(0,s-v*0.4)).toFixed(1); const einsp=+Math.max(0,s-v*0.5-laden).toFixed(1); const entl=+Math.min(laden*0.9,v*0.5).toFixed(1); const bezug=+Math.max(0,v*0.5-entl).toFixed(1);
+      out.push({l:String(d),solar:s,bezug,entl,verbr:v,einsp,laden}); } return out; }
+  function yearData(){ const m=['J','F','M','A','M','J','J','A','S','O','N','D']; const pv=[180,290,560,820,990,1050,1040,920,680,420,200,150]; const v=[380,330,310,270,250,230,240,250,270,300,350,390];
+    return m.map((l,i)=>{const laden=Math.min(190,pv[i]*0.3); const einsp=Math.max(0,pv[i]-v[i]*0.55-laden); const entl=Math.min(laden*0.9,v[i]*0.45); const bezug=Math.max(0,v[i]*0.45-entl)+(i<2||i>9?120:0);
+      return {l,solar:pv[i],bezug,entl,verbr:v[i],einsp,laden};}); }
+  let range='week';
+
+  function stacked(el,data,opt){
+    opt=opt||{}; const cs=getComputedStyle(document.documentElement);
+    const W=353,H=opt.h||190,pl=26,pr=4,pt=8,pb=18; const iw=W-pl-pr, ih=H-pt-pb;
+    const vis=(opt.series||series).filter(s=>!hidden[s.key]);
+    let maxP=0,maxN=0; data.forEach(d=>{let p=0,n=0; vis.forEach(s=>{if(s.sign>0)p+=d[s.key]; else n+=d[s.key]}); maxP=Math.max(maxP,p); maxN=Math.max(maxN,n);});
+    const nice=v=>{const e=Math.pow(10,Math.floor(Math.log10(v||1))); const f=v/e; return (f<=1?1:f<=2?2:f<=5?5:10)*e;};
+    const top=nice(maxP||1), bot=maxN?nice(maxN):0; const y0=pt+ih*top/(top+bot); const sc=ih/(top+bot);
+    const n=data.length; const slot=iw/n; const bw=Math.max(3,Math.min(22,slot*0.55)); const gap=2;
+    let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gestapeltes Balkendiagramm">`;
+    const ticks=bot?[top,top/2,0,-bot/2,-bot]:[top,top/2,0];
+    ticks.forEach(t=>{const y=y0-t*sc; svg+=`<line class="${t===0?'base':'gridl'}" x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}"/><text x="${pl-5}" y="${y+3}" text-anchor="end">${Math.abs(t)%1?t.toFixed(1):t}</text>`;});
+    data.forEach((d,i)=>{ const x=pl+slot*i+(slot-bw)/2; let yp=y0,yn=y0;
+      vis.forEach(s=>{ const v=d[s.key]; if(!v) return; const h=v*sc; if(h<0.5) return; const col=cs.getPropertyValue(s.css).trim();
+        if(s.sign>0){ const y=yp-h; svg+=`<rect x="${x}" y="${y.toFixed(1)}" width="${bw}" height="${Math.max(0,h-gap).toFixed(1)}" fill="${col}" rx="1.5"/>`; yp=y; }
+        else { svg+=`<rect x="${x}" y="${(yn+gap).toFixed(1)}" width="${bw}" height="${Math.max(0,h-gap).toFixed(1)}" fill="${col}" rx="1.5"/>`; yn+=h; } });
+      svg+=`<rect x="${pl+slot*i}" y="${pt}" width="${slot}" height="${ih}" fill="transparent" data-i="${i}" class="hit"/>`;
+      if(n<=12||i%Math.ceil(n/8)===0) svg+=`<text x="${x+bw/2}" y="${H-5}" text-anchor="middle">${d.l}</text>`; });
+    svg+='</svg><div class="tip"></div>';
+    el.innerHTML=svg;
+    const tip=el.querySelector('.tip');
+    el.querySelectorAll('.hit').forEach(r=>{ const show=()=>{ const d=data[+r.dataset.i]; const bb=r.getBoundingClientRect(), eb=el.getBoundingClientRect();
+        tip.innerHTML=`<b>${d.l}</b><br>`+vis.map(s=>`${s.label}: ${fmt(d[s.key])} kWh`).join('<br>'); tip.style.left=(bb.left-eb.left+bb.width/2)+'px'; tip.style.top=(bb.top-eb.top+8)+'px'; tip.style.display='block'; };
+      r.addEventListener('mouseenter',show); r.addEventListener('click',show); r.addEventListener('mouseleave',()=>tip.style.display='none'); });
+  }
+  function legend(el,list){ el.innerHTML=(list||series).map(s=>`<button type="button" data-key="${s.key}" aria-pressed="${hidden[s.key]?'false':'true'}"><span class="sw" style="background:var(${s.css})"></span>${s.label}</button>`).join(''); }
+  function drawHist(){ const d=range==='day'?dayData():range==='month'?monthData():range==='year'?yearData():week;
+    $('#rangeTitle').textContent={day:'Fr, 24. Okt 2026',week:'18. – 24. Okt 2026',month:'Oktober 2026',year:'2026'}[range];
+    stacked($('#histChart'),d,{h:220}); legend($('#histLegend')); }
+  function drawMini(){ const two=[series[0],series[3]]; stacked($('#miniChart'),week,{h:120,series:two}); legend($('#miniLegend'),two); }
+
+  /* ---------- sparklines ---------- */
+  function spark(el,vals,col,zero){ const W=92,H=22; const mx=Math.max(...vals.map(Math.abs))||1; const n=vals.length;
+    const y=v=>zero? H/2 - v/mx*(H/2-1) : H-1 - v/mx*(H-2); const pts=vals.map((v,i)=>`${(i/(n-1)*W).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+    const base=zero?H/2:H-1; const cs=getComputedStyle(document.documentElement); const c=cs.getPropertyValue(col).trim();
+    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><polygon points="0,${base} ${pts} ${W},${base}" fill="${c}" opacity=".12"/><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="${W}" cy="${y(vals[n-1]).toFixed(1)}" r="2" fill="${c}"/></svg>`; }
+  function drawSparks(){ const d=dayData().slice(0,10).concat(dayData().slice(0,10)).map((x,i)=>x); const day=dayData();
+    const pv=day.slice(10).concat(day.slice(0,10)).map(x=>x.solar), haus=day.slice(10).concat(day.slice(0,10)).map(x=>x.verbr), netz=day.slice(10).concat(day.slice(0,10)).map(x=>x.bezug-x.einsp);
+    spark($('[data-spark="pv"]'),pv,'--s-solar'); spark($('[data-spark="haus"]'),haus,'--s-verbr'); spark($('[data-spark="netz"]'),netz,'--s-einsp',true); }
+
+  /* ---------- sankey (Quellen links, Verwendung rechts) ---------- */
+  const SK={solar:['Solar','--s-solar'],bezug:['Netzbezug','--s-bezug'],entl:['Batterie','--s-entl'],haus:['Haus','--s-verbr'],laden:['Batterie','--s-laden'],einsp:['Einspeisung','--s-einsp'],wb:['Wallbox','--s-entl']};
+  let skSeq=0;
+  function sankey(el,flows,unit,h){
+    const cs=getComputedStyle(document.documentElement); const c=k=>cs.getPropertyValue(SK[k][1]).trim(); const uid='sk'+(++skSeq)+'_';
+    const W=353,H=h||170,colW=10,LX=104,RX=W-104-colW,gap=10,minH=5,top=18;
+    const L=[...new Set(flows.map(f=>f.from))], R=[...new Set(flows.map(f=>f.to))];
+    const total=flows.reduce((a,f)=>a+f.v,0);
+    const usable=H-top-gap*(Math.max(L.length,R.length)-1);
+    const hv=f=>Math.max(minH,f.v/total*usable);
+    const nodeH=(ids,key)=>Object.fromEntries(ids.map(id=>[id,flows.filter(f=>f[key]===id).reduce((a,f)=>a+hv(f),0)]));
+    const LH=nodeH(L,'from'), RH=nodeH(R,'to');
+    const place=(ids,HH)=>{const o={}; const tot=ids.reduce((a,id)=>a+HH[id],0)+gap*(ids.length-1); let y=top+(H-top-tot)/2; ids.forEach(id=>{o[id]=y; y+=HH[id]+gap;}); return o;};
+    const LY=place(L,LH), RY=place(R,RH); const lo={...LY}, ro={...RY};
+    const sum=(ids,key)=>Object.fromEntries(ids.map(id=>[id,flows.filter(f=>f[key]===id).reduce((a,f)=>a+f.v,0)]));
+    const LS=sum(L,'from'), RS=sum(R,'to'); const dec=unit==='kW'?2:1;
+    const labelY=(ids,Y,HH)=>{const o={}; let prev=-99; ids.forEach(id=>{let y=Y[id]+HH[id]/2; if(y<prev+26) y=prev+26; o[id]=y; prev=y;}); const over=prev+10-H; if(over>0) ids.forEach(id=>o[id]-=over); return o;};
+    const LLY=labelY(L,LY,LH), RLY=labelY(R,RY,RH);
+    let defs='',ribbons='',nodes='';
+    flows.forEach((f,i)=>{ const hh=hv(f); const y0=lo[f.from], y1=ro[f.to]; lo[f.from]+=hh; ro[f.to]+=hh;
+      const x0=LX+colW, x1=RX, mx=(x0+x1)/2; const id=uid+i;
+      defs+=`<linearGradient id="${id}" x1="0" x2="1"><stop offset="0" stop-color="${c(f.from)}"/><stop offset="1" stop-color="${c(f.to)}"/></linearGradient>`;
+      ribbons+=`<path d="M${x0} ${y0} C${mx} ${y0} ${mx} ${y1} ${x1} ${y1} L${x1} ${y1+hh} C${mx} ${y1+hh} ${mx} ${y0+hh} ${x0} ${y0+hh} Z" fill="url(#${id})" opacity=".45"><title>${SK[f.from][0]} → ${SK[f.to][0]}: ${fmt(f.v,dec)} ${unit}</title></path>`; });
+    L.forEach(id=>{ nodes+=`<rect x="${LX}" y="${LY[id]}" width="${colW}" height="${LH[id]}" rx="2" fill="${c(id)}"/><text class="nm" x="${LX-8}" y="${LLY[id]-2}" text-anchor="end">${SK[id][0]}</text><text class="vl" x="${LX-8}" y="${LLY[id]+11}" text-anchor="end">${fmt(LS[id],dec)} ${unit}</text>`; });
+    R.forEach(id=>{ nodes+=`<rect x="${RX}" y="${RY[id]}" width="${colW}" height="${RH[id]}" rx="2" fill="${c(id)}"/><text class="nm" x="${RX+colW+8}" y="${RLY[id]-2}">${SK[id][0]}</text><text class="vl" x="${RX+colW+8}" y="${RLY[id]+11}">${fmt(RS[id],dec)} ${unit}</text>`; });
+    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Energiefluss"><defs>${defs}</defs><text class="hd" x="${LX+colW}" y="8" text-anchor="end">QUELLEN</text><text class="hd" x="${RX}" y="8">VERWENDUNG</text>${ribbons}${nodes}</svg>`;
+  }
+  const flowNow=[{from:'solar',to:'haus',v:0.612},{from:'solar',to:'laden',v:2.41},{from:'solar',to:'einsp',v:0.398}];
+  const flowToday=[{from:'solar',to:'haus',v:5.2},{from:'solar',to:'laden',v:4.8},{from:'solar',to:'einsp',v:4.2},{from:'entl',to:'haus',v:3.2},{from:'bezug',to:'haus',v:0.3}];
+  function drawSankeys(){ $$('[data-sankey]').forEach(e=>{ const k=e.dataset.sankey; sankey(e,k==='now'?flowNow:flowToday,k==='now'?'kW':'kWh',+e.dataset.h||170); }); }
+
+  function drawAll(){ drawMini(); drawHist(); drawSparks(); drawSankeys(); }
+  drawAll();
+  if(/^#(now|history|flow|control|more)$/.test(location.hash)) go(location.hash.slice(1));
+})();
+</script>

@@ -1,0 +1,896 @@
+<title>Wattbury Click-Dummy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: desktop = notes rail left + iPhone frame right; phone = app fills the screen.
+   App design follows the upcoming my4E dashboard: full-width colour cards (slate, wine, green, orange)
+   with translucent sub-tiles, a white statistics card with pastel KPIs, floating bottom toolbar. */
+:root{
+  --bg:#eef0ea; --fg:#1d2320; --muted:#5f675f; --rail:#ffffff; --line:rgba(29,35,32,.12);
+  --app-bg:#f2f2f7; --card:#ffffff; --app-fg:#111; --app-muted:#6b6f76; --sep:rgba(60,60,67,.14);
+  --c-slate:#4d6a78; --c-wine:#9b2a3b; --c-green:#5ea33a; --c-orange:#f0a12e; --c-sub:rgba(255,255,255,.15); --c-sub2:rgba(255,255,255,.26);
+  --on:#ffffff; --on-dim:rgba(255,255,255,.82);
+  --p-peach:#fbe9e3; --p-yellow:#fdf3dc; --p-grey:#e4ebef; --p-blue:#e3eef8; --p-green:#e6f3e0;
+  --accent:#2a7a3d; --accent-fg:#ffffff;
+  --s-solar:#eda100; --s-bezug:#1baf7a; --s-entl:#6250d6; --s-verbr:#e34948; --s-einsp:#2a78d6; --s-laden:#008300;
+  --grid:#e1e0d9; --axis:#c3c2b7; --ink3:#898781;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --font-app:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --font-page:"IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141714; --fg:#e8ebe6; --muted:#9aa39a; --rail:#1c201c; --line:rgba(232,235,230,.12);
+  --app-bg:#000; --card:#1c1c1e; --app-fg:#f2f2f2; --app-muted:#9a9ca3; --sep:rgba(84,84,88,.6);
+  --c-slate:#3b545f; --c-wine:#7e2231; --c-green:#4a8a2c; --c-orange:#d48a1f; --c-sub:rgba(255,255,255,.12); --c-sub2:rgba(255,255,255,.2);
+  --p-peach:#3a2a26; --p-yellow:#3a3220; --p-grey:#262d31; --p-blue:#22303d; --p-green:#223020;
+  --s-solar:#c98500; --s-bezug:#199e70; --s-entl:#9085e9; --s-verbr:#e66767; --s-einsp:#3987e5; --s-laden:#008300;
+  --grid:#2c2c2a; --axis:#383835; --ink3:#898781; --accent:#3c9a52; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141714; --fg:#e8ebe6; --muted:#9aa39a; --rail:#1c201c; --line:rgba(232,235,230,.12);
+  --app-bg:#000; --card:#1c1c1e; --app-fg:#f2f2f2; --app-muted:#9a9ca3; --sep:rgba(84,84,88,.6);
+  --c-slate:#3b545f; --c-wine:#7e2231; --c-green:#4a8a2c; --c-orange:#d48a1f; --c-sub:rgba(255,255,255,.12); --c-sub2:rgba(255,255,255,.2);
+  --p-peach:#3a2a26; --p-yellow:#3a3220; --p-grey:#262d31; --p-blue:#22303d; --p-green:#223020;
+  --s-solar:#c98500; --s-bezug:#199e70; --s-entl:#9085e9; --s-verbr:#e66767; --s-einsp:#3987e5; --s-laden:#008300;
+  --grid:#2c2c2a; --axis:#383835; --ink3:#898781; --accent:#3c9a52; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-page);font-size:14px;line-height:1.45}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}
+
+/* ---------- page chrome ---------- */
+.page{min-height:100%;display:grid;grid-template-columns:320px 1fr}
+.rail{background:var(--rail);border-right:1px solid var(--line);padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:20px;overflow:auto;position:sticky;top:0;height:100vh;min-width:0}
+.rail h1{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.rail .sub{color:var(--muted);font-size:13px;margin-top:4px}
+.rail .group{margin-top:22px}
+.rail .label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px}
+.rail .nav{display:flex;flex-direction:column;gap:2px}
+.rail .nav button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;width:100%}
+.rail .nav button:hover{background:color-mix(in srgb,var(--fg) 6%,transparent)}
+.rail .nav button[aria-current="true"]{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:600}
+.rail .nav .k{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:600;background:color-mix(in srgb,var(--fg) 8%,transparent);color:var(--muted);flex:none}
+.rail .note{font-size:13px;color:var(--muted);margin-top:8px;max-width:38ch}
+.rail .note b{color:var(--fg);font-weight:600}
+.rail .note p{margin:0 0 8px}
+.rail .note ul{margin:0;padding-left:18px}
+.stage{display:flex;align-items:flex-start;justify-content:center;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0}
+.toggles{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.toggles button{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px}
+.toggles button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* ---------- iPhone frame ---------- */
+.phone{width:393px;max-width:100%;height:852px;max-height:calc(100vh - 64px);background:#101214;border-radius:54px;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.35),0 0 0 2px #2a2d31 inset;position:relative;flex:none}
+.screen{width:100%;height:100%;border-radius:42px;overflow:hidden;background:var(--app-bg);color:var(--app-fg);font-family:var(--font-app);position:relative;display:flex;flex-direction:column}
+.island{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:122px;height:36px;background:#000;border-radius:20px;z-index:5}
+.status{height:52px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 6px;font-size:15px;font-weight:600;flex:none}
+.status .r{display:flex;gap:5px;align-items:center;font-size:12px}
+.status .bat{width:25px;height:12px;border:1.5px solid currentColor;border-radius:4px;position:relative}
+.status .bat::after{content:"";position:absolute;inset:2px;right:4px;background:currentColor;border-radius:1px}
+
+/* ---------- app shell ---------- */
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:2px 14px 6px;flex:none}
+.appbar .title{text-align:center;flex:1;min-width:0}
+.appbar .title h2{font-size:17px;font-weight:600}
+.appbar .title .conn{font-size:11px;color:var(--app-muted);display:flex;align-items:center;justify-content:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block}
+.icon-btn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--app-fg);flex:none}
+.icon-btn svg{width:22px;height:22px}
+.abtns{display:flex;gap:2px}
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;overflow:auto;padding:0 10px 90px;display:none;scrollbar-width:none}
+.view.active{display:block}
+.view::-webkit-scrollbar{display:none}
+.svgicon{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+/* floating toolbar (like the my4E preview) */
+.toolbar{position:absolute;left:12px;right:12px;bottom:18px;background:var(--card);border-radius:18px;box-shadow:0 6px 24px rgba(0,0,0,.22);display:flex;align-items:center;padding:6px 8px;gap:2px;z-index:6}
+.toolbar button{width:42px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--app-fg)}
+.toolbar button svg{width:24px;height:24px}
+.toolbar button[aria-current="true"]{background:color-mix(in srgb,var(--app-fg) 9%,transparent)}
+.toolbar .st{margin-left:auto;font-size:12px;color:var(--app-muted);padding-right:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* ---------- colour cards ---------- */
+.cards{display:flex;flex-direction:column;gap:10px}
+.cc{border-radius:20px;padding:14px 14px 14px;color:var(--on);position:relative;width:100%;display:block}
+.cc.slate{background:var(--c-info)} .cc.wine{background:var(--c-wine)} .cc.green{background:var(--c-green)} .cc.orange{background:var(--c-orange)}
+.cc .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cc .hd h3{font-size:21px;font-weight:600;letter-spacing:-.01em}
+.cc .hd .hi{width:30px;height:30px;color:var(--on);opacity:.95}
+.cc .hd .hi svg{width:100%;height:100%}
+.cc .big{font-size:42px;font-weight:300;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cc .big small{font-size:18px;font-weight:400;margin-left:4px}
+.cc .lab{font-size:14px;color:var(--on-dim);margin-top:2px}
+.pair{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:10px}
+.pair .vline{width:1px;height:54px;background:rgba(255,255,255,.35)}
+.pair > div:last-child{text-align:right}
+.gradbar{height:4px;border-radius:2px;margin:12px 0 10px;background:linear-gradient(90deg,var(--s-solar),var(--c-orange) 60%,rgba(255,255,255,.35) 60%)}
+.sub{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sub.three{grid-template-columns:1fr 1fr 1fr}
+.st{background:var(--c-sub);border-radius:12px;padding:8px 10px;min-width:0}
+.st .l{font-size:12px;color:var(--on-dim);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st .l svg{width:13px;height:13px;flex:none}
+.st .v{font-size:18px;font-weight:600;text-align:center;margin-top:3px;font-variant-numeric:tabular-nums}
+.st .v small{font-size:12px;font-weight:400;margin-left:2px}
+.st.c{text-align:center}
+.st.c .l{justify-content:center;white-space:normal;line-height:1.2}
+.cbtn{background:var(--c-sub);border-radius:12px;padding:11px 10px;font-size:14px;font-weight:600;color:var(--on);display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
+.cbtn svg{width:18px;height:18px}
+.cbtn:hover{background:var(--c-sub2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cc.half{padding:14px 12px}
+.cc.half .hd h3{font-size:18px}
+.cc.half .big{font-size:38px;margin-top:10px}
+.today{background:var(--c-sub);border-radius:12px;padding:8px 6px 8px;margin-top:10px;text-align:center}
+.today .t{font-size:14px;font-weight:600}
+.today .cols{display:grid;grid-template-columns:1fr 1fr;margin-top:4px}
+.today .cols > div{padding:0 4px}
+.today .cols > div + div{border-left:1px solid rgba(255,255,255,.3)}
+.today .cols .l{font-size:11px;color:var(--on-dim)}
+.today .cols .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.today .cols .v small{font-size:11px;font-weight:400;display:block;line-height:1}
+.minibar{height:5px;border-radius:3px;background:rgba(255,255,255,.3);overflow:hidden;margin:6px 0 2px}
+.minibar i{display:block;height:100%;border-radius:3px}
+/* solar nested card */
+.solarcard{background:var(--c-orange);border-radius:16px;padding:10px 12px 10px;text-align:center;position:relative}
+.solarcard .t{font-size:17px;font-weight:600}
+.solarcard .big{font-size:46px;margin-top:2px}
+.solarcard .trk{display:flex;justify-content:space-around;margin-top:4px;font-variant-numeric:tabular-nums}
+.solarcard .trk b{font-size:17px;font-weight:600;display:block}
+.solarcard .trk span{font-size:11px;color:var(--on-dim)}
+.solarcard .strip{background:rgba(255,255,255,.18);border-radius:9px;padding:6px;margin-top:8px;font-size:14px;font-weight:600}
+.solarcard .hi{position:absolute;right:10px;top:8px;width:24px;height:24px}
+.solarcard .hi svg{width:100%;height:100%}
+.dots{display:flex;justify-content:center;gap:6px;margin:10px 0 6px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35)}
+.dots i.on{background:#fff}
+.fc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.fc .h{display:flex;justify-content:space-between;align-items:center;grid-column:1/-1;font-size:17px;font-weight:600}
+.fc .h .chip{font-size:12px;font-weight:500;background:var(--c-sub);border-radius:999px;padding:3px 10px;display:flex;align-items:center;gap:5px}
+.fc .h .chip svg{width:14px;height:14px}
+.fc .h .pr{font-size:12px;color:var(--on-dim);font-weight:400;text-align:center}
+.fc .col{text-align:center}
+.fc .col .k{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
+.fc .col .minibar{margin:8px 6px 10px}
+.fc .col .acts{display:flex;justify-content:space-around}
+.fc .col .acts button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--on)}
+.fc .col .acts button svg{width:22px;height:22px}
+/* white stats card */
+.wc{background:var(--card);border-radius:20px;padding:14px;color:var(--app-fg)}
+.wc .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.wc .hd h3{font-size:18px;font-weight:600}
+.wc .hd .r{font-size:13px;color:var(--app-muted)}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.kp.three{grid-template-columns:1fr 1fr 1fr}
+.kt{border-radius:12px;padding:8px 6px;text-align:center;min-width:0}
+.kt .l{font-size:12px;color:var(--app-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt .v{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+.kt .v small{font-size:12px;font-weight:400;display:block;color:var(--app-muted)}
+.kp.three .kt .v{font-size:20px}
+.footline{text-align:center;font-size:11px;color:var(--app-muted);margin:10px 0 2px;font-variant-numeric:tabular-nums}
+
+/* ---------- generic white cards / lists ---------- */
+.card{background:var(--card);border-radius:16px;padding:12px 14px;margin-top:10px}
+.card h3{font-size:16px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3 .r{font-size:12px;font-weight:400;color:var(--app-muted)}
+.seg{display:flex;background:color-mix(in srgb,var(--app-fg) 8%,transparent);border-radius:9px;padding:2px;margin:8px 0}
+.seg button{flex:1;padding:6px 0;font-size:13px;border-radius:7px;color:var(--app-fg);text-align:center}
+.seg button[aria-pressed="true"]{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.18);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--app-muted);margin-top:8px}
+.legend button{display:flex;align-items:center;gap:5px;color:inherit}
+.legend button[aria-pressed="false"]{opacity:.4;text-decoration:line-through}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.chart{position:relative;width:100%}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{font-family:var(--font-app);font-size:9px;fill:var(--ink3)}
+.chart .gridl{stroke:var(--grid);stroke-width:1}
+.chart .base{stroke:var(--axis);stroke-width:1}
+.tip{position:absolute;pointer-events:none;background:var(--app-fg);color:var(--app-bg);font-size:11px;padding:6px 8px;border-radius:7px;white-space:nowrap;transform:translate(-50%,-110%);display:none;z-index:3;line-height:1.35}
+.tip b{font-weight:600}
+.list{display:flex;flex-direction:column}
+.list .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--sep);font-size:15px}
+.list .row:last-child{border-bottom:0}
+.list .row .l{display:flex;align-items:center;gap:10px;min-width:0}
+.list .row .l .ic{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;flex:none}
+.list .row .l .ic svg{width:18px;height:18px}
+.list .row .v{color:var(--app-muted);font-size:14px;display:flex;align-items:center;gap:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.list .row small{display:block;font-size:12px;color:var(--app-muted)}
+.sw-toggle{width:44px;height:26px;border-radius:13px;background:color-mix(in srgb,var(--app-fg) 18%,transparent);position:relative;flex:none;transition:background .2s}
+.sw-toggle::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+.sw-toggle[aria-checked="true"]{background:var(--accent)}
+.sw-toggle[aria-checked="true"]::after{transform:translateX(18px)}
+.slider{margin-top:10px}
+.slider .lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.slider .lbl b{font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btn{display:block;width:100%;text-align:center;padding:12px;border-radius:12px;font-size:15px;font-weight:600;margin-top:10px}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.sec{background:color-mix(in srgb,var(--app-fg) 8%,transparent);color:var(--app-fg)}
+.pill{font-size:11px;padding:3px 8px;border-radius:999px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.pill.good{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 24%,transparent);color:#7a5200}
+:root[data-theme="dark"] .pill.warn{color:var(--warn)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pill.warn{color:var(--warn)}}
+.hint{font-size:12px;color:var(--app-muted);margin-top:8px}
+.bigtitle{font-size:28px;font-weight:700;letter-spacing:-.02em;padding:4px 4px 0}
+
+/* ---------- Energiefluss: Kreuz mit Haus in der Mitte ---------- */
+.hub{position:relative;margin-top:8px}
+.hub svg{width:100%;height:auto;display:block;overflow:visible}
+.hub .edge{fill:none;stroke-linecap:round}
+.hub .edge.off{stroke:var(--sep);stroke-width:2}
+.hub .nl{font-family:var(--font-app);font-size:10.5px;fill:rgba(255,255,255,.85)}
+.hub .nv{font-family:var(--font-disp);font-size:17px;font-weight:600;fill:#fff}
+.hub .nv tspan{font-size:10px;font-weight:500}
+.hub .ns{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,255,.8)}
+.hub .ni{stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-reduced-motion:reduce){.hub .dot{display:none}}
+/* Bilanzbalken (Heute) */
+.ledger{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.ledger .lh{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+.ledger .lh b{font-family:var(--font-disp);font-weight:600}
+.ledger .lh span{color:var(--app-muted);font-size:12px}
+.ledger .lb{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;margin-top:6px}
+.ledger .lb i{display:block;height:100%}
+.ledger .lk{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:12px;color:var(--app-muted);margin-top:6px}
+.ledger .lk span{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.ledger .lk b{color:var(--app-fg);font-weight:600}
+/* ---------- sankey (nicht mehr genutzt) ---------- */
+.sk{position:relative;margin-top:10px}
+.sk svg{width:100%;height:auto;display:block;overflow:visible}
+.sk .nm{font-family:var(--font-app);font-size:12px;font-weight:600;fill:var(--app-fg)}
+.sk .vl{font-family:var(--font-app);font-size:11px;fill:var(--app-muted)}
+.sk .hd{font-family:var(--font-app);font-size:10px;fill:var(--app-muted);letter-spacing:.06em}
+.idle{font-size:12px;color:var(--app-muted);margin-top:8px}
+.fc2{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;margin-top:12px;font-size:14px}
+.fc2 .l{color:var(--on-dim)}
+.fc2 .t{height:6px;border-radius:3px;background:rgba(255,255,255,.25);overflow:hidden}
+.fc2 .t i{display:block;height:100%;border-radius:3px;background:#f2c94c}
+.fc2 b{font-weight:600;font-variant-numeric:tabular-nums}
+.fc2 .h{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600}
+/* ---------- flow (legacy) ---------- */
+.flow{position:relative;margin-top:10px}
+.flow svg{width:100%;height:auto;display:block}
+.flow .node{fill:var(--card)}
+.flow .nl{font-family:var(--font-app);font-size:11px;fill:var(--app-muted)}
+.flow .nv{font-family:var(--font-app);font-size:15px;font-weight:600;fill:var(--app-fg)}
+.flow .ns{font-family:var(--font-app);font-size:10px;fill:var(--app-muted)}
+.flow .edge{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:6 8;animation:dash 1.2s linear infinite}
+.flow .edge.rev{animation-direction:reverse}
+.flow .edge.idle{stroke-dasharray:none;opacity:.25;animation:none}
+.flow .ev{font-family:var(--font-app);font-size:11px;font-weight:600;fill:var(--app-fg)}
+.flow .evbg{fill:var(--app-bg)}
+@keyframes dash{to{stroke-dashoffset:-14}}
+@media (prefers-reduced-motion:reduce){.flow .edge{animation:none}}
+
+/* ---------- sheet ---------- */
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:8;display:none}
+.sheet-bg.open{display:block}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--app-bg);border-radius:24px 24px 0 0;z-index:9;max-height:88%;overflow:auto;padding:8px 12px 30px;transform:translateY(105%);transition:transform .25s ease}
+.sheet.open{transform:none}
+.sheet .grab{width:36px;height:5px;border-radius:3px;background:color-mix(in srgb,var(--app-fg) 25%,transparent);margin:4px auto 10px}
+.sheet h2{font-size:20px;font-weight:700;padding:0 4px}
+.sheet .shd{display:flex;justify-content:space-between;align-items:center}
+@media (prefers-reduced-motion:reduce){.sheet{transition:none}}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .page{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .rail .note{max-width:none}
+  .stage{padding-block:16px}
+}
+@media (max-width:480px){
+  .phone{border-radius:0;padding:0;box-shadow:none;height:auto;max-height:none;width:100%}
+  .screen{border-radius:0;height:calc(100vh - 20px)}
+  .island,.status{display:none}
+  .stage{padding:0}
+  .rail .nav{display:none}
+}
+
+/* ===== Eigenständige Formensprache und kräftige Farbwelten (überschreibt die Regeln oben) =====
+   Farbwelt „Signal“ nach RAL-Signal-/Verkehrsfarben (festgelegt 24.10.2026). Diagrammserien validiert. */
+:root{ --c-info:#383e42; --c-solar:#e69500; --c-solar2:#f5ab00; --c-batt:#237f52; --c-house:#c1121c; --c-grid:#1f4e8c; --c-wb:#924e7d; --p-green:#e4f1ea; --p-yellow:#fdf0cf; --p-peach:#f8e3e3; --p-grey:#e9ecee; --p-blue:#e2e9f4; --s-solar:#9e7a23; --s-bezug:#36a3c8; --s-entl:#8d6cc2; --s-verbr:#c15c67; --s-einsp:#547ecd; --s-laden:#539344; --c-sub:rgba(255,255,255,.16); --c-sub2:rgba(255,255,255,.28); --c-deep:rgba(10,14,24,.22); --font-disp:"Sora",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; --chamfer:26px; }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){ --c-info:#2b3034; --c-solar:#d99400; --c-solar2:#e5a600; --c-batt:#1c6642; --c-house:#9e0f17; --c-grid:#1a4075; --c-wb:#773f66; --p-green:#203528; --p-yellow:#3a3014; --p-peach:#3b2224; --p-grey:#262b2f; --p-blue:#1f2a3b; --s-solar:#98741a; --s-bezug:#299abe; --s-entl:#8766bb; --s-verbr:#ba5661; --s-einsp:#4e78c7; --s-laden:#4d8c3e; --c-sub:rgba(255,255,255,.12); --c-sub2:rgba(255,255,255,.22); --c-deep:rgba(0,0,0,.28); }}
+:root[data-theme="dark"]{ --c-info:#2b3034; --c-solar:#d99400; --c-solar2:#e5a600; --c-batt:#1c6642; --c-house:#9e0f17; --c-grid:#1a4075; --c-wb:#773f66; --p-green:#203528; --p-yellow:#3a3014; --p-peach:#3b2224; --p-grey:#262b2f; --p-blue:#1f2a3b; --s-solar:#98741a; --s-bezug:#299abe; --s-entl:#8766bb; --s-verbr:#ba5661; --s-einsp:#4e78c7; --s-laden:#4d8c3e; --c-sub:rgba(255,255,255,.12); --c-sub2:rgba(255,255,255,.22); --c-deep:rgba(0,0,0,.28); }
+
+.appbar .title h2,.cc .hd h3,.wc .hd h3,.cc .big,.solar .big,.kt .v,.ring .rv,.bigtitle{font-family:var(--font-disp)}
+.cc .big{font-weight:500;letter-spacing:-.03em}
+.cc .hd h3{font-size:19px;font-weight:600;letter-spacing:-.01em}
+
+/* Karten: große Rundung, gefaste Ecke oben rechts als Signatur */
+.cc,.wc{border-radius:22px;overflow:hidden;isolation:isolate}
+.cc::after,.wc::after{content:"";position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 var(--chamfer) var(--chamfer) 0;border-color:transparent var(--app-bg) transparent transparent;pointer-events:none;z-index:2}
+.wc{position:relative}
+.cc.info{background:var(--c-info)} .cc.solar{background:linear-gradient(160deg,var(--c-solar2),var(--c-solar) 70%)}
+.cc.batt{background:var(--c-batt)} .cc.house{background:var(--c-house)} .cc.grid{background:var(--c-grid)} .cc.wb{background:var(--c-wb)}
+.cc .hd{padding-right:var(--chamfer)}
+.cc .wm{position:absolute;right:-6px;bottom:-10px;width:92px;height:92px;opacity:.14;pointer-events:none;color:#fff}
+.cc .wm svg{width:100%;height:100%;stroke-width:1.2}
+.cc.half .wm{width:70px;height:70px;right:-8px;bottom:-8px}
+
+/* Unterkacheln: weicher, mit Akzentkante links */
+.st{border-radius:14px;border-left:3px solid var(--c-sub2);padding:8px 10px 8px 11px}
+.cbtn{border-radius:999px;padding:10px 14px;background:var(--c-sub);border:1px solid var(--c-sub2)}
+.cbtn:hover{background:var(--c-sub2)}
+.today{border-radius:14px}
+
+/* Sonnenbogen (Tagesverlauf) */
+.sunarc{width:100%;height:auto;display:block;margin:6px 0 8px}
+.cc.solar{--c-deep:rgba(0,0,0,.16);text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.cc.solar .fc2 .t{background:rgba(255,255,255,.3)} .cc.solar .fc2 .t i{background:#fff}
+.sunarc .trk{fill:none;stroke:currentColor;opacity:.4;stroke-width:2;stroke-dasharray:3 5}
+.sunarc .done{fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round}
+.sunarc .sun{fill:currentColor}
+.sunarc text{font-family:var(--font-app);font-size:9.5px;fill:currentColor;opacity:.85}
+.solar .trkrow{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--on-dim);font-variant-numeric:tabular-nums;margin-top:4px}
+.solar .trkrow span{white-space:nowrap}
+.solar .trkrow b{color:var(--on);font-weight:600}
+.solar .fcblock{background:var(--c-deep);border-radius:14px;padding:10px 12px;margin-top:12px}
+.fc2{margin-top:0}
+.fc2 .t{background:rgba(255,255,255,.22)}
+.fc2 .t i{background:#fff}
+
+/* Ring für den Ladezustand */
+.ring{display:grid;place-items:center;position:relative;width:104px;height:104px}
+.ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(135deg)}
+.ring .bg{fill:none;stroke:rgba(255,255,255,.22);stroke-width:8;stroke-linecap:round}
+.ring .fg{fill:none;stroke:#fff;stroke-width:8;stroke-linecap:round}
+.ring .rv{font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.ring .rv small{font-size:12px;font-weight:500;margin-left:1px}
+.ring .rl{font-size:10.5px;color:var(--on-dim);margin-top:2px}
+.battrow{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;margin-top:6px}
+.battrow .big{font-size:38px}
+.battrow .lab{margin-top:0}
+.battrow .eta{font-size:12.5px;color:var(--on-dim);margin-top:6px}
+
+/* KPI-Kacheln: Punkt statt Pastell-Dominanz */
+.kt{border-radius:14px;text-align:left;padding:8px 10px;position:relative}
+.kt .l{padding-left:12px}
+.kt .l::before{content:"";position:absolute;left:10px;top:13px;width:6px;height:6px;border-radius:50%;background:var(--kdot,var(--app-muted))}
+.kt .v{padding-left:12px;font-size:22px}
+.kp.three .kt .v{font-size:19px}
+
+/* Toolbar: Pille mit gefülltem aktiven Punkt */
+.toolbar{border-radius:999px;padding:6px 10px 6px 6px}
+.toolbar button{border-radius:50%;width:40px;height:40px}
+.toolbar button[aria-current="true"]{background:var(--c-solar);color:#1c1407}
+.toolbar .st{font-family:var(--font-app)}
+</style>
+
+<div class="page">
+  <aside class="rail">
+    <h1>Wattbury Click-Dummy</h1>
+    <div class="sub">Eigene iOS-App für das E3/DC S10E. Gestapelte Farbkarten wie bei my4E, aber mit eigener Formensprache (Fase, Sonnenbogen, Ring) und der Farbwelt „Signal“ nach RAL. Alle Werte sind Beispieldaten.</div>
+    <div class="toggles">
+      <button type="button" id="th-light" aria-pressed="false">Hell</button>
+      <button type="button" id="th-dark" aria-pressed="false">Dunkel</button>
+      <button type="button" id="th-sys" aria-pressed="true">System</button>
+    </div>
+    <div class="group">
+      <div class="label">Screens</div>
+      <nav class="nav" id="screenNav">
+        <button type="button" data-go="monitor" aria-current="true"><span class="k">1</span>Energiemonitor</button>
+        <button type="button" data-go="history"><span class="k">2</span>Diagramme</button>
+        <button type="button" data-go="flow"><span class="k">3</span>Energiefluss</button>
+        <button type="button" data-go="smart"><span class="k">4</span>Smart-Funktionen</button>
+        <button type="button" data-go="more"><span class="k">5</span>Einstellungen</button>
+        <button type="button" data-sheet="wallbox"><span class="k">W</span>Sheet: Wallbox-Steuerung</button>
+        <button type="button" data-sheet="battery"><span class="k">B</span>Sheet: Systemstatistik &amp; Info</button>
+        <button type="button" data-sheet="setup"><span class="k">V</span>Sheet: Verbindung einrichten</button>
+      </nav>
+    </div>
+    <div class="group">
+      <div class="label">Hinweise zum Screen</div>
+      <div class="note" id="note"></div>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="phone">
+      <div class="screen" id="app">
+        <div class="island"></div>
+        <div class="status"><span>09:41</span><span class="r">●●●● <span class="bat"></span></span></div>
+
+        <div class="appbar">
+          <button type="button" class="icon-btn" aria-label="Einstellungen" data-go="more"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="7.5" r=".9" fill="currentColor"/><circle cx="12" cy="12" r=".9" fill="currentColor"/><circle cx="12" cy="16.5" r=".9" fill="currentColor"/></svg></button>
+          <div class="title"><h2 id="appTitle">Wattbury</h2><div class="conn"><span class="dot"></span><span id="connText">RSCP Verbindung · 1 Sek.</span></div></div>
+          <div class="abtns">
+            <button type="button" class="icon-btn" aria-label="Diagramme" data-go="history"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 20h18M5 17V11M10 17V6M15 17v-4"/><circle cx="19" cy="7" r="3"/><path d="M19 5.5v3M17.5 7h3"/></svg></button>
+            <button type="button" class="icon-btn" aria-label="Aktualisieren"><svg class="svgicon" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
+          </div>
+        </div>
+
+        <div class="views">
+          <!-- ===== Energiemonitor ===== -->
+          <section class="view active" id="v-monitor">
+            <div class="cards">
+
+              <!-- Solar -->
+              <button type="button" class="cc solar" data-sheet="pv">
+                <div class="hd"><h3>Solar</h3></div>
+                <svg class="sunarc" viewBox="0 0 330 72" aria-hidden="true">
+                  <path class="trk" d="M20 58 A260 260 0 0 1 310 58"/>
+                  <path class="done" d="M20 58 A260 260 0 0 1 67.6 32.7"/>
+                  <circle class="sun" cx="67.6" cy="32.7" r="5"/>
+                  <text x="20" y="70" text-anchor="start">07:50</text><text x="165" y="9" text-anchor="middle">Mittag 12:55</text><text x="310" y="70" text-anchor="end">18:20</text>
+                </svg>
+                <div class="big">3,42<small>kW</small></div>
+                <div class="trkrow"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span><span>Heute <b>14,2 kWh</b></span></div>
+                <div class="fcblock">
+                  <div class="fc2">
+                    <div class="h"><span>Prognose</span><span style="font-size:12px;font-weight:500;background:var(--c-sub);border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:5px"><svg class="svgicon" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 18 18z"/></svg>leicht bewölkt</span></div>
+                    <span class="l">Heute</span><span class="t"><i style="width:45%"></i></span><b>≈ 31,4 kWh</b>
+                    <span class="l">Morgen</span><span class="t"><i style="width:68%"></i></span><b>≈ 42,0 kWh</b>
+                  </div>
+                </div>
+                <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>
+              </button>
+
+              <!-- Batterie -->
+              <div class="cc batt">
+                <div class="hd"><h3>Batterie</h3></div>
+                <div class="battrow">
+                  <div class="ring"><svg viewBox="0 0 104 104"><circle class="bg" cx="52" cy="52" r="44" stroke-dasharray="207 276"/><circle class="fg" cx="52" cy="52" r="44" stroke-dasharray="141 276"/></svg><div style="text-align:center"><div class="rv">68<small>%</small></div><div class="rl">8,8 kWh</div></div></div>
+                  <div><div class="big">+2,41<small>kW</small></div><div class="lab">Ladung aus Solar</div><div class="eta">Voll gegen 11:25 · Autarkie heute 97 %</div></div>
+                </div>
+                <div class="sub" style="margin-top:12px">
+                  <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16V8M8 12l4-4 4 4"/></svg>Heute geladen</div><div class="v">4,80<small>kWh</small></div></div>
+                  <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>Heute entladen</div><div class="v">3,20<small>kWh</small></div></div>
+                  <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><path d="M10 4v10a3 3 0 1 0 4 0V4a2 2 0 0 0-4 0z"/></svg>Temperatur</div><div class="v">23,4 – 24,8<small>°C</small></div></div>
+                  <div class="st"><div class="l"><svg class="svgicon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Batteriezustand</div><div class="v">96,1<small>%</small></div></div>
+                </div>
+                <div class="sub" style="margin-top:10px">
+                  <button type="button" class="cbtn" data-sheet="battery"><svg class="svgicon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Statistik &amp; Info</button>
+                  <button type="button" class="cbtn" data-go="smart"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Smart-Funktionen</button>
+                </div>
+                <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M6 10v4M9 10v4M12 10v4"/></svg></span>
+              </div>
+
+              <!-- Netz + Haus -->
+              <div class="two">
+                <button type="button" class="cc grid half" data-go="flow">
+                  <div class="hd"><h3>Netz</h3></div>
+                  <div class="big">398<small>W</small></div><div class="lab">Einspeisung</div>
+                  <div class="today"><div class="t">Heute</div><div class="cols"><div><div class="l">Bezug</div><div class="v">↓ 0,31<small>kWh</small></div></div><div><div class="l">Einspeisung</div><div class="v">↑ 4,22<small>kWh</small></div></div></div></div>
+                  <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 2l-6 20M12 2l6 20M6 9h12M7.5 15h9M3 22h18"/></svg></span>
+                </button>
+                <button type="button" class="cc house half" data-go="flow">
+                  <div class="hd"><h3>Haus</h3></div>
+                  <div class="big">612<small>W</small></div><div class="lab">Verbrauch</div>
+                  <div class="today"><div class="t">Heute</div><div class="cols"><div><div class="l">Direkt</div><div class="v">5,21<small>kWh</small></div></div><div><div class="l">Gesamt</div><div class="v">8,70<small>kWh</small></div></div></div></div>
+                  <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><path d="M10 20v-5h4v5"/></svg></span>
+                </button>
+              </div>
+
+              <!-- Wallbox (kompakt) -->
+              <div class="cc wb" style="padding:12px 14px">
+                <div class="hd"><h3>Wallbox</h3></div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:4px">
+                  <div style="min-width:0"><div class="big">0<small>W</small></div><div class="lab">bereit · Sonnenmodus · 3 Phasen · 8 A</div><div class="lab" style="margin-top:2px">Heute 2,49 kWh geladen, 99 % Solar</div></div>
+                  <button type="button" class="cbtn" style="width:auto;flex:none" data-sheet="wallbox">Steuerung</button>
+                </div>
+                <span class="wm"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 15l2-6h12l2 6v4H3z"/><circle cx="7" cy="18" r="1.5"/><circle cx="16" cy="18" r="1.5"/><path d="M19 9l3-3"/></svg></span>
+              </div>
+
+              <!-- Heute -->
+              <div class="wc">
+                <div class="hd"><h3>Heute</h3><span class="r">Fr, 24. Okt</span></div>
+                <div class="kp three">
+                  <div class="kt" style="background:var(--p-green);--kdot:var(--c-batt)"><div class="l">Autarkie</div><div class="v">96,6<small>%</small></div></div>
+                  <div class="kt" style="background:var(--p-yellow);--kdot:var(--s-solar)"><div class="l">Eigenverbr.</div><div class="v">70,4<small>%</small></div></div>
+                  <div class="kt" style="background:var(--p-blue);--kdot:var(--c-grid)"><div class="l">Ersparnis</div><div class="v">3,20<small>€</small></div></div>
+                </div>
+                <div class="ledger" data-flow="today" data-compact="1"></div>
+              </div>
+
+              <!-- Monatsstatistik -->
+              <div class="wc">
+                <div class="hd"><h3>Monatsstatistik</h3><span class="r">Oktober 2026</span></div>
+                <div class="kp">
+                  <div class="kt" style="background:var(--p-green);--kdot:var(--c-batt)"><div class="l">Autarkie</div><div class="v">93,4<small>%</small></div></div>
+                  <div class="kt" style="background:var(--p-peach);--kdot:var(--c-house)"><div class="l">Direktverbrauch</div><div class="v">98,7<small>kWh</small></div></div>
+                </div>
+                <div class="kp three">
+                  <div class="kt" style="background:var(--p-yellow);--kdot:var(--s-solar)"><div class="l">Solarproduktion</div><div class="v">412<small>kWh</small></div></div>
+                  <div class="kt" style="background:var(--p-grey);--kdot:var(--s-bezug)"><div class="l">Netzbezug</div><div class="v">17,2<small>kWh</small></div></div>
+                  <div class="kt" style="background:var(--p-blue);--kdot:var(--s-einsp)"><div class="l">Einspeisung</div><div class="v">198<small>kWh</small></div></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--app-muted);margin-top:12px"><span>Tagesproduktion</span><span>Ø 17 kWh · Max 24,1 kWh</span></div>
+                <div class="chart" id="monthMini"></div>
+              </div>
+
+              <div class="footline">Ausgeblendet, bis konfiguriert: Ext. Verbrauch · Ext. Quellen · Börsenstrompreise</div>
+              <div class="footline" style="margin-top:0">S10 E · 9,9 kWp · 13 kWh · Firmware S10_2025_04 · letzte Daten 09:41:07</div>
+            </div>
+          </section>
+
+          <!-- ===== Diagramme ===== -->
+          <section class="view" id="v-history">
+            <div class="seg" id="rangeSeg" style="margin-top:0">
+              <button type="button" aria-pressed="false" data-range="day">Tag</button>
+              <button type="button" aria-pressed="true" data-range="week">Woche</button>
+              <button type="button" aria-pressed="false" data-range="month">Monat</button>
+              <button type="button" aria-pressed="false" data-range="year">Jahr</button>
+            </div>
+            <div class="wc">
+              <div class="hd"><h3 id="rangeTitle">18. – 24. Okt 2026</h3><span class="r">‹ &nbsp; ›</span></div>
+              <div class="chart" id="histChart" style="margin-top:8px"></div>
+              <div class="legend" id="histLegend"></div>
+            </div>
+            <div class="wc" style="margin-top:10px">
+              <div class="hd"><h3>Bilanz</h3><span class="r">Woche</span></div>
+              <div class="kp">
+                <div class="kt" style="background:var(--p-green);--kdot:var(--c-batt)"><div class="l">Autarkie</div><div class="v">94,2<small>%</small></div></div>
+                <div class="kt" style="background:var(--p-yellow);--kdot:var(--s-solar)"><div class="l">Eigenverbrauch</div><div class="v">56,0<small>%</small></div></div>
+              </div>
+              <div class="kp three">
+                <div class="kt" style="background:var(--p-yellow);--kdot:var(--s-solar)"><div class="l">Solar</div><div class="v">118<small>kWh</small></div></div>
+                <div class="kt" style="background:var(--p-grey);--kdot:var(--s-bezug)"><div class="l">Netzbezug</div><div class="v">4,4<small>kWh</small></div></div>
+                <div class="kt" style="background:var(--p-blue);--kdot:var(--s-einsp)"><div class="l">Einspeisung</div><div class="v">50,2<small>kWh</small></div></div>
+              </div>
+              <div class="list" style="margin-top:6px">
+                <div class="row"><div class="l">Einspeisevergütung</div><div class="v">50,2 kWh × 8,1 ct = 4,07 €</div></div>
+                <div class="row"><div class="l">Netzbezugskosten</div><div class="v">4,4 kWh × 31,2 ct = 1,37 €</div></div>
+                <div class="row"><div class="l">Ersparnis ggü. Vollbezug</div><div class="v"><b>20,8 €</b></div></div>
+              </div>
+            </div>
+            <div class="wc" style="margin-top:10px">
+              <div class="hd"><h3>Weitere Ansichten</h3></div>
+              <div class="list">
+                <div class="row"><div class="l">Energiefluss (Chord) für den Zeitraum</div><div class="v">›</div></div>
+                <div class="row"><div class="l">Heatmap Stunde × Tag</div><div class="v">›</div></div>
+                <div class="row"><div class="l">Vergleich mit Vorjahr</div><div class="v">›</div></div>
+                <div class="row"><div class="l">Export CSV / PDF</div><div class="v">›</div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== Energiefluss ===== -->
+          <section class="view" id="v-flow">
+            <div class="wc">
+              <div class="hd"><h3>Jetzt</h3><span class="pill good">✓ Überschuss</span></div>
+              <div class="hint" style="margin-top:4px">Die Sonne liefert 3,42 kW. Davon versorgt sie das Haus, lädt die Batterie und speist den Rest ein.</div>
+              <div class="hub" data-flow="now"></div>
+            </div>
+            <div class="wc" style="margin-top:10px">
+              <div class="hd"><h3>Heute</h3><span class="r">seit 00:00 · kWh</span></div>
+              <div class="ledger" data-flow="today"></div>
+              <div class="list" style="margin-top:8px">
+                <div class="row"><div class="l">Autarkie</div><div class="v"><b>96,6 %</b></div></div>
+                <div class="row"><div class="l">Eigenverbrauch</div><div class="v"><b>70,4 %</b></div></div>
+                <div class="row"><div class="l">Batterie voll</div><div class="v">ca. 11:25</div></div>
+                <div class="row"><div class="l">Phasen L1 · L2 · L3</div><div class="v">−0,21 · −0,09 · −0,10 kW</div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===== Smart-Funktionen ===== -->
+          <section class="view" id="v-smart">
+            <div class="seg" style="margin-top:0">
+              <button type="button" aria-pressed="true">Sperrzeiten</button>
+              <button type="button" aria-pressed="false">Lade- / Entladeleistung</button>
+              <button type="button" aria-pressed="false">Notstrom</button>
+            </div>
+            <div class="wc">
+              <div class="hd"><h3>Sperrzeiten</h3><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Sperrzeiten aktiv"></button></div>
+              <div class="list">
+                <div class="row"><div class="l"><span class="ic" style="background:var(--s-entl)"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M7 12h8"/></svg></span><span>Entladesperre<small>Mo – Fr · 00:00 – 06:00</small></span></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Entladesperre aktiv"></button></div></div>
+                <div class="row"><div class="l"><span class="ic" style="background:var(--s-laden)"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M11 9v6M8 12h6"/></svg></span><span>Ladesperre<small>Sa, So · 10:00 – 14:00</small></span></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Ladesperre aktiv"></button></div></div>
+              </div>
+              <button type="button" class="btn sec">+ Neue Sperrzeit</button>
+            </div>
+            <div class="wc" style="margin-top:10px">
+              <div class="hd"><h3>Lade- / Entladeleistung</h3></div>
+              <div class="slider"><div class="lbl"><span>Max. Ladeleistung</span><b id="chgVal">4.500 W</b></div><input type="range" id="chg" min="500" max="6000" step="100" value="4500"></div>
+              <div class="slider"><div class="lbl"><span>Max. Entladeleistung</span><b id="dchVal">6.000 W</b></div><input type="range" id="dch" min="500" max="6000" step="100" value="6000"></div>
+              <div class="list" style="margin-top:6px">
+                <div class="row"><div class="l">Wetterabhängiges Laden</div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Wetterabhängiges Laden"></button></div></div>
+                <div class="row"><div class="l">PowerSave</div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="PowerSave"></button></div></div>
+              </div>
+            </div>
+            <div class="wc" style="margin-top:10px">
+              <div class="hd"><h3>Notstromreserve</h3></div>
+              <div class="slider"><div class="lbl"><span>Reserve</span><b id="resVal">20 % · 2,6 kWh</b></div><input type="range" id="res" min="0" max="100" step="5" value="20"></div>
+              <div class="hint">Erst „Übernehmen“ sendet die Werte an das Hauskraftwerk (RSCP-Setter). Danach liest die App den Wert zurück und bestätigt.</div>
+            </div>
+            <button type="button" class="btn primary" id="applyBtn">Änderungen übernehmen</button>
+          </section>
+
+          <!-- ===== Einstellungen ===== -->
+          <section class="view" id="v-more">
+            <div class="bigtitle">Einstellungen</div>
+            <div class="card">
+              <h3>Verbindung</h3>
+              <div class="list">
+                <div class="row"><div class="l"><span class="ic" style="background:var(--accent)"><svg class="svgicon" viewBox="0 0 24 24"><path d="M4 12h16M12 4v16"/></svg></span><span>Lokal (RSCP)<small>192.168.178.40 · verbunden · 1 Sek.</small></span></div><div class="v"><span class="dot"></span></div></div>
+                <div class="row"><div class="l"><span class="ic" style="background:var(--c-info)"><svg class="svgicon" viewBox="0 0 24 24"><path d="M7 18a4 4 0 0 1 0-8 6 6 0 0 1 11.5 1.5A3.5 3.5 0 0 1 18 18z"/></svg></span><span>Bridge / unterwegs<small>bridge.home.example · Tailscale</small></span></div><div class="v">›</div></div>
+                <div class="row"><div class="l"><span class="ic" style="background:#9fb0ba"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span><span>E3/DC Cloud (Fallback)<small>Cloud-Registry-Key · 15 Sek. / 15 Min.</small></span></div><div class="v">›</div></div>
+                <div class="row"><div class="l">Verbindung neu einrichten</div><div class="v"><button type="button" class="pill warn" data-sheet="setup">Assistent ›</button></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Dashboard</h3>
+              <div class="list">
+                <div class="row"><div class="l">Karten sortieren &amp; ausblenden</div><div class="v">›</div></div>
+                <div class="row"><div class="l">Layout iPhone / iPad getrennt</div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Getrennte Layouts"></button></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Anlage</h3>
+              <div class="list">
+                <div class="row"><div class="l">PV-Leistung</div><div class="v">9,9 kWp · 2 Tracker</div></div>
+                <div class="row"><div class="l">Batterie</div><div class="v">13,0 kWh · 2 Module</div></div>
+                <div class="row"><div class="l">Prognose-Ausrichtung<small>Azimut / Neigung je Tracker</small></div><div class="v">SO 35° / NW 35°</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Tarif &amp; Kosten</h3>
+              <div class="list">
+                <div class="row"><div class="l">Strompreis</div><div class="v">31,2 ct/kWh</div></div>
+                <div class="row"><div class="l">Einspeisevergütung</div><div class="v">8,1 ct/kWh</div></div>
+                <div class="row"><div class="l">Börsenpreise (Tibber / aWATTar)</div><div class="v">an</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Benachrichtigungen <span class="r">über Bridge</span></h3>
+              <div class="list">
+                <div class="row"><div class="l">Batterie unter<small>10 % · nur abends</small></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Batterie-Warnung"></button></div></div>
+                <div class="row"><div class="l">Netzbezug über<small>2,0 kW länger als 10 Min.</small></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Netzbezug-Warnung"></button></div></div>
+                <div class="row"><div class="l">Anlage offline</div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Offline-Warnung"></button></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Widgets &amp; Watch</h3>
+              <div class="list">
+                <div class="row"><div class="l">Home-Screen „Energiefluss“</div><div class="v">›</div></div>
+                <div class="row"><div class="l">Lock-Screen „SOC“</div><div class="v">›</div></div>
+                <div class="row"><div class="l">Apple Watch „Jetzt“-Kacheln</div><div class="v">›</div></div>
+              </div>
+            </div>
+            <div class="footline">Wattbury 0.1 · Open Source · Zugangsdaten nur im Schlüsselbund</div>
+          </section>
+        </div>
+
+        <nav class="toolbar" id="toolbar" aria-label="Hauptnavigation">
+          <button type="button" data-go="monitor" aria-current="true" aria-label="Energiemonitor"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="8" height="7" rx="2"/><rect x="13" y="14" width="8" height="7" rx="2"/></svg></button>
+          <button type="button" data-go="history" aria-label="Diagramme"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 15l2 2 4-4"/></svg></button>
+          <button type="button" data-go="flow" aria-label="Energiefluss"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/><path d="M12 12L5.6 18.4"/></svg></button>
+          <button type="button" data-go="smart" aria-label="Smart-Funktionen"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>
+          <span class="st">✓ 09:41:07 · ✓ Lokal</span>
+        </nav>
+
+        <!-- ===== Sheets ===== -->
+        <div class="sheet-bg" id="sheetBg"></div>
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const fmt=(n,d=1)=>n.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+  /* ---------- theme toggles ---------- */
+  const root=document.documentElement;
+  function setTheme(t){ if(t==='sys') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',t);
+    ['light','dark','sys'].forEach(k=>$('#th-'+k).setAttribute('aria-pressed',String(k===t)));
+    try{localStorage.setItem('wattbury-theme',t)}catch(e){} drawAll(); }
+  ['light','dark','sys'].forEach(k=>$('#th-'+k).addEventListener('click',()=>setTheme(k)));
+  try{const s=localStorage.getItem('wattbury-theme'); if(s) setTheme(s)}catch(e){}
+  /* ---------- notes ---------- */
+  const notes={
+    monitor:`<p><b>Energiemonitor</b>: gestapelte Farbkarten mit eigener Handschrift.</p><ul><li><b>Farbwelt „Signal“</b> nach RAL: Signalgelb, Signalgrün, Verkehrsrot, Signalblau, Signalviolett, Anthrazitgrau. Diagrammfarben auf Farbfehlsichtigkeit geprüft.</li><li>Weiße Schrift auf allen Karten, auch auf Gelb.</li><li><b>Fase:</b> jede Karte hat eine abgeschrägte Ecke oben rechts.</li><li><b>Sonnenbogen</b> zeigt den Tagesverlauf der Sonne, der <b>Ring</b> den Ladezustand.</li><li>Große, blasse Wasserzeichen-Icons unten rechts statt kleiner Ecken-Icons.</li><li>Zahlen und Titel in Sora, Fließtext in der Systemschrift.</li><li>Ext. Verbrauch, Ext. Quellen und Börsenpreise erscheinen erst, wenn konfiguriert.</li></ul>`,
+    history:`<p><b>Diagramme</b>: Zeitraum (Tag/Woche/Monat/Jahr), gestapelte Balken. Oben Quellen (Solar, Netzbezug, Batterie entladen), unten Senken (Verbrauch, Einspeisung, Batterie laden).</p><ul><li>Legende blendet Serien aus, Tooltip per Tap.</li><li>Bilanz mit Pastell-KPIs wie in der Monatsstatistik, plus Kosten-Zeilen.</li></ul>`,
+    flow:`<p><b>Energiefluss</b> als Kreuz: Haus in der Mitte, Solar oben, Batterie unten, Netz links, Wallbox rechts. Jeder Knoten trägt seinen Wert in seiner Kartenfarbe.</p><ul><li>Aktive Verbindungen sind dick, in der Farbe der Quelle, mit laufenden Punkten in Flussrichtung. Ruhende sind dünn und grau.</li><li>Liniendicke folgt der Leistung.</li><li>„Heute“ als zwei Bilanzbalken: wohin die Sonne ging, woher der Verbrauch kam.</li></ul>`,
+    smart:`<p><b>Smart-Funktionen</b> (nur mit RSCP): Sperrzeiten, Lade-/Entladeleistung, Notstromreserve. Wallbox-Steuerung als eigenes Sheet.</p><ul><li>Änderungen werden gesammelt und mit „Übernehmen“ gesendet, danach zurückgelesen.</li><li>Ohne RSCP ist der Bereich deaktiviert und erklärt warum.</li></ul>`,
+    more:`<p><b>Einstellungen</b>: Verbindungsarten, Dashboard-Sortierung, Anlage, Tarif, Benachrichtigungen, Widgets.</p><ul><li>Benachrichtigungen brauchen die Bridge, da iOS-Apps nicht dauerhaft im Hintergrund pollen dürfen.</li></ul>`,
+    wallbox:`<p><b>Wallbox-Steuerung</b> wie my4E: Sonnen-/Mischmodus, Phasen, Ladestrom, Priorität, Batterie-Entladung in die Wallbox, Laden starten/stoppen.</p>`,
+    battery:`<p><b>Systemstatistik &amp; Info</b>: Tabs Systeminfo · Energiefluss seit Inbetriebnahme · Berechnungen; hier die Batterie-Details.</p>`,
+    setup:`<p><b>Verbindungs-Assistent</b>: lokal (IP, Portal-Login, RSCP-Passwort), optional Bridge, optional Cloud-Registry-Key.</p><ul><li>Zugangsdaten bleiben im iOS-Schlüsselbund.</li></ul>`,
+    pv:`<p><b>PV-Details</b>: Leistung je Tracker, Spannung/Strom, Abregelung, Tagesverlauf.</p>`
+  };
+  function note(k){ $('#note').innerHTML=notes[k]||''; }
+
+  /* ---------- navigation ---------- */
+  const titles={monitor:'Wattbury',history:'Diagramme',flow:'Energiefluss',smart:'Smart-Funktionen',more:'Einstellungen'};
+  function go(v){
+    $$('.view').forEach(e=>e.classList.toggle('active',e.id==='v-'+v));
+    $$('#toolbar button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.go===v)));
+    $$('#screenNav button').forEach(b=>b.setAttribute('aria-current',String(b.dataset.go===v)));
+    $('#appTitle').textContent=titles[v]; note(v); closeSheet(); drawAll();
+  }
+  document.addEventListener('click',e=>{
+    const g=e.target.closest('[data-go]'); if(g){go(g.dataset.go);return;}
+    const s=e.target.closest('[data-sheet]'); if(s){openSheet(s.dataset.sheet);}
+  });
+  note('monitor');
+
+  /* ---------- sheets ---------- */
+  const sheets={
+    wallbox:`<div class="grab"></div><div class="shd"><h2>Wallbox</h2><span class="pill good">verbunden · bereit</span></div>
+      <div class="card"><div class="seg" style="margin-top:0"><button type="button" aria-pressed="true">Sonnenmodus</button><button type="button" aria-pressed="false">Mischmodus</button></div>
+      <div class="seg"><button type="button" aria-pressed="false">1 Phase</button><button type="button" aria-pressed="true">3 Phasen</button><button type="button" aria-pressed="false">Auto</button></div>
+      <div class="slider"><div class="lbl"><span>Ladestrom</span><b id="ampVal">8 A · 5,5 kW</b></div><input type="range" id="amp" min="6" max="32" value="8"></div></div>
+      <div class="card"><h3>Ladepriorität</h3><div class="seg"><button type="button" aria-pressed="true">Wallbox</button><button type="button" aria-pressed="false">Hauskraftwerk</button></div>
+      <div class="list"><div class="row"><div class="l">Batterie entlädt in Wallbox<small>bis min. SOC 30 %</small></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Batterie entlädt in Wallbox"></button></div></div></div></div>
+      <div class="card"><div class="list"><div class="row"><div class="l">Status</div><div class="v">Wagen lädt nicht</div></div><div class="row"><div class="l">Heute</div><div class="v">☀ 2,48 kWh · ⚡ 9 Wh</div></div></div></div>
+      <button type="button" class="btn sec">Einstellungen übermitteln</button><button type="button" class="btn primary">Laden starten</button>
+      <div class="hint">Fahrzeugseitige Einstellungen können den Ladestart verhindern oder verzögern.</div>`,
+    battery:`<div class="grab"></div><div class="shd"><h2>Systemstatistik &amp; Info</h2></div>
+      <div class="seg"><button type="button" aria-pressed="false">Systeminfo</button><button type="button" aria-pressed="true">Batterie</button><button type="button" aria-pressed="false">Seit Inbetriebn.</button></div>
+      <div class="card" style="margin-top:0"><div class="list">
+        <div class="row"><div class="l">Ladezustand (SOC)</div><div class="v">68,2 % · 8,8 kWh</div></div>
+        <div class="row"><div class="l">Batteriezustand (SOH)</div><div class="v">96,1 %</div></div>
+        <div class="row"><div class="l">Temperatur min / max</div><div class="v">23,4 / 24,8 °C</div></div>
+        <div class="row"><div class="l">Vollzyklen</div><div class="v">812</div></div>
+        <div class="row"><div class="l">Spannung · Strom</div><div class="v">51,2 V · 47,1 A</div></div>
+        <div class="row"><div class="l">Voll um</div><div class="v">ca. 11:25</div></div>
+      </div></div>
+      <div class="card"><h3>Heute</h3><div class="list">
+        <div class="row"><div class="l"><span class="sw" style="background:var(--s-laden)"></span>Geladen</div><div class="v">4,80 kWh</div></div>
+        <div class="row"><div class="l"><span class="sw" style="background:var(--s-entl)"></span>Entladen</div><div class="v">3,20 kWh</div></div>
+        <div class="row"><div class="l">Wirkungsgrad (30 Tage)</div><div class="v">91 %</div></div>
+      </div></div>
+      <div class="card"><h3>Module</h3><div class="list">
+        <div class="row"><div class="l">Modul 1</div><div class="v">6,5 kWh · 24,8 °C · SOH 96 %</div></div>
+        <div class="row"><div class="l">Modul 2</div><div class="v">6,5 kWh · 23,4 °C · SOH 97 %</div></div>
+      </div></div>`,
+    setup:`<div class="grab"></div><div class="shd"><h2>Verbindung einrichten</h2></div>
+      <div class="card"><h3>1 · Lokal per RSCP <span class="pill good">empfohlen</span></h3>
+        <div class="list"><div class="row"><div class="l">IP-Adresse des S10</div><div class="v">192.168.178.40</div></div>
+        <div class="row"><div class="l">Portal-Benutzer</div><div class="v">name@beispiel.de</div></div>
+        <div class="row"><div class="l">Portal-Passwort</div><div class="v">••••••••</div></div>
+        <div class="row"><div class="l">RSCP-Passwort<small>S10-Menü: Personalisieren › Benutzerprofil</small></div><div class="v">••••••</div></div></div>
+        <button type="button" class="btn primary">Verbindung testen</button></div>
+      <div class="card"><h3>2 · Unterwegs über Bridge <span class="r">optional</span></h3>
+        <div class="list"><div class="row"><div class="l">Bridge-URL</div><div class="v">https://bridge.home…</div></div><div class="row"><div class="l">Token</div><div class="v">••••••••</div></div></div>
+        <div class="hint">Die Bridge läuft zu Hause (z. B. Raspberry Pi), hält die RSCP-Verbindung, speichert den Verlauf und sendet Benachrichtigungen.</div></div>
+      <div class="card"><h3>3 · E3/DC Cloud <span class="r">optional, nur lesend</span></h3>
+        <div class="list"><div class="row"><div class="l">Seriennummer</div><div class="v">S10-…</div></div><div class="row"><div class="l">Cloud-Registry-Key<small>my.e3dc.com › Rechteverwaltung</small></div><div class="v">••••••</div></div></div></div>`,
+    pv:`<div class="grab"></div><div class="shd"><h2>Solarproduktion</h2><span class="pill good">3,42 kW</span></div>
+      <div class="card"><div class="list">
+        <div class="row"><div class="l">Tracker 1 (SO)</div><div class="v">1,81 kW · 412 V · 4,4 A</div></div>
+        <div class="row"><div class="l">Tracker 2 (NW)</div><div class="v">1,61 kW · 398 V · 4,0 A</div></div>
+        <div class="row"><div class="l">Ertrag je kWp</div><div class="v">345 W/kWp</div></div>
+        <div class="row"><div class="l">Abregelung</div><div class="v">keine</div></div>
+        <div class="row"><div class="l">Heute</div><div class="v">14,2 kWh · Prognose 31,4 kWh</div></div>
+        <div class="row"><div class="l">Seit Inbetriebnahme</div><div class="v">22.505 kWh</div></div>
+      </div></div>`
+  };
+  function openSheet(k){ const sh=$('#sheet'); sh.innerHTML=sheets[k]||''; sh.classList.add('open'); $('#sheetBg').classList.add('open'); note(k); bindSliders(); }
+  function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheetBg').classList.remove('open'); }
+  $('#sheetBg').addEventListener('click',closeSheet);
+
+  /* ---------- toggles / segments / sliders ---------- */
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('.sw-toggle'); if(t){t.setAttribute('aria-checked',String(t.getAttribute('aria-checked')!=='true'));return;}
+    const sb=e.target.closest('.seg button'); if(sb){ sb.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===sb))); if(sb.dataset.range){range=sb.dataset.range; drawHist();} return;}
+    const lg=e.target.closest('.legend button'); if(lg){ lg.setAttribute('aria-pressed',String(lg.getAttribute('aria-pressed')==='false')); hidden[lg.dataset.key]=lg.getAttribute('aria-pressed')==='false'; drawAll(); }
+    if(e.target.id==='applyBtn'){ e.target.textContent='Übernommen ✓'; setTimeout(()=>e.target.textContent='Änderungen übernehmen',1800);}
+  });
+  function bindSliders(){
+    const map={chg:v=>fmt(+v,0)+' W',dch:v=>fmt(+v,0)+' W',res:v=>v+' % · '+fmt(v*0.13)+' kWh',amp:v=>v+' A · '+fmt(v*0.69)+' kW'};
+    Object.keys(map).forEach(id=>{const el=document.getElementById(id); if(!el||el.dataset.bound) return; el.dataset.bound='1';
+      el.addEventListener('input',()=>{document.getElementById(id+'Val').textContent=map[id](el.value);});});
+  }
+  bindSliders();
+
+  /* ---------- data (sample) ---------- */
+  const series=[
+    {key:'solar',label:'Solar',css:'--s-solar',sign:1},
+    {key:'bezug',label:'Netzbezug',css:'--s-bezug',sign:1},
+    {key:'entl',label:'Batterie entladen',css:'--s-entl',sign:1},
+    {key:'verbr',label:'Verbrauch',css:'--s-verbr',sign:-1},
+    {key:'einsp',label:'Einspeisung',css:'--s-einsp',sign:-1},
+    {key:'laden',label:'Batterie laden',css:'--s-laden',sign:-1}
+  ];
+  const hidden={};
+  const week=[
+    {l:'Sa',solar:22.4,bezug:0.4,entl:5.1,verbr:11.2,einsp:11.3,laden:5.4},
+    {l:'So',solar:9.8,bezug:1.9,entl:6.2,verbr:12.9,einsp:1.1,laden:3.8},
+    {l:'Mo',solar:17.6,bezug:0.6,entl:5.6,verbr:9.4,einsp:7.9,laden:6.3},
+    {l:'Di',solar:24.1,bezug:0.2,entl:4.9,verbr:10.1,einsp:13.0,laden:6.0},
+    {l:'Mi',solar:6.3,bezug:1.3,entl:5.8,verbr:9.8,einsp:0.4,laden:3.2},
+    {l:'Do',solar:23.6,bezug:0.1,entl:4.1,verbr:9.0,einsp:12.3,laden:6.5},
+    {l:'Fr',solar:14.2,bezug:0.3,entl:3.2,verbr:8.7,einsp:4.2,laden:4.8}
+  ];
+  function dayData(){ const out=[]; for(let h=0;h<24;h++){ const sun=Math.max(0,Math.sin((h-6)/13*Math.PI)); const pv=+(sun*3.6).toFixed(2); const cons=+(0.3+(h>=7&&h<=9?0.5:0)+(h>=18&&h<=22?0.9:0)).toFixed(2);
+      let rest=pv-cons, laden=0,einsp=0,entl=0,bezug=0; if(rest>0){laden=Math.min(rest,h<12?2.4:0.8); einsp=rest-laden;} else {entl=Math.min(-rest,h>=0&&h<6?0:1.5); bezug=-rest-entl;}
+      out.push({l:String(h).padStart(2,'0'),solar:pv,bezug:+bezug.toFixed(2),entl:+entl.toFixed(2),verbr:cons,einsp:+einsp.toFixed(2),laden:+laden.toFixed(2)}); } return out; }
+  function monthData(){ const out=[]; let seed=7; const r=()=>{seed=(seed*9301+49297)%233280; return seed/233280;};
+    for(let d=1;d<=31;d++){ const s=+(4+r()*20).toFixed(1); const v=+(8+r()*5).toFixed(1); const laden=+Math.min(6.5,Math.max(0,s-v*0.4)).toFixed(1); const einsp=+Math.max(0,s-v*0.5-laden).toFixed(1); const entl=+Math.min(laden*0.9,v*0.5).toFixed(1); const bezug=+Math.max(0,v*0.5-entl).toFixed(1);
+      out.push({l:String(d),solar:s,bezug,entl,verbr:v,einsp,laden}); } return out; }
+  function yearData(){ const m=['J','F','M','A','M','J','J','A','S','O','N','D']; const pv=[180,290,560,820,990,1050,1040,920,680,420,200,150]; const v=[380,330,310,270,250,230,240,250,270,300,350,390];
+    return m.map((l,i)=>{const laden=Math.min(190,pv[i]*0.3); const einsp=Math.max(0,pv[i]-v[i]*0.55-laden); const entl=Math.min(laden*0.9,v[i]*0.45); const bezug=Math.max(0,v[i]*0.45-entl)+(i<2||i>9?120:0);
+      return {l,solar:pv[i],bezug,entl,verbr:v[i],einsp,laden};}); }
+  let range='week';
+
+  /* ---------- stacked bar chart ---------- */
+  function stacked(el,data,opt){
+    opt=opt||{}; const cs=getComputedStyle(document.documentElement);
+    const W=360,H=opt.h||190,pl=28,pr=6,pt=10,pb=18; const iw=W-pl-pr, ih=H-pt-pb;
+    const vis=(opt.series||series).filter(s=>!hidden[s.key]);
+    let maxP=0,maxN=0; data.forEach(d=>{let p=0,n=0; vis.forEach(s=>{if(s.sign>0)p+=d[s.key]; else n+=d[s.key]}); maxP=Math.max(maxP,p); maxN=Math.max(maxN,n);});
+    const nice=v=>{const e=Math.pow(10,Math.floor(Math.log10(v||1))); const f=v/e; return (f<=1?1:f<=2?2:f<=5?5:10)*e;};
+    const top=nice(maxP||1), bot=maxN?nice(maxN):0; const y0=pt+ih*top/(top+bot); const sc=ih/(top+bot);
+    const n=data.length; const slot=iw/n; const bw=Math.max(3,Math.min(26,slot*0.62)); const gap=2;
+    let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gestapeltes Balkendiagramm">`;
+    const ticks=bot?[top,top/2,0,-bot/2,-bot]:[top,top/2,0];
+    ticks.forEach(t=>{const y=y0-t*sc; svg+=`<line class="${t===0?'base':'gridl'}" x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}"/><text x="${pl-4}" y="${y+3}" text-anchor="end">${Math.abs(t)%1?t.toFixed(1):t}</text>`;});
+    data.forEach((d,i)=>{ const x=pl+slot*i+(slot-bw)/2; let yp=y0,yn=y0;
+      vis.forEach(s=>{ const v=d[s.key]; if(!v) return; const h=v*sc; if(h<0.5) return; const col=cs.getPropertyValue(s.css).trim();
+        if(s.sign>0){ const y=yp-h; svg+=`<rect x="${x}" y="${y.toFixed(1)}" width="${bw}" height="${Math.max(0,h-gap).toFixed(1)}" fill="${col}" rx="1.5"/>`; yp=y; }
+        else { svg+=`<rect x="${x}" y="${(yn+gap).toFixed(1)}" width="${bw}" height="${Math.max(0,h-gap).toFixed(1)}" fill="${col}" rx="1.5"/>`; yn+=h; } });
+      svg+=`<rect x="${pl+slot*i}" y="${pt}" width="${slot}" height="${ih}" fill="transparent" data-i="${i}" class="hit"/>`;
+      if(n<=12||i%Math.ceil(n/8)===0) svg+=`<text x="${x+bw/2}" y="${H-5}" text-anchor="middle">${d.l}</text>`; });
+    if(opt.avg){ const y=y0-opt.avg*sc; svg+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="${cs.getPropertyValue('--ink3').trim()}" stroke-dasharray="3 3"/>`; }
+    svg+='</svg><div class="tip"></div>';
+    el.innerHTML=svg;
+    const tip=el.querySelector('.tip');
+    el.querySelectorAll('.hit').forEach(r=>{ const show=()=>{ const d=data[+r.dataset.i]; const bb=r.getBoundingClientRect(), eb=el.getBoundingClientRect();
+        tip.innerHTML=`<b>${d.l}</b><br>`+vis.map(s=>`${s.label}: ${fmt(d[s.key])} kWh`).join('<br>'); tip.style.left=(bb.left-eb.left+bb.width/2)+'px'; tip.style.top=(bb.top-eb.top+8)+'px'; tip.style.display='block'; };
+      r.addEventListener('mouseenter',show); r.addEventListener('click',show); r.addEventListener('mouseleave',()=>tip.style.display='none'); });
+  }
+  function legend(el){ el.innerHTML=series.map(s=>`<button type="button" data-key="${s.key}" aria-pressed="${hidden[s.key]?'false':'true'}"><span class="sw" style="background:var(${s.css})"></span>${s.label}</button>`).join(''); }
+  function drawHist(){ const d=range==='day'?dayData():range==='month'?monthData():range==='year'?yearData():week;
+    $('#rangeTitle').textContent={day:'Fr, 24. Okt 2026',week:'18. – 24. Okt 2026',month:'Oktober 2026',year:'2026'}[range];
+    stacked($('#histChart'),d,{h:210}); legend($('#histLegend')); }
+  function drawMonthMini(){ const d=monthData().slice(0,24); stacked($('#monthMini'),d,{h:110,series:[series[0]],avg:17}); }
+
+  /* ---------- Energiefluss: Kreuz ---------- */
+  const live={solar:3.42,haus:0.612,batt:2.41,netz:-0.398,wb:0,soc:68};   /* kW; Netz − = Einspeisung, Batterie + = Laden */
+  const ICON={
+    solar:'<circle cx="0" cy="0" r="3.2"/><path d="M0-7v2M0 5v2M-7 0h2M5 0h2M-5-5l1.4 1.4M3.6 3.6L5 5M-5 5l1.4-1.4M3.6-3.6L5-5"/>',
+    haus:'<path d="M-7 0l7-6 7 6v6h-14z"/><path d="M-2 6v-4h4v4"/>',
+    batt:'<rect x="-7" y="-4" width="12" height="8" rx="1.5"/><path d="M6-1v2"/>',
+    netz:'<path d="M0-7l-4 14M0-7l4 14M-4-2h8M-5 3h10"/>',
+    wb:'<path d="M-7 2l1.5-5h9l1.5 5v3h-12z"/><circle cx="-4" cy="5" r="1.2"/><circle cx="3" cy="5" r="1.2"/>'};
+  function hub(el){
+    const cs=getComputedStyle(document.documentElement); const c=k=>cs.getPropertyValue(k).trim();
+    const W=360,H=320, NW=92,NH=66, R=16;
+    const N={solar:[180,40],haus:[180,160],batt:[180,280],netz:[50,160],wb:[310,160]};
+    const col={solar:c('--c-solar'),haus:c('--c-house'),batt:c('--c-batt'),netz:c('--c-grid'),wb:c('--c-wb')};
+    const f=(v,d)=>fmt(Math.abs(v),d);
+    const nodes={
+      solar:{l:'Solar',v:f(live.solar,2),u:'kW',s:'2 Tracker'},
+      haus:{l:'Haus',v:f(live.haus*1000,0),u:'W',s:'Verbrauch'},
+      batt:{l:'Batterie',v:f(live.batt,2),u:'kW',s:(live.batt>=0?'lädt · ':'entlädt · ')+live.soc+' %'},
+      netz:{l:'Netz',v:f(live.netz*1000,0),u:'W',s:live.netz<0?'Einspeisung':'Bezug'},
+      wb:{l:'Wallbox',v:f(live.wb*1000,0),u:'W',s:live.wb>0?'lädt':'bereit'}};
+    /* Kanten: [von, nach, Leistung kW, Farbe]; Richtung = Flussrichtung */
+    const E=[];
+    E.push(['solar','haus',live.solar,col.solar]);
+    if(live.batt>=0) E.push(['haus','batt',live.batt,col.batt]); else E.push(['batt','haus',-live.batt,col.batt]);
+    if(live.netz<=0) E.push(['haus','netz',-live.netz,col.netz]); else E.push(['netz','haus',live.netz,col.netz]);
+    E.push(['haus','wb',live.wb,col.wb]);
+    const maxv=Math.max(...E.map(e=>e[2]),0.001);
+    const anchor=(a,b)=>{ const [ax,ay]=N[a],[bx,by]=N[b]; const dx=Math.sign(bx-ax),dy=Math.sign(by-ay);
+      return [[ax+dx*NW/2,ay+dy*NH/2],[bx-dx*NW/2,by-dy*NH/2]]; };
+    let edges='',dots='',nodesSvg='';
+    E.forEach(([a,b,v,colr],i)=>{ const [[x1,y1],[x2,y2]]=anchor(a,b); const on=v>0.01; const w=on?3+6*v/maxv:2; const d=`M${x1} ${y1}L${x2} ${y2}`;
+      edges+=`<path class="edge ${on?'':'off'}" d="${d}" stroke="${on?colr:''}" stroke-width="${w.toFixed(1)}"/>`;
+      if(on){ for(let k=0;k<2;k++) dots+=`<circle class="dot" r="${(w/2+1.5).toFixed(1)}" fill="${colr}" stroke="var(--card)" stroke-width="1.5"><animateMotion dur="1.8s" begin="${(-0.9*k).toFixed(1)}s" repeatCount="indefinite" path="${d}"/></circle>`; } });
+    Object.entries(nodes).forEach(([k,n])=>{ const [x,y]=N[k]; nodesSvg+=`<g transform="translate(${x-NW/2},${y-NH/2})"><rect width="${NW}" height="${NH}" rx="${R}" fill="${col[k]}"/>
+      <g class="ni" transform="translate(16,16)">${ICON[k]}</g><text class="nl" x="28" y="20">${n.l}</text>
+      <text class="nv" x="10" y="46">${n.v}<tspan dx="2">${n.u}</tspan></text><text class="ns" x="10" y="59">${n.s}</text></g>`; });
+    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Energiefluss jetzt: Solar ${nodes.solar.v} kW, Haus ${nodes.haus.v} W, Batterie lädt ${nodes.batt.v} kW, Einspeisung ${nodes.netz.v} W">${edges}${dots}${nodesSvg}</svg>`;
+  }
+  /* ---------- Heute: Bilanzbalken ---------- */
+  const today={solarTo:[['Haus',5.2,'--c-house'],['Batterie',4.8,'--c-batt'],['Netz',4.2,'--c-grid']], hausFrom:[['Solar',5.2,'--c-solar'],['Batterie',3.2,'--c-batt'],['Netz',0.3,'--c-grid']]};
+  function ledger(el){
+    const bar=(title,total,unit,parts,dir)=>{ const tot=parts.reduce((a,p)=>a+p[1],0);
+      return `<div><div class="lh"><b>${title} ${fmt(total)} ${unit}</b><span>${dir}</span></div><div class="lb">${parts.map(p=>`<i style="width:${(p[1]/tot*100).toFixed(1)}%;background:var(${p[2]})"></i>`).join('')}</div><div class="lk">${parts.map(p=>`<span><span class="sw" style="background:var(${p[2]})"></span>${p[0]} <b>${fmt(p[1])}</b></span>`).join('')}</div></div>`; };
+    el.innerHTML=bar('Solar',14.2,'kWh',today.solarTo,'wohin die Sonne ging')+bar('Haus',8.7,'kWh',today.hausFrom,'woher der Verbrauch kam')+(el.dataset.compact?'':`<div class="hint">Direkt genutzt wurden 5,2 kWh, 4,8 kWh gingen in die Batterie, 4,2 kWh ins Netz. Der Verbrauch kam zu 97 % aus Sonne und Batterie.</div>`);
+  }
+  function drawFlows(){ $$('[data-flow="now"]').forEach(hub); $$('[data-flow="today"]').forEach(ledger); }
+
+  function drawAll(){ drawMonthMini(); drawHist(); drawFlows(); }
+  drawAll();
+  if(/^#(monitor|history|flow|smart|more)$/.test(location.hash)) go(location.hash.slice(1));
+})();
+</script>

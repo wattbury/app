@@ -60,8 +60,8 @@ Der Unterschied kommt daher, dass openrscp alle zehn Live-Tags in **einem** Fram
 | Spitzenleistung | `EMS_INSTALLED_PEAK_POWER` 10.740 W |
 | Systemkennwerte (`EMS_REQ_GET_SYS_SPECS`) | Batteriekapazität 13.107 Wh, max. AC 12.000 W, Laden/Entladen max. 4.500 W, empfohlene Mindestgrenzen 2.200 / 1.100 W, Hybridmodus ja; `maxPvPower` nicht verfügbar |
 | Wechselrichter | 2 DC-Eingänge (Tracker), 3 Phasen, max. 4.000 VA je Phase. `PVI_USED_STRING_COUNT` meldet **1**, obwohl beide belegt sind |
-| Tracker 1 | Leistung, Spannung, Strom live; max. 6.000 W; Lebenszeit-Ertrag 30.882 kWh; trägt zwei parallele Strings |
-| Tracker 2 | nachts 93 V Restspannung; max. 6.000 W; Lebenszeit-Ertrag 1.121 kWh (später nachgerüstet) |
+| Tracker 1 | Leistung, Spannung, Strom live; `PVI_DC_MAX_POWER` meldet 6.000 W; das ist weder Modulleistung (7,1 kWp) noch harte Grenze, der Wechselrichter verarbeitet 12 kW DC gesamt ohne Kappung; Lebenszeit-Ertrag 30.882 kWh; zwei parallele Strings |
+| Tracker 2 | nachts 93 V Restspannung; `PVI_DC_MAX_POWER` 6.000 W; Lebenszeit-Ertrag 1.121 kWh (später nachgerüstet) |
 | Batterie | 4 Module, Nennkapazität 256 Ah, nutzbar 202,8 Ah |
 | Anlagenadresse (`INFO_REQ_GET_FACILITY`) | Postleitzahl, Ort, Land, Name, Straße, Hausnummer, Telefon und E-Mail vorhanden. Die App nutzt nur Postleitzahl, Ort und Land. |
 

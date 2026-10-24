@@ -332,6 +332,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
 .cc.solar .meter{display:flex;height:6px;border-radius:3px;overflow:hidden;gap:2px;background:rgba(255,255,255,.26);margin-top:6px}
 .cc.solar .meter i{display:block;height:100%;background:#fff}
 .cc.solar .meter i.b{background:rgba(255,255,255,.6)}
+.cc.solar .meter i.c{background:rgba(255,255,255,.36)}
 .cc.solar .meter.split2{background:none}
 .cc.solar .cap{display:flex;justify-content:space-between;gap:6px;font-size:12px;color:var(--on-dim);font-variant-numeric:tabular-nums}
 .cc.solar .cap b{color:var(--on);font-weight:600}
@@ -446,6 +447,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     <div class="group" style="margin-top:14px">
       <div class="label">Demo</div>
       <div class="toggles" style="margin-top:6px"><button type="button" id="demoWb" aria-pressed="false">System meldet Wallbox: nein</button></div>
+      <div class="toggles" style="margin-top:6px" id="demoTrk"><span style="font-size:12px;color:var(--muted);align-self:center">Tracker am Gerät:</span><button type="button" data-demotrk="1" aria-pressed="false">1</button><button type="button" data-demotrk="2" aria-pressed="true">2</button><button type="button" data-demotrk="3" aria-pressed="false">3</button></div>
     </div>
     <div class="group">
       <div class="label">Screens</div>
@@ -494,8 +496,8 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
                   <div class="c">
                     <div class="ey">Jetzt</div>
                     <div class="big">3,42<small>kW</small></div>
-                    <div class="meter split2" role="img" aria-label="Aufteilung auf Tracker 1 mit 1,81 kW und Tracker 2 mit 1,61 kW"><i style="width:52.9%"></i><i class="b" style="width:47.1%"></i></div>
-                    <div class="cap"><span><span id="trk1Code">SO</span> <b>1,81</b></span><span><span id="trk2Code">NW</span> <b>1,61</b></span></div>
+                    <div class="meter split2" id="solarSplit" role="img" aria-label="Aufteilung der Leistung auf die Tracker"><i style="width:52.9%"></i><i class="b" style="width:47.1%"></i></div>
+                    <div class="cap" id="solarSplitCap"><span>SO <b>1,81</b></span><span>NW <b>1,61</b></span></div>
                   </div>
                   <div class="c">
                     <div class="ey">Heute</div>
@@ -722,7 +724,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
             <div class="card">
               <h3>Anlage</h3>
               <div class="list">
-                <div class="row"><div class="l">PV-Leistung<small>aus dem S10</small></div><div class="v">10,74 kWp · 2 Tracker</div></div>
+                <div class="row"><div class="l">PV-Leistung<small>aus dem S10</small></div><div class="v">10,74 kWp</div></div>
                 <div class="row"><div class="l">Batterie<small>aus dem S10</small></div><div class="v">13,1 kWh · 4 Module</div></div>
                 <div class="row"><div class="l">Ausrichtung<small>Azimut und Neigung je Tracker</small></div><div class="v" id="anlageSum">SO 35° · NW 35°</div></div>
                 <div class="row"><div class="l">Anlage konfigurieren</div><div class="v"><button type="button" class="pill warn" data-sheet="anlage">Öffnen ›</button></div></div>
@@ -793,7 +795,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     more:`<p><b>Einstellungen</b>: Verbindungsarten, Dashboard-Sortierung, Anlage, Tarif, Benachrichtigungen, Widgets.</p><ul><li>Benachrichtigungen brauchen die Bridge, da iOS-Apps nicht dauerhaft im Hintergrund pollen dürfen.</li></ul>`,
     wallbox:`<p><b>Wallbox-Steuerung</b> wie my4E: Sonnen-/Mischmodus, Phasen, Ladestrom, Priorität, Batterie-Entladung in die Wallbox, Laden starten/stoppen.</p>`,
     battery:`<p><b>Systemstatistik &amp; Info</b>: Tabs Systeminfo · Energiefluss seit Inbetriebnahme · Berechnungen; hier die Batterie-Details.</p>`,
-    anlage:`<p><b>Anlage einrichten</b> (Schritt 4 im Assistenten, später unter Einstellungen › Anlage).</p><ul><li>Oben steht, was das S10 per RSCP liefert: Modell, Firmware, Spitzenleistung, genutzte Tracker, Batterie, Wechselrichter, Postleitzahl.</li><li>Je Tracker: Name, Dachfläche (Ausrichtung, Neigung) und die angeschlossenen Strings. Die Live-Leistung hilft bei der Zuordnung: morgens liefert der östliche Tracker mehr.</li><li>Je Tracker eine Dachfläche: Ausrichtung (Kompass, ±1° oder Zahl) und Neigung (Schieberegler in 1°-Schritten oder Zahl).</li><li>Darunter die Strings an diesem Tracker, je String Module × Wp je Modul. Parallele Strings misst das S10 nur gemeinsam; die Prognose nutzt die Summe.</li><li>Die Summe aller Tracker muss die Spitzenleistung des S10 ergeben; die Anzeige nennt die Differenz.</li><li>Der Standort kommt aus der Postleitzahl und lässt sich per GPS verfeinern.</li><li>Speichern setzt die Kürzel (z. B. SO, NW) auf der Solarkarte.</li></ul>`,
+    anlage:`<p><b>Anlage einrichten</b> (Schritt 4 im Assistenten, später unter Einstellungen › Anlage).</p><ul><li>Oben steht, was das S10 per RSCP liefert: Modell, Firmware, Spitzenleistung, genutzte Tracker, Batterie, Wechselrichter, Postleitzahl.</li><li>Je Tracker: Name, Dachfläche (Ausrichtung, Neigung) und die angeschlossenen Strings. Die Live-Leistung hilft bei der Zuordnung: morgens liefert der östliche Tracker mehr.</li><li>Je Tracker eine Dachfläche: Ausrichtung (Kompass, ±1° oder Zahl) und Neigung (Schieberegler in 1°-Schritten oder Zahl).</li><li>Darunter die Strings an diesem Tracker, je String Module × Wp je Modul. Parallele Strings misst das S10 nur gemeinsam; die Prognose nutzt die Summe.</li><li>Die Summe wird mit der im S10 hinterlegten Spitzenleistung verglichen, nur als Hinweis.</li><li>Nichts ist fest eingebaut: Trackerzahl und Wechselrichter kommen vom Gerät. Links unter „Demo“ lassen sich 1, 2 oder 3 Tracker durchspielen.</li><li>Der Standort kommt aus der Postleitzahl und lässt sich per GPS verfeinern.</li><li>Speichern setzt die Kürzel (z. B. SO, NW) auf der Solarkarte.</li></ul>`,
     setup:`<p><b>Verbindungs-Assistent</b>: lokal (IP, Portal-Login, RSCP-Passwort), optional Bridge, optional Cloud-Registry-Key.</p><ul><li>Zugangsdaten bleiben im iOS-Schlüsselbund.</li></ul>`,
     pv:`<p><b>PV-Details</b>: Leistung je Tracker, Spannung/Strom, Abregelung, Tagesverlauf.</p>`
   };
@@ -858,24 +860,28 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
       <div class="card"><h3>4 · Anlage <span class="r">für die Prognose</span></h3>
         <div class="hint" style="margin-top:4px">Tracker, Leistung und Batterie liest die App aus dem S10. Ausrichtung, Neigung und Leistung je Tracker trägst du einmal selbst ein.</div>
         <button type="button" class="btn primary" data-sheet="anlage">Weiter zur Anlage</button></div>`,
-    pv:`<div class="grab"></div><div class="shd"><h2>Solarproduktion</h2><span class="pill good">3,42 kW</span></div>
-      <div class="card"><div class="list">
-        <div class="row"><div class="l">Tracker 1 (SO)</div><div class="v">1,81 kW · 412 V · 4,4 A</div></div>
-        <div class="row"><div class="l">Tracker 2 (NW)</div><div class="v">1,61 kW · 398 V · 4,0 A</div></div>
-        <div class="row"><div class="l">Ertrag je kWp</div><div class="v">345 W/kWp</div></div>
-        <div class="row"><div class="l">Abregelung</div><div class="v">keine</div></div>
-        <div class="row"><div class="l">Heute</div><div class="v">14,2 kWh · Prognose 31,4 kWh</div></div>
-        <div class="row"><div class="l">Seit Inbetriebnahme</div><div class="v">22.505 kWh</div></div>
-      </div></div>`
+    pv:''
   };
-  function openSheet(k){ const sh=$('#sheet'); sh.innerHTML=k==='anlage'?anlageHtml():(sheets[k]||''); sh.classList.add('open'); $('#sheetBg').classList.add('open'); note(k); bindSliders(); if(k==='anlage') renderAnlSum(); sh.scrollTop=0; }
+  function openSheet(k){ const sh=$('#sheet'); sh.innerHTML=k==='anlage'?anlageHtml():k==='pv'?pvHtml():(sheets[k]||''); sh.classList.add('open'); $('#sheetBg').classList.add('open'); note(k); bindSliders(); if(k==='anlage') renderAnlSum(); sh.scrollTop=0; }
 
   /* ---------- Anlage einrichten ---------- */
   /* Werte aus dem S10 wie bei der Testanlage; Standort bewusst ein Beispiel (öffentliches Repo). */
   const anlage={
     s10:{model:'S10 E',fw:'S10_2026_027',kwp:10.74,bat:'13,1 kWh · 4 Module',ac:'12,0 kW · 3 Phasen',inputs:2,plz:'12345',ort:'Beispielstadt'},
     loc:{lat:52.52,lon:13.40,gps:false},
-    trk:[{name:'Tracker 1',az:135,tilt:35,live:1.81,strings:[{mod:8,wp:340},{mod:8,wp:340}]},{name:'Tracker 2',az:315,tilt:35,live:1.61,strings:[{mod:10,wp:530}]}]};
+    trk:[]};
+  /* Demo-Belegungen: Was das Gerät meldet (Anzahl, Live-Werte) und was der Nutzer einträgt.
+     2 Tracker = Aufteilung der Testanlage (7,10 / 3,64 kWp); Modulzahlen ausgedacht. */
+  const DEMO_TRK={
+    1:[{name:'Tracker 1',az:180,tilt:30,live:3.42,v:405,strings:[{mod:15,wp:358},{mod:15,wp:358}]}],
+    2:[{name:'Tracker 1',az:135,tilt:35,live:1.81,v:412,strings:[{mod:10,wp:355},{mod:10,wp:355}]},
+       {name:'Tracker 2',az:315,tilt:35,live:1.61,v:398,strings:[{mod:8,wp:455}]}],
+    3:[{name:'Tracker 1',az:180,tilt:35,live:1.81,v:410,strings:[{mod:12,wp:355}]},
+       {name:'Tracker 2',az:90,tilt:20,live:1.02,v:388,strings:[{mod:8,wp:455}]},
+       {name:'Tracker 3',az:270,tilt:20,live:0.59,v:301,strings:[{mod:8,wp:355}]}]};
+  let demoTrkN=2;
+  const cloneTrk=n=>DEMO_TRK[n].map(t=>({...t,strings:t.strings.map(x=>({...x}))}));
+  anlage.trk=cloneTrk(2);
   const DIRS=[['N','Nord'],['NO','Nordost'],['O','Ost'],['SO','Südost'],['S','Süd'],['SW','Südwest'],['W','West'],['NW','Nordwest']];
   const dirOf=az=>DIRS[Math.round((((az%360)+360)%360)/45)%8];
   const fsAz=az=>{ let a=az-180; if(a>180) a-=360; if(a<=-180) a+=360; return String(a).replace('-','−'); };   /* forecast.solar: 0 = Süd, −90 = Ost, 90 = West */
@@ -924,7 +930,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   }
   function anlageHtml(){
     const a=anlage.s10;
-    const rows=[['Modell · Firmware',`${a.model} · ${a.fw}`],['PV-Spitzenleistung',fmt(a.kwp,2)+' kWp'],['Tracker (DC-Eingänge)',`${a.inputs} mit Messwerten`],['Batterie',a.bat],['Wechselrichter',`max. ${a.ac} AC`],['Postleitzahl',`${a.plz} ${a.ort}`]];
+    const rows=[['Modell · Firmware',`${a.model} · ${a.fw}`],['PV-Spitzenleistung',fmt(a.kwp,2)+' kWp'],['Tracker (DC-Eingänge)',`${anlage.trk.length} belegt`],['Batterie',a.bat],['Wechselrichter',`max. ${a.ac} AC`],['Postleitzahl',`${a.plz} ${a.ort}`]];
     return `<div class="grab"></div><div class="shd"><h2>Anlage</h2><span class="pill good">aus dem S10 gelesen</span></div>
       <div class="hint" style="margin:6px 4px 0">Was das Hauskraftwerk selbst weiß, ist vorbelegt. Wie die Module auf dem Dach liegen, kennt es nicht. Das braucht die Prognose.</div>
       <div class="card"><h3>Vom Hauskraftwerk <span class="r">per RSCP</span></h3><div class="list">${rows.map(r=>`<div class="row"><div class="l">${r[0]}</div><div class="v">${r[1]}</div></div>`).join('')}</div></div>
@@ -939,10 +945,10 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     const el=$('#anlSum'); if(!el) return;
     const ks=anlage.trk.map(trkKwp), bad=ks.some(k=>k==null);
     const sum=ks.reduce((x,k)=>x+(k||0),0), tot=anlage.s10.kwp, diff=Math.round((tot-sum)*100)/100, ok=!bad&&Math.abs(diff)<0.005;
-    const state=bad?['warn','Eingabe prüfen']:ok?['good','✓ passt']:['warn',diff>0?`noch ${fmt(diff,2)} kWp offen`:`${fmt(-diff,2)} kWp zu viel`];
+    const state=bad?['warn','Eingabe prüfen']:ok?['good','✓ passt zum S10']:['warn',diff>0?`${fmt(diff,2)} kWp weniger als im S10`:`${fmt(-diff,2)} kWp mehr als im S10`];
     el.innerHTML=`<h3>Summe <span class="pill ${state[0]}">${state[1]}</span></h3>
       <div class="row3" style="margin-top:4px"><span>${ks.map(k=>k==null?'?':fmt(k,2)).join(' + ')} kWp</span><span class="sumv">${fmt(sum,2)} von ${fmt(tot,2)} kWp</span></div>
-      <div class="hint">Die Summe aller Tracker muss die Spitzenleistung des S10 ergeben. Zuordnung: Morgens liefert ein östlicher Tracker mehr, abends ein westlicher. Die Live-Werte oben zeigen, welcher gerade stärker ist.</div>`;
+      <div class="hint">Im S10 ist eine Spitzenleistung hinterlegt. Weicht deine Summe ab, prüfe die Module. Der Wert im S10 kann auch veraltet sein oder weitere Erzeuger enthalten, deshalb ist das nur ein Hinweis. Zuordnung: Morgens liefert ein östlicher Tracker mehr, abends ein westlicher. Die Live-Werte oben zeigen, welcher gerade stärker ist.</div>`;
   }
   /* Aktualisiert Anzeige-Elemente; das gerade bearbeitete Eingabefeld bleibt unangetastet. */
   function updTrk(i){
@@ -982,10 +988,38 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     if(k==='gps'){ anlage.loc={lat:52.5163,lon:13.3777,gps:true}; $('#locSrc').innerHTML='Per GPS<small>genauer Standort · Beispiel</small>'; $('#locVal').textContent=`${fmt(anlage.loc.lat,4)}° N · ${fmt(anlage.loc.lon,4)}° O`; b.textContent='Standort übernommen'; }
     if(k==='save'){
       if(anlage.trk.some(t=>trkKwp(t)==null)){ b.textContent='Bitte Strings prüfen'; setTimeout(()=>b.textContent='Speichern',1400); return; }
-      anlage.trk.forEach((t,j)=>{ const el=$('#trk'+(j+1)+'Code'); if(el) el.textContent=dirOf(t.az)[0]; });
+      renderSolarSplit();
       $('#anlageSum').textContent=anlage.trk.map(t=>`${dirOf(t.az)[0]} ${t.tilt}°`).join(' · ');
       b.textContent='Gespeichert ✓'; setTimeout(closeSheet,700);
     }
+  });
+  function renderSolarSplit(){
+    const tot=anlage.trk.reduce((a,t)=>a+t.live,0)||1, cls=['','b','c'];
+    const bar=$('#solarSplit'), cap=$('#solarSplitCap'); if(!bar||!cap) return;
+    bar.innerHTML=anlage.trk.map((t,i)=>`<i class="${cls[i%3]}" style="width:${(t.live/tot*100).toFixed(1)}%"></i>`).join('');
+    bar.setAttribute('aria-label','Aufteilung: '+anlage.trk.map(t=>`${t.name} ${fmt(t.live,2)} kW`).join(', '));
+    cap.innerHTML=anlage.trk.length===1
+      ? `<span>${dirOf(anlage.trk[0].az)[0]} · 1 Tracker</span>`
+      : anlage.trk.map(t=>`<span>${dirOf(t.az)[0]} <b>${fmt(t.live,2)}</b></span>`).join('');
+  }
+  function pvHtml(){
+    const tot=anlage.trk.reduce((a,t)=>a+t.live,0), kwp=anlage.trk.reduce((a,t)=>a+(trkKwp(t)||0),0);
+    const rows=anlage.trk.map(t=>{ const k=trkKwp(t); return `<div class="row"><div class="l">${t.name} (${dirOf(t.az)[0]})<small>${k==null?'—':fmt(k,2)+' kWp'}</small></div><div class="v">${fmt(t.live,2)} kW · ${t.v} V · ${fmt(t.live*1000/t.v,1)} A</div></div>`; }).join('');
+    return `<div class="grab"></div><div class="shd"><h2>Solarproduktion</h2><span class="pill good">${fmt(tot,2)} kW</span></div>
+      <div class="card"><div class="list">${rows}
+        <div class="row"><div class="l">Ertrag je kWp</div><div class="v">${kwp?fmt(tot*1000/kwp,0):'—'} W/kWp</div></div>
+        <div class="row"><div class="l">Heute</div><div class="v">14,2 kWh · Prognose 31,4 kWh</div></div>
+        <div class="row"><div class="l">Seit Inbetriebnahme</div><div class="v">22.505 kWh</div></div>
+      </div></div>
+      <button type="button" class="btn sec" data-sheet="anlage">Anlage konfigurieren</button>`;
+  }
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-demotrk]'); if(!b) return;
+    demoTrkN=+b.dataset.demotrk; anlage.trk=cloneTrk(demoTrkN);
+    $$('#demoTrk button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    $('#anlageSum').textContent=anlage.trk.map(t=>`${dirOf(t.az)[0]} ${t.tilt}°`).join(' · ');
+    const kw=anlage.trk.reduce((a,t)=>a+(trkKwp(t)||0),0);
+    renderSolarSplit(); if($('#sheet').classList.contains('open')&&$('#anlSum')) openSheet('anlage');
   });
   let drag=null;
   function azFromEvent(svg,e){ const r=svg.getBoundingClientRect(), dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
@@ -1217,6 +1251,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
 
   function drawAll(){ drawMonthMini(); drawHist(); drawFlows(); drawSolarCurve(); }
   applyWb();
+  renderSolarSplit();
   drawAll();
   if(/^#(monitor|history|flow|smart|more)$/.test(location.hash)) go(location.hash.slice(1));
 })();

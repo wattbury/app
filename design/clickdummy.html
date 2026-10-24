@@ -418,6 +418,17 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
 .nin[aria-invalid="true"]{border-color:var(--crit);color:var(--crit)}
 .unit{font-size:13px;color:var(--app-muted)}
 .lblrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:15px}
+.nin.xs{width:54px}
+.strs{margin-top:14px;border-top:1px solid var(--sep);padding-top:10px}
+.strs .hdr{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
+.strs .hdr b{font-variant-numeric:tabular-nums}
+.strrow{display:grid;grid-template-columns:1fr auto 28px;gap:6px 8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--sep)}
+.strrow .sn{font-size:14px;color:var(--app-muted)}
+.strrow .skwp{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.strrow .field{grid-column:1/-1}
+.strrow .rm{width:28px;height:28px;border-radius:50%;color:var(--app-muted);font-size:18px;line-height:1;text-align:center}
+.strrow .rm:hover{background:color-mix(in srgb,var(--app-fg) 7%,transparent)}
+.btn.sm{padding:8px;font-size:14px;margin-top:10px}
 /* ===== Energiefluss mit Hauskraftwerk als Mitte ===== */
 .hub .trk{fill:none;stroke:color-mix(in srgb,var(--app-fg) 9%,transparent);stroke-width:10;stroke-linecap:round}
 .hub .hubt{font-family:var(--font-disp);font-weight:600;font-size:13px;fill:#fff}
@@ -782,7 +793,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     more:`<p><b>Einstellungen</b>: Verbindungsarten, Dashboard-Sortierung, Anlage, Tarif, Benachrichtigungen, Widgets.</p><ul><li>Benachrichtigungen brauchen die Bridge, da iOS-Apps nicht dauerhaft im Hintergrund pollen dürfen.</li></ul>`,
     wallbox:`<p><b>Wallbox-Steuerung</b> wie my4E: Sonnen-/Mischmodus, Phasen, Ladestrom, Priorität, Batterie-Entladung in die Wallbox, Laden starten/stoppen.</p>`,
     battery:`<p><b>Systemstatistik &amp; Info</b>: Tabs Systeminfo · Energiefluss seit Inbetriebnahme · Berechnungen; hier die Batterie-Details.</p>`,
-    anlage:`<p><b>Anlage einrichten</b> (Schritt 4 im Assistenten, später unter Einstellungen › Anlage).</p><ul><li>Oben steht, was das S10 per RSCP liefert: Modell, Firmware, Spitzenleistung, genutzte Tracker, Batterie, Wechselrichter, Postleitzahl.</li><li>Je String: Name, Ausrichtung, Neigung, Leistung. Die Live-Leistung hilft bei der Zuordnung: morgens liefert der östliche Tracker mehr.</li><li>Ausrichtung, Neigung und Leistung lassen sich als Zahl eintippen; die Neigung zusätzlich gradgenau per Schieberegler, die Ausrichtung per Kompass oder ±1°.</li><li>Die Summe der Strings muss die Spitzenleistung des S10 ergeben; die Anzeige sagt, wie viel noch fehlt oder zu viel ist.</li><li>Der Standort kommt aus der Postleitzahl und lässt sich per GPS verfeinern.</li><li>Speichern setzt die Kürzel (z. B. SO, NW) auf der Solarkarte.</li></ul>`,
+    anlage:`<p><b>Anlage einrichten</b> (Schritt 4 im Assistenten, später unter Einstellungen › Anlage).</p><ul><li>Oben steht, was das S10 per RSCP liefert: Modell, Firmware, Spitzenleistung, genutzte Tracker, Batterie, Wechselrichter, Postleitzahl.</li><li>Je Tracker: Name, Dachfläche (Ausrichtung, Neigung) und die angeschlossenen Strings. Die Live-Leistung hilft bei der Zuordnung: morgens liefert der östliche Tracker mehr.</li><li>Je Tracker eine Dachfläche: Ausrichtung (Kompass, ±1° oder Zahl) und Neigung (Schieberegler in 1°-Schritten oder Zahl).</li><li>Darunter die Strings an diesem Tracker, je String Module × Wp je Modul. Parallele Strings misst das S10 nur gemeinsam; die Prognose nutzt die Summe.</li><li>Die Summe aller Tracker muss die Spitzenleistung des S10 ergeben; die Anzeige nennt die Differenz.</li><li>Der Standort kommt aus der Postleitzahl und lässt sich per GPS verfeinern.</li><li>Speichern setzt die Kürzel (z. B. SO, NW) auf der Solarkarte.</li></ul>`,
     setup:`<p><b>Verbindungs-Assistent</b>: lokal (IP, Portal-Login, RSCP-Passwort), optional Bridge, optional Cloud-Registry-Key.</p><ul><li>Zugangsdaten bleiben im iOS-Schlüsselbund.</li></ul>`,
     pv:`<p><b>PV-Details</b>: Leistung je Tracker, Spannung/Strom, Abregelung, Tagesverlauf.</p>`
   };
@@ -862,9 +873,9 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   /* ---------- Anlage einrichten ---------- */
   /* Werte aus dem S10 wie bei der Testanlage; Standort bewusst ein Beispiel (öffentliches Repo). */
   const anlage={
-    s10:{model:'S10 E',fw:'S10_2026_027',kwp:10.74,strings:2,maxStrings:2,bat:'13,1 kWh · 4 Module',ac:'12,0 kW · 3 Phasen',plz:'12345',ort:'Beispielstadt'},
+    s10:{model:'S10 E',fw:'S10_2026_027',kwp:10.74,bat:'13,1 kWh · 4 Module',ac:'12,0 kW · 3 Phasen',inputs:2,plz:'12345',ort:'Beispielstadt'},
     loc:{lat:52.52,lon:13.40,gps:false},
-    trk:[{name:'String 1',az:135,tilt:35,kwp:5.68,live:1.81,v:412},{name:'String 2',az:315,tilt:35,kwp:5.06,live:1.61,v:398}]};
+    trk:[{name:'Tracker 1',az:135,tilt:35,live:1.81,strings:[{mod:8,wp:340},{mod:8,wp:340}]},{name:'Tracker 2',az:315,tilt:35,live:1.61,strings:[{mod:10,wp:530}]}]};
   const DIRS=[['N','Nord'],['NO','Nordost'],['O','Ost'],['SO','Südost'],['S','Süd'],['SW','Südwest'],['W','West'],['NW','Nordwest']];
   const dirOf=az=>DIRS[Math.round((((az%360)+360)%360)/45)%8];
   const fsAz=az=>{ let a=az-180; if(a>180) a-=360; if(a<=-180) a+=360; return String(a).replace('-','−'); };   /* forecast.solar: 0 = Süd, −90 = Ost, 90 = West */
@@ -878,25 +889,42 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   }
   const roofSvg=tilt=>{ const t=tilt*Math.PI/180, x2=2+Math.cos(t)*30, y2=18-Math.sin(t)*16; return `<svg class="roof" viewBox="0 0 34 20" aria-hidden="true"><line x1="2" y1="18" x2="32" y2="18" opacity=".35"/><line x1="2" y1="18" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/></svg>`; };
   const parseNum=v=>{ const n=parseFloat(String(v).trim().replace(/\s/g,'').replace(',','.')); return Number.isFinite(n)?n:null; };
+  /* kWp eines Trackers = Summe seiner Strings (Module × Wp); null, solange eine Eingabe ungültig ist. */
+  const trkKwp=t=>t.strings.some(x=>x.mod==null||x.wp==null)?null:Math.round(t.strings.reduce((a,x)=>a+x.mod*x.wp,0)/10)/100;
+  function strRow(i,j,st,n){
+    const k=(st.mod!=null&&st.wp!=null)?fmt(st.mod*st.wp/1000,2)+' kWp':'—';
+    return `<div class="strrow"><span class="sn">String ${j+1}</span><span class="skwp" data-skwp="${i}-${j}">${k}</span>`+
+      (n>1?`<button type="button" class="rm" data-anl="rmstr" data-i="${i}" data-j="${j}" aria-label="String ${j+1} entfernen">×</button>`:'<span></span>')+
+      `<span class="field"><input class="nin xs" inputmode="numeric" data-anl="mod" data-i="${i}" data-j="${j}" value="${st.mod??''}" aria-label="Module in String ${j+1}"><span class="unit">Module ×</span>`+
+      `<input class="nin" inputmode="numeric" data-anl="wp" data-i="${i}" data-j="${j}" value="${st.wp??''}" aria-label="Wattpeak je Modul in String ${j+1}"><span class="unit">Wp je Modul</span></span></div>`;
+  }
+  function strsHtml(t,i){
+    const k=trkKwp(t);
+    return `<div class="hdr"><span>Strings an diesem Tracker</span><b data-tkwp="${i}">${k==null?'—':fmt(k,2)+' kWp'}</b></div>
+      ${t.strings.map((st,j)=>strRow(i,j,st,t.strings.length)).join('')}
+      <button type="button" class="btn sec sm" data-anl="addstr" data-i="${i}">+ String hinzufügen</button>
+      <div class="hint">Parallele Strings am selben Tracker misst das S10 nur gemeinsam. Für die Prognose zählt die Summe.</div>`;
+  }
   function trkCard(t,i){
     const [sh,lg]=dirOf(t.az);
     return `<div class="card anl" data-i="${i}">
-      <h3><input class="inp" data-anl="name" data-i="${i}" value="${t.name}" aria-label="Name von String ${i+1}"><span class="pill good" style="white-space:nowrap">live ${fmt(t.live,2)} kW</span></h3>
+      <h3><input class="inp" data-anl="name" data-i="${i}" value="${t.name}" aria-label="Name von Tracker ${i+1}"><span class="pill good" style="white-space:nowrap">live ${fmt(t.live,2)} kW</span></h3>
+      <div class="lbl2" style="margin-top:-2px">Dachfläche</div>
       <div class="trkgrid">
         <div class="compass" data-i="${i}">${compassSvg(t.az)}</div>
         <div><div class="lbl2">Ausrichtung</div>
-          <div class="field" style="margin-top:4px"><input class="nin sm" inputmode="numeric" data-anl="az" data-i="${i}" value="${t.az}" aria-label="Ausrichtung von String ${i+1} in Grad, 0 ist Nord"><span class="unit" data-azn="${i}">° · ${lg}</span></div>
+          <div class="field" style="margin-top:4px"><input class="nin sm" inputmode="numeric" data-anl="az" data-i="${i}" value="${t.az}" aria-label="Ausrichtung von Tracker ${i+1} in Grad, 0 ist Nord"><span class="unit" data-azn="${i}">° · ${lg}</span></div>
           <div class="stp"><button type="button" data-anl="az-" data-i="${i}" aria-label="1 Grad gegen den Uhrzeigersinn">−</button><button type="button" data-anl="az+" data-i="${i}" aria-label="1 Grad im Uhrzeigersinn">+</button></div>
           <div class="hint" data-fs="${i}" style="margin-top:6px">Kürzel ${sh} · für forecast.solar ${fsAz(t.az)}°</div></div>
       </div>
-      <div class="lblrow"><span>Neigung <span data-roof="${i}">${roofSvg(t.tilt)}</span></span><span class="field"><input class="nin sm" inputmode="numeric" data-anl="tiltn" data-i="${i}" value="${t.tilt}" aria-label="Neigung von String ${i+1} in Grad"><span class="unit">°</span></span></div>
-      <input type="range" min="0" max="90" step="1" value="${t.tilt}" data-anl="tilt" data-i="${i}" aria-label="Neigung von String ${i+1}" style="margin-top:6px">
-      <div class="lblrow"><span>Leistung</span><span class="field"><input class="nin" inputmode="decimal" data-anl="kwp" data-i="${i}" value="${fmt(t.kwp,2)}" aria-label="Leistung von String ${i+1} in kWp"><span class="unit">kWp</span></span></div>
+      <div class="lblrow"><span>Neigung <span data-roof="${i}">${roofSvg(t.tilt)}</span></span><span class="field"><input class="nin sm" inputmode="numeric" data-anl="tiltn" data-i="${i}" value="${t.tilt}" aria-label="Neigung von Tracker ${i+1} in Grad"><span class="unit">°</span></span></div>
+      <input type="range" min="0" max="90" step="1" value="${t.tilt}" data-anl="tilt" data-i="${i}" aria-label="Neigung von Tracker ${i+1}" style="margin-top:6px">
+      <div class="strs" data-strs="${i}">${strsHtml(t,i)}</div>
     </div>`;
   }
   function anlageHtml(){
     const a=anlage.s10;
-    const rows=[['Modell · Firmware',`${a.model} · ${a.fw}`],['PV-Spitzenleistung',fmt(a.kwp,2)+' kWp'],['Strings',`${a.strings} genutzt von ${a.maxStrings}`],['Batterie',a.bat],['Wechselrichter',`max. ${a.ac} AC`],['Postleitzahl',`${a.plz} ${a.ort}`]];
+    const rows=[['Modell · Firmware',`${a.model} · ${a.fw}`],['PV-Spitzenleistung',fmt(a.kwp,2)+' kWp'],['Tracker (DC-Eingänge)',`${a.inputs} mit Messwerten`],['Batterie',a.bat],['Wechselrichter',`max. ${a.ac} AC`],['Postleitzahl',`${a.plz} ${a.ort}`]];
     return `<div class="grab"></div><div class="shd"><h2>Anlage</h2><span class="pill good">aus dem S10 gelesen</span></div>
       <div class="hint" style="margin:6px 4px 0">Was das Hauskraftwerk selbst weiß, ist vorbelegt. Wie die Module auf dem Dach liegen, kennt es nicht. Das braucht die Prognose.</div>
       <div class="card"><h3>Vom Hauskraftwerk <span class="r">per RSCP</span></h3><div class="list">${rows.map(r=>`<div class="row"><div class="l">${r[0]}</div><div class="v">${r[1]}</div></div>`).join('')}</div></div>
@@ -909,12 +937,12 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   }
   function renderAnlSum(){
     const el=$('#anlSum'); if(!el) return;
-    const bad=anlage.trk.some(t=>t.kwp==null);
-    const sum=anlage.trk.reduce((x,t)=>x+(t.kwp||0),0), tot=anlage.s10.kwp, diff=Math.round((tot-sum)*100)/100, ok=!bad&&Math.abs(diff)<0.005;
+    const ks=anlage.trk.map(trkKwp), bad=ks.some(k=>k==null);
+    const sum=ks.reduce((x,k)=>x+(k||0),0), tot=anlage.s10.kwp, diff=Math.round((tot-sum)*100)/100, ok=!bad&&Math.abs(diff)<0.005;
     const state=bad?['warn','Eingabe prüfen']:ok?['good','✓ passt']:['warn',diff>0?`noch ${fmt(diff,2)} kWp offen`:`${fmt(-diff,2)} kWp zu viel`];
     el.innerHTML=`<h3>Summe <span class="pill ${state[0]}">${state[1]}</span></h3>
-      <div class="row3" style="margin-top:4px"><span>${anlage.trk.map(t=>t.kwp==null?'?':fmt(t.kwp,2)).join(' + ')} kWp</span><span class="sumv">${fmt(sum,2)} von ${fmt(tot,2)} kWp</span></div>
-      <div class="hint">Die Summe der Strings muss die Spitzenleistung des S10 ergeben. Zuordnung: Morgens liefert ein östlicher String mehr, abends ein westlicher. Die Live-Werte oben zeigen, welcher gerade stärker ist.</div>`;
+      <div class="row3" style="margin-top:4px"><span>${ks.map(k=>k==null?'?':fmt(k,2)).join(' + ')} kWp</span><span class="sumv">${fmt(sum,2)} von ${fmt(tot,2)} kWp</span></div>
+      <div class="hint">Die Summe aller Tracker muss die Spitzenleistung des S10 ergeben. Zuordnung: Morgens liefert ein östlicher Tracker mehr, abends ein westlicher. Die Live-Werte oben zeigen, welcher gerade stärker ist.</div>`;
   }
   /* Aktualisiert Anzeige-Elemente; das gerade bearbeitete Eingabefeld bleibt unangetastet. */
   function updTrk(i){
@@ -927,7 +955,8 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     setVal(`[data-anl="az"][data-i="${i}"]`,t.az);
     setVal(`[data-anl="tiltn"][data-i="${i}"]`,t.tilt);
     setVal(`[data-anl="tilt"][data-i="${i}"]`,t.tilt);
-    if(t.kwp!=null) setVal(`[data-anl="kwp"][data-i="${i}"]`,fmt(t.kwp,2));
+    const tk=$(`[data-tkwp="${i}"]`), k=trkKwp(t); if(tk) tk.textContent=k==null?'—':fmt(k,2)+' kWp';
+    t.strings.forEach((st,j)=>{ const e=$(`[data-skwp="${i}-${j}"]`); if(e) e.textContent=(st.mod!=null&&st.wp!=null)?fmt(st.mod*st.wp/1000,2)+' kWp':'—'; });
     renderAnlSum();
   }
   function checkField(el,v,min,max){ const ok=v!=null&&v>=min&&v<=max; el.setAttribute('aria-invalid',String(!ok)); return ok; }
@@ -938,16 +967,21 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     if(k==='tilt'){ t.tilt=+el.value; updTrk(i); return; }
     if(k==='tiltn'){ const v=parseNum(el.value); if(checkField(el,v,0,90)){ t.tilt=Math.round(v); updTrk(i); } return; }
     if(k==='az'){ const v=parseNum(el.value); if(checkField(el,v,0,359)){ t.az=Math.round(v); updTrk(i); } return; }
-    if(k==='kwp'){ const v=parseNum(el.value); t.kwp=checkField(el,v,0,50)?Math.round(v*100)/100:null; renderAnlSum(); return; }
+    if(k==='mod'||k==='wp'){ const j=+el.dataset.j, v=parseNum(el.value), ok=k==='mod'?checkField(el,v,1,60)&&Number.isInteger(v):checkField(el,v,50,1000);
+      if(k==='mod') el.setAttribute('aria-invalid',String(!ok)); t.strings[j][k]=ok?Math.round(v):null; updTrk(i); return; }
   });
-  document.addEventListener('change',e=>{ const el=e.target; if(el.dataset&&['az','tiltn','kwp'].includes(el.dataset.anl)&&el.getAttribute('aria-invalid')!=='true'){ const i=+el.dataset.i; el.blur(); updTrk(i); } });
+  document.addEventListener('change',e=>{ const el=e.target; if(el.dataset&&['az','tiltn','mod','wp'].includes(el.dataset.anl)&&el.getAttribute('aria-invalid')!=='true'){ const i=+el.dataset.i; el.blur(); updTrk(i); } });
   document.addEventListener('click',e=>{
     const b=e.target.closest('[data-anl]'); if(!b||b.tagName==='INPUT') return;
     const k=b.dataset.anl, i=+b.dataset.i;
     if(k==='az-'||k==='az+'){ const t=anlage.trk[i]; t.az=(t.az+(k==='az+'?1:-1)+360)%360; updTrk(i); }
+    if(k==='addstr'||k==='rmstr'){ const t=anlage.trk[i];
+      if(k==='addstr'){ const last=t.strings[t.strings.length-1]||{mod:null,wp:null}; t.strings.push({mod:last.mod,wp:last.wp}); }
+      else if(t.strings.length>1){ t.strings.splice(+b.dataset.j,1); }
+      $(`[data-strs="${i}"]`).innerHTML=strsHtml(t,i); renderAnlSum(); }
     if(k==='gps'){ anlage.loc={lat:52.5163,lon:13.3777,gps:true}; $('#locSrc').innerHTML='Per GPS<small>genauer Standort · Beispiel</small>'; $('#locVal').textContent=`${fmt(anlage.loc.lat,4)}° N · ${fmt(anlage.loc.lon,4)}° O`; b.textContent='Standort übernommen'; }
     if(k==='save'){
-      if(anlage.trk.some(t=>t.kwp==null)){ b.textContent='Bitte Leistung prüfen'; setTimeout(()=>b.textContent='Speichern',1400); return; }
+      if(anlage.trk.some(t=>trkKwp(t)==null)){ b.textContent='Bitte Strings prüfen'; setTimeout(()=>b.textContent='Speichern',1400); return; }
       anlage.trk.forEach((t,j)=>{ const el=$('#trk'+(j+1)+'Code'); if(el) el.textContent=dirOf(t.az)[0]; });
       $('#anlageSum').textContent=anlage.trk.map(t=>`${dirOf(t.az)[0]} ${t.tilt}°`).join(' · ');
       b.textContent='Gespeichert ✓'; setTimeout(closeSheet,700);

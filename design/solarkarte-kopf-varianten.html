@@ -1,0 +1,198 @@
+<title>Solarkarte Kopfbereich</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@500;600&display=swap">
+<style>
+/* Layout: Kopf, darunter Spalten in Telefonbreite. Jede Spalte: Titel, Solarkarte im Wattbury-Stil, kurze Bewertung.
+   Nur der obere Bereich der Karte unterscheidet sich; Tageskurve und Zeile für morgen sind überall gleich. */
+:root{
+  --bg:#eef0ea; --app-bg:#f2f2f7; --fg:#1b1f22; --muted:#5d646a; --accent:#1f4e8c;
+  --c-solar:#e69500; --c-solar2:#f5ab00; --on:#ffffff; --on-dim:rgba(255,255,255,.84);
+  --c-sub:rgba(255,255,255,.16); --c-sub2:rgba(255,255,255,.30);
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --disp:"Sora","IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101214; --app-bg:#000000; --fg:#eceef0; --muted:#9aa1a7; --accent:#7aa3dc;
+  --c-solar:#d99400; --c-solar2:#e5a600; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101214; --app-bg:#000000; --fg:#eceef0; --muted:#9aa1a7; --accent:#7aa3dc;
+  --c-solar:#d99400; --c-solar2:#e5a600; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
+.wrap{max-width:880px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--disp);font-weight:600;font-size:clamp(24px,4vw,32px);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.lead{color:var(--muted);max-width:70ch;margin:8px 0 24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ttl{display:flex;align-items:center;gap:10px}
+.no{font-family:var(--disp);font-weight:600;font-size:13px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--fg);color:var(--bg);flex:none}
+.no.ref{background:transparent;color:var(--muted);border:1.5px solid var(--muted)}
+.col h2{font-family:var(--disp);font-weight:600;font-size:17px;margin:0;letter-spacing:-.01em}
+.rec{font-size:12px;font-weight:600;color:var(--accent);border:1px solid currentColor;border-radius:999px;padding:1px 9px;margin-left:auto}
+.stage{background:var(--app-bg);border-radius:20px;padding:10px}
+.col p{margin:0;font-size:14px;color:var(--muted)}
+
+/* ---------- Solarkarte ---------- */
+.cc{position:relative;overflow:hidden;border-radius:22px;padding:14px;color:var(--on);
+  background:linear-gradient(160deg,var(--c-solar2),var(--c-solar) 70%);text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.cc::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 26px 26px 0;border-color:transparent var(--app-bg) transparent transparent}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-right:26px}
+h3{font-family:var(--disp);font-weight:600;font-size:19px;margin:0;letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums}
+.big{font-family:var(--disp);font-weight:500;font-size:42px;line-height:1.05;letter-spacing:-.03em}
+.big small{font-size:18px;font-weight:400;margin-left:4px;letter-spacing:0}
+.lab{font-size:13px;color:var(--on-dim)}
+.lab b{color:var(--on);font-weight:600}
+svg.chart{width:100%;height:auto;display:block;margin-top:10px;overflow:visible}
+svg.chart text{font-family:var(--font);font-size:9.5px;fill:rgba(255,255,255,.88)}
+.line1{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--c-sub2)}
+.line1 .l{color:var(--on-dim)}
+.line1 b{font-weight:600}
+/* Referenz */
+.hr{font-size:13px;color:var(--on-dim);white-space:nowrap}
+.hr b{color:var(--on);font-weight:600}
+.trkrow{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--on-dim);margin-top:4px}
+.trkrow span{white-space:nowrap}
+.trkrow b{color:var(--on);font-weight:600}
+/* 1 Kacheln */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.tile{background:var(--c-sub);border-radius:12px;padding:6px 8px;border-left:3px solid var(--c-sub2);min-width:0}
+.tile .k{font-size:11px;color:var(--on-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .v{font-family:var(--disp);font-size:15px;font-weight:600}
+.tile .v small{font-size:10px;font-weight:500;margin-left:2px}
+.cap{display:flex;justify-content:space-between;font-size:12.5px;color:var(--on-dim);margin-top:10px}
+.cap b{color:var(--on);font-weight:600}
+/* 2 Jetzt und Heute */
+.pair{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;margin-top:6px}
+.pair .vl{width:1px;align-self:stretch;background:var(--c-sub2);margin:4px 14px}
+.pair .r{text-align:right}
+.pair .big{font-size:36px}
+.split{margin-top:12px}
+.split .bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px}
+.split .bar i{display:block;height:100%;background:#fff}
+.split .bar i+i{background:rgba(255,255,255,.55)}
+.split .lg{display:flex;justify-content:space-between;font-size:12px;color:var(--on-dim);margin-top:5px}
+.split .lg b{color:var(--on);font-weight:600}
+.prog{height:4px;border-radius:2px;background:rgba(255,255,255,.28);margin-top:6px;overflow:hidden}
+.prog i{display:block;height:100%;background:#fff;border-radius:2px}
+/* 3 Chips */
+.pill{font-size:12.5px;font-weight:600;background:var(--c-sub);border:1px solid var(--c-sub2);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.pill span{font-weight:400;color:var(--on-dim)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:var(--c-sub);border-radius:999px;padding:3px 10px 3px 4px;white-space:nowrap}
+.chip .d{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.9);color:#9a6200;font-family:var(--disp);font-size:10px;font-weight:600;text-shadow:none}
+.chip b{font-weight:600}
+</style>
+
+<div class="wrap">
+  <h1>Solarkarte: Tracker, Spitze und Ertrag neu geordnet</h1>
+  <p class="lead">Links die aktuelle Karte als Referenz. Die drei Varianten ordnen nur den oberen Bereich neu, Tageskurve und Zeile für morgen bleiben gleich. Alle Werte sind Beispiele (13:20 Uhr).</p>
+
+  <div class="grid">
+    <section class="col">
+      <div class="ttl"><span class="no ref">0</span><h2>Aktuell</h2></div>
+      <div class="stage"><div class="cc">
+        <div class="hd"><h3>Solar</h3><span class="hr"><b>14,2</b> von ≈ 31,4 kWh</span></div>
+        <div class="big num">3,42<small>kW</small></div>
+        <div class="trkrow num"><span>Tracker 1 <b>1,81 kW</b></span><span>Tracker 2 <b>1,61 kW</b></span><span>Spitze heute <b data-peak-kw></b></span></div>
+        <svg class="chart" data-curve viewBox="0 0 332 80" aria-hidden="true"></svg>
+        <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
+      </div></div>
+      <p>Drei gleichrangige Kleinwerte in einer Zeile, der Ertrag konkurriert mit dem Titel. Bei schmalen Geräten wird die Zeile abgeschnitten.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">1</span><h2>Kacheln</h2></div>
+      <div class="stage"><div class="cc">
+        <div class="hd"><h3>Solar</h3></div>
+        <div class="big num">3,42<small>kW</small></div>
+        <div class="tiles num">
+          <div class="tile"><div class="k">Tracker 1 · SO</div><div class="v">1,81<small>kW</small></div></div>
+          <div class="tile"><div class="k">Tracker 2 · NW</div><div class="v">1,61<small>kW</small></div></div>
+          <div class="tile"><div class="k">Spitze heute</div><div class="v"><span data-peak-num></span><small>kW</small></div></div>
+        </div>
+        <div class="cap num"><span>Heute <b>14,2 kWh</b></span><span>erwartet ≈ 31,4 kWh</span></div>
+        <svg class="chart" data-curve viewBox="0 0 332 80" aria-hidden="true" style="margin-top:4px"></svg>
+        <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
+      </div></div>
+      <p>Gleiche Sprache wie die Batteriekarte: drei kleine Kacheln mit Akzentkante. Der Ertrag steht als Überschrift direkt über der Kurve, zu der er gehört.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">2</span><h2>Jetzt und Heute</h2><span class="rec">Empfehlung</span></div>
+      <div class="stage"><div class="cc">
+        <div class="hd"><h3>Solar</h3></div>
+        <div class="pair num">
+          <div><div class="big">3,42<small>kW</small></div><div class="lab">jetzt</div></div>
+          <div class="vl"></div>
+          <div class="r"><div class="big">14,2<small>kWh</small></div><div class="lab">heute · von ≈ <b>31,4</b></div><div class="prog"><i style="width:45%"></i></div></div>
+        </div>
+        <div class="split num">
+          <div class="bar" role="img" aria-label="Tracker 1 1,81 kW, Tracker 2 1,61 kW"><i style="width:52.9%"></i><i style="width:47.1%"></i></div>
+          <div class="lg"><span>Tracker 1 · SO <b>1,81 kW</b></span><span>Tracker 2 · NW <b>1,61 kW</b></span></div>
+        </div>
+        <svg class="chart" data-curve data-peak-mark viewBox="0 0 332 80" aria-hidden="true"></svg>
+        <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
+      </div></div>
+      <p>Die zwei Fragen, die man stellt, stehen gleich groß nebeneinander: Was kommt gerade, und was kam heute schon? Die Tracker werden ein geteilter Balken, die Tagesspitze sitzt als Markierung direkt in der Kurve.</p>
+    </section>
+
+    <section class="col">
+      <div class="ttl"><span class="no">3</span><h2>Chips</h2></div>
+      <div class="stage"><div class="cc">
+        <div class="hd"><h3>Solar</h3><span class="pill">14,2 kWh <span>heute</span></span></div>
+        <div class="big num">3,42<small>kW</small></div>
+        <div class="chips num">
+          <span class="chip"><span class="d">1</span>SO <b>1,81 kW</b></span>
+          <span class="chip"><span class="d">2</span>NW <b>1,61 kW</b></span>
+        </div>
+        <svg class="chart" data-curve data-peak-mark data-fc-label viewBox="0 0 332 80" aria-hidden="true"></svg>
+        <div class="line1"><span class="l">Morgen</span><span><b>≈ 42,0 kWh</b> · sonnig</span></div>
+      </div></div>
+      <p>Am leichtesten: Ertrag als Pille neben dem Titel, Tracker als nummerierte Chips, Spitze in der Kurve, die erwartete Tagesmenge als Beschriftung der Prognoselinie.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  const fmt=(v,d)=>v.toLocaleString('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const rise=7+50/60, set=18+20/60, now=13+20/60, t0=7, t1=19, W=332, H=80, top=8, base=64;
+  const N=180, step=(set-rise)/N;
+  const shape=t=>t<=rise||t>=set?0:Math.pow(Math.sin(Math.PI*(t-rise)/(set-rise)),1.4);
+  let area=0; for(let i=0;i<N;i++) area+=shape(rise+(i+.5)*step)*step;
+  const peak=31.4/area, fc=t=>peak*shape(t);
+  const k=t=>0.9+0.08*Math.sin(t*2.3)-(t>12.6?0.35*((t-12.6)/0.75)**2:0);
+  let done=0; for(let t=rise;t<now;t+=step) done+=fc(t)*Math.max(.2,k(t))*step;
+  const act=t=>fc(t)*Math.max(.2,k(t))*14.2/done;
+  let pk=0, pkT=rise; for(let t=rise;t<=now;t+=0.01){ const v=act(t); if(v>pk){pk=v;pkT=t;} }
+  const hhmm=t=>String(Math.floor(t)).padStart(2,'0')+':'+String(Math.round((t%1)*60/5)*5%60).padStart(2,'0');
+  document.querySelectorAll('[data-peak-kw]').forEach(e=>e.textContent=fmt(pk,2)+' kW');
+  document.querySelectorAll('[data-peak-num]').forEach(e=>e.textContent=fmt(pk,2));
+  const maxKw=Math.max(peak,6), X=t=>(t-t0)/(t1-t0)*W, Y=kw=>base-(kw/maxKw)*(base-top);
+  let fcP='', actP='', areaP=`M${X(rise).toFixed(1)} ${base}`, last=[0,0];
+  for(let t=now;t<=set+1e-6;t+=0.05) fcP+=(fcP?'L':'M')+X(t).toFixed(1)+' '+Y(fc(t)).toFixed(1);
+  for(let t=rise;t<=now+1e-6;t+=0.05){ const p=[X(t),Y(act(t))]; actP+=(actP?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); areaP+='L'+p[0].toFixed(1)+' '+p[1].toFixed(1); last=p; }
+  areaP+=`L${last[0].toFixed(1)} ${base}Z`;
+  const ticks=[8,12,16].map(h=>`<text x="${X(h).toFixed(1)}" y="${H-3}" text-anchor="middle">${String(h).padStart(2,'0')}</text>`).join('');
+  document.querySelectorAll('[data-curve]').forEach(svg=>{
+    let s=`<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="rgba(255,255,255,.35)"/>`+
+      `<path d="${areaP}" fill="rgba(255,255,255,.28)"/>`+
+      `<path d="${actP}" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>`+
+      `<path d="${fcP}" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-dasharray="3 4"/>`+
+      `<line x1="${last[0].toFixed(1)}" x2="${last[0].toFixed(1)}" y1="${top}" y2="${base}" stroke="rgba(255,255,255,.5)"/>`+
+      `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" fill="#fff" stroke="rgba(0,0,0,.15)"/>`+
+      `<text x="${(last[0]+6).toFixed(1)}" y="${top+2}">jetzt</text>`+ticks;
+    if(svg.hasAttribute('data-peak-mark')){
+      const px=X(pkT), py=Y(pk);
+      s+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3" fill="none" stroke="#fff" stroke-width="1.5"/>`+
+         `<text x="${(px-6).toFixed(1)}" y="${(py-6).toFixed(1)}" text-anchor="end">Spitze ${fmt(pk,2)} kW · ${hhmm(pkT)}</text>`;
+    }
+    s+= svg.hasAttribute('data-fc-label')
+      ? `<text x="${W}" y="${top+2}" text-anchor="end">Prognose ≈ 31,4 kWh</text>`
+      : `<text x="${W}" y="${top+2}" text-anchor="end">Prognose</text>`;
+    svg.innerHTML=s;
+  });
+})();
+</script>

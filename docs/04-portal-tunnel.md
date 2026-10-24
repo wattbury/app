@@ -37,11 +37,21 @@ Quellen (Protokoll): https://python-e3dc.readthedocs.io/en/latest/_modules/e3dc/
 | Wechselrichter (`PVI_*`) | 0,9 s · 3 Phasen, 2 Strings, Phasenwerte (P, U, I, S, Q), Energiezähler, Netzstatus |
 | Leistungseinstellungen | 0,1 s · max. Laden/Entladen 1.500 W (Limits nicht aktiv), PowerSave an, wetterabhängiges Laden aus |
 | Wallbox (`WB_*`) | 0,2 s · praktisch leer (`appSoftware: null`), **vermutlich keine Wallbox installiert** |
-| DB Tageswert (`DB_REQ_HISTORY_DATA_DAY`) | **0,1 s** · Solar 18,75 kWh, Verbrauch 19,11 kWh, Netzbezug 1,36, Einspeisung 7,58, Batterie laden 10,84, entladen 6,46, Autarkie 60 %, Eigenverbrauch 89 % |
+| DB Tageswert (`DB_REQ_HISTORY_DATA_DAY`) | **0,1 s** · Solar 18,75 kWh, Verbrauch 19,11 kWh, Netzbezug 7,58, Einspeisung 1,36, Batterie laden 10,84, entladen 6,46, Autarkie 60 %, Eigenverbrauch 89 %. Achtung Benennung: `DB_GRID_POWER_OUT` ist der **Bezug**, `DB_GRID_POWER_IN` die **Einspeisung** (Sicht des Netzes); python-e3dc dokumentiert das verdreht. |
 
 Fazit: Alle Lesepfade funktionieren über den Tunnel, die Datenbank des S10 antwortet schnell genug, um Diagramme direkt daraus zu füllen. Zusatzquellen sind nicht vorhanden (`externalSourceAvailable: 0`).
 
 Stolperfallen, die beim Test aufgefallen sind: PyPI-Version 0.10.0 kann das Relay-Protokoll nicht (GitHub-Stand nötig); `isPasswordMd5=False` sendet Klartext und wird abgelehnt; der `_rscpLib`-Debug-Logger schreibt Passwörter ins Log.
+
+### Zweiter Test mit der eigenen Dart-Implementierung (openrscp, 24.10.2026, 22:42)
+
+| | python-e3dc | openrscp |
+|---|---|---|
+| Verbindungsaufbau | 1,0 s | **0,39 s** |
+| Live-Abfrage (10 EMS-Werte) | 1,0–1,2 s | **51–68 ms** |
+| Systeminfo, Einstellungen, Tagesbilanz | ok | ok |
+
+Der Unterschied kommt daher, dass openrscp alle zehn Live-Tags in **einem** Frame schickt, python-e3dc dagegen jedes Tag einzeln mit eigenem Rundlauf über das Relay. Ein 1-s-Intervall erzeugt damit nur etwa 5 % Auslastung der Verbindung. Gemessen: Produktionsdatum KW29 2022, Abregelung bei 100 % / 10.740 W (keine Begrenzung), Tagesbilanz bis 22:42 Solar 18,75 kWh, Haus 21,03 kWh, Bezug 7,66 kWh, Einspeisung 1,43 kWh, Autarkie 64 %.
 
 ## Selbst testen
 

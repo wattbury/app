@@ -64,7 +64,7 @@ step("Batterie (BAT_*)", lambda: e3.get_battery_data(keepAlive=True))
 step("PV-Wechselrichter (PVI_*)", lambda: e3.get_pvi_data(keepAlive=True))
 step("Leistungseinstellungen (EMS_REQ_GET_POWER_SETTINGS)", lambda: e3.get_power_settings(keepAlive=True))
 step("Wallbox (WB_*)", lambda: e3.get_wallbox_data(keepAlive=True))
-step("DB Tageswerte gestern", lambda: e3.get_db_data(startDate=datetime.now().date(), timespan="DAY", keepAlive=True))
+step("DB Tageswerte heute", lambda: e3.get_db_data(startDate=datetime.now().date(), timespan="DAY", keepAlive=True))
 try:
     e3.disconnect()
 except Exception:

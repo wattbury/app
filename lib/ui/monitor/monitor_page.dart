@@ -181,7 +181,8 @@ class _SolarCard extends StatelessWidget {
                                   TextSpan(
                                     children: [
                                       TextSpan(text: 'T${t.index + 1} '),
-                                      _b(fmt((t.powerW ?? 0) / 1000, 2)),
+                                      _b(power(t.powerW ?? 0).value),
+                                      TextSpan(text: ' ${power(t.powerW ?? 0).unit}'),
                                     ],
                                   ),
                                 ),

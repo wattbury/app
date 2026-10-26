@@ -2,23 +2,42 @@ import 'package:flutter/material.dart';
 
 import '../../data/app_settings.dart';
 import '../../data/credentials.dart';
+import '../../data/forecast.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
+import '../plant/plant_page.dart';
 
 class SettingsPage extends StatelessWidget {
   final LiveController live;
   final AppSettings settings;
   final Credentials? credentials;
+  final ForecastService? forecast;
   final VoidCallback onSignOut, onEditConnection;
   const SettingsPage({
     super.key,
     required this.live,
     required this.settings,
     required this.credentials,
+    this.forecast,
     required this.onSignOut,
     required this.onEditConnection,
   });
+
+  void _openPlant(BuildContext context) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => PlantPage(
+        initial: settings.plant,
+        trackers: live.trackers,
+        system: live.system,
+        source: live.source,
+        onSave: (p) {
+          settings.plant = p;
+          forecast?.plant = p;
+        },
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -135,6 +154,17 @@ class SettingsPage extends StatelessWidget {
               _Row(label: 'PV-Leistung', sub: 'aus dem S10', value: '${fmt(sys.installedPeakPowerW / 1000, 2)} kWp'),
               _Row(label: 'Firmware', value: sys.swRelease),
               _Row(label: 'Tracker', sub: 'mit Messwerten', value: '${live.trackers.length}'),
+              _Row(
+                label: 'Ausrichtung',
+                sub: settings.plant.complete ? 'Dachflächen je Tracker' : 'Für die Prognose nötig',
+                value: settings.plant.complete
+                    ? settings.plant.trackers.map((t) => '${t.direction} ${t.tilt}°').join(' · ')
+                    : 'nicht eingerichtet',
+              ),
+              _Row(
+                label: 'Anlage einrichten',
+                trailing: TextButton(onPressed: () => _openPlant(context), child: const Text('Öffnen')),
+              ),
             ],
           ),
         Padding(

@@ -76,6 +76,8 @@ Verwendung: Kürzel auf der Solarkarte (SO, NW …) und Prognose je Tracker (sie
 
 ### 7b · Prognose (Einstellungen › Prognose)
 
+Stand 26.10.2026: **Anlage einrichten** (Einstellungen › Anlage) mit Kompass, Neigung, Strings je Tracker und Summenvergleich; Standort aus PLZ und Ort des Geräts (`INFO_REQ_GET_FACILITY`, nur PLZ, Ort, Land) über die Ortssuche von Open-Meteo, alternativ Koordinaten von Hand. **Open-Meteo-Prognose** je Tracker (`global_tilted_irradiance`, `temperature_2m`, 15 Minuten, 3 Tage, stündlich erneuert); Leistung = kWp × Einstrahlung/1000 × 0,86 × Temperaturfaktor (−0,37 %/K, Zelltemperatur nach NOCT). Die Solarkarte zeigt den Fortschritt zur Tagesprognose, die gestrichelte Kurve bis Sonnenuntergang und „Morgen ≈ … kWh · Wetter“. Korrekturfaktor und Solcast folgen.
+
 **Anbieter** (entschieden 26.10.2026):
 
 - **Open-Meteo** (Standard): kostenlos, ohne Konto. Je Tracker wird die Einstrahlung auf die geneigte Fläche (`global_tilted_irradiance` mit `tilt` und `azimuth` aus 7a) und die Lufttemperatur abgefragt, 15 Minuten aufgelöst, 7 Tage voraus, stündlich aktualisiert. Die Leistung rechnet die App selbst: Einstrahlung × kWp des Trackers × Temperaturkorrektur der Module × Systemverluste. Übertragen werden nur Standort, Ausrichtung und Neigung.

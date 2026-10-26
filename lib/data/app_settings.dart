@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'plant.dart';
 
 enum WallboxMode { auto, show, hide }
 
@@ -33,6 +37,19 @@ class AppSettings extends ChangeNotifier {
     _p.setInt(k, v);
     notifyListeners();
   }
+
+  /// Roof faces and location for the forecast. Not secret, so it lives here and not in the keychain.
+  PlantConfig get plant {
+    final raw = _p.getString('plant');
+    if (raw == null) return const PlantConfig();
+    try {
+      return PlantConfig.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return const PlantConfig();
+    }
+  }
+
+  set plant(PlantConfig c) => _put('plant', jsonEncode(c.toJson()));
 
   /// True while the user looks at sample data instead of a real system.
   bool get demo => _p.getBool('demo') ?? false;

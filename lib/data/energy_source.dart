@@ -42,6 +42,9 @@ abstract class EnergySource {
   });
   Future<List<IdlePeriod>> idlePeriods();
   Future<bool> setIdlePeriods(List<IdlePeriod> periods);
+
+  /// Postcode, city and country of the installation, to locate it for the forecast.
+  Future<({String postcode, String city, String country})> facilityLocation();
 }
 
 /// RSCP over any [RscpTransport]; the transport decides whether it goes local or through the portal.
@@ -147,6 +150,8 @@ class RscpSource implements EnergySource {
   Future<List<IdlePeriod>> idlePeriods() => _client.idlePeriods();
   @override
   Future<bool> setIdlePeriods(List<IdlePeriod> periods) => _client.setIdlePeriods(periods);
+  @override
+  Future<({String postcode, String city, String country})> facilityLocation() => _client.facilityLocation();
 
   @override
   Future<List<PvTracker>> trackers() async => (await _client.pvTrackers()).where((t) => t.active).toList();
@@ -249,6 +254,8 @@ class AutoSource implements EnergySource {
   Future<List<IdlePeriod>> idlePeriods() => _src.idlePeriods();
   @override
   Future<bool> setIdlePeriods(List<IdlePeriod> periods) => _src.setIdlePeriods(periods);
+  @override
+  Future<({String postcode, String city, String country})> facilityLocation() => _src.facilityLocation();
   @override
   Future<List<PvTracker>> trackers() => _src.trackers();
   @override
@@ -478,4 +485,9 @@ class DemoSource implements EnergySource {
     _idle = List.of(periods);
     return true;
   }
+
+  /// Example address; the public repository never contains a real one.
+  @override
+  Future<({String postcode, String city, String country})> facilityLocation() async =>
+      (postcode: '10115', city: 'Berlin', country: 'DE');
 }

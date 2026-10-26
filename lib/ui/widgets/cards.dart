@@ -130,20 +130,22 @@ class WhiteCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(right: kChamfer),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Expanded(
-                    child: Text(title, style: sora(18, color: c.fg)),
-                  ),
-                  if (trailing != null) Text(trailing!, style: TextStyle(fontSize: 13, color: c.muted)),
-                  ?action,
-                ],
+            // An empty title leaves the first row to the content, e.g. an editable name.
+            if (title.isNotEmpty || trailing != null || action != null)
+              Padding(
+                padding: const EdgeInsets.only(right: kChamfer),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Expanded(
+                      child: Text(title, style: sora(18, color: c.fg)),
+                    ),
+                    if (trailing != null) Text(trailing!, style: TextStyle(fontSize: 13, color: c.muted)),
+                    ?action,
+                  ],
+                ),
               ),
-            ),
             child,
           ],
         ),

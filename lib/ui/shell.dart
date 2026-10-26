@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/app_settings.dart';
 import '../data/credentials.dart';
+import '../data/forecast.dart';
 import '../data/history.dart';
 import '../data/live_controller.dart';
 import '../theme/tokens.dart';
@@ -18,12 +19,14 @@ class Shell extends StatefulWidget {
   final LiveController live;
   final AppSettings settings;
   final Credentials? credentials;
+  final ForecastService? forecast;
   final VoidCallback onSignOut, onEditConnection;
   const Shell({
     super.key,
     required this.live,
     required this.settings,
     required this.credentials,
+    this.forecast,
     required this.onSignOut,
     required this.onEditConnection,
   });
@@ -60,7 +63,7 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     final c = context.wb;
     return ListenableBuilder(
-      listenable: Listenable.merge([widget.live, widget.settings]),
+      listenable: Listenable.merge([widget.live, widget.settings, ?widget.forecast]),
       builder: (context, _) => Scaffold(
         body: SafeArea(
           bottom: false,
@@ -71,7 +74,7 @@ class _ShellState extends State<Shell> {
                 child: IndexedStack(
                   index: _tab,
                   children: [
-                    MonitorPage(live: widget.live, settings: widget.settings),
+                    MonitorPage(live: widget.live, settings: widget.settings, forecast: widget.forecast?.forecast),
                     HistoryPage(repo: _history),
                     // Animations run only while the tab is visible.
                     TickerMode(
@@ -83,6 +86,7 @@ class _ShellState extends State<Shell> {
                       live: widget.live,
                       settings: widget.settings,
                       credentials: widget.credentials,
+                      forecast: widget.forecast,
                       onSignOut: widget.onSignOut,
                       onEditConnection: widget.onEditConnection,
                     ),

@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'data/app_settings.dart';
 import 'data/credentials.dart';
 import 'data/energy_source.dart';
+import 'data/forecast.dart';
 import 'data/live_controller.dart';
 import 'theme/tokens.dart';
 import 'ui/setup/setup_page.dart';
@@ -40,6 +41,7 @@ class _WattburyAppState extends State<WattburyApp> {
   Credentials? _creds;
   LiveController? _live;
   bool _editing = false;
+  late final ForecastService _forecast = ForecastService(widget.settings.plant);
 
   @override
   void initState() {
@@ -90,6 +92,7 @@ class _WattburyAppState extends State<WattburyApp> {
 
   @override
   void dispose() {
+    _forecast.dispose();
     _live?.dispose();
     super.dispose();
   }
@@ -116,6 +119,7 @@ class _WattburyAppState extends State<WattburyApp> {
                 live: _live!,
                 settings: widget.settings,
                 credentials: _creds,
+                forecast: _forecast,
                 onSignOut: _signOut,
                 onEditConnection: () => setState(() => _editing = true),
               ),

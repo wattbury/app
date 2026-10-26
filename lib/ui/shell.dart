@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import '../data/credentials.dart';
 import '../data/forecast.dart';
 import '../data/history.dart';
 import '../data/history_cache.dart';
+import '../data/notification_service.dart';
+import '../data/notifications.dart';
 import '../data/live_controller.dart';
 import '../theme/tokens.dart';
 import 'flow/flow_page.dart';
@@ -22,6 +25,7 @@ class Shell extends StatefulWidget {
   final Credentials? credentials;
   final ForecastService? forecast;
   final HistoryCache? historyCache;
+  final NotificationService? notifications;
   final VoidCallback onSignOut, onEditConnection;
   const Shell({
     super.key,
@@ -30,6 +34,7 @@ class Shell extends StatefulWidget {
     required this.credentials,
     this.forecast,
     this.historyCache,
+    this.notifications,
     required this.onSignOut,
     required this.onEditConnection,
   });
@@ -56,9 +61,39 @@ class _ShellState extends State<Shell> {
   int _tab = 0;
   late HistoryRepository _history = HistoryRepository(widget.live.source, cache: widget.historyCache);
 
+  StreamSubscription<Alert>? _alertSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _alertSub = widget.notifications?.alerts.listen(_showAlert);
+  }
+
+  /// In-app banner for an alert; the system notification (if available) comes separately.
+  void _showAlert(Alert a) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${a.title} · ${a.body}'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _alertSub?.cancel();
+    super.dispose();
+  }
+
   @override
   void didUpdateWidget(Shell old) {
     super.didUpdateWidget(old);
+    if (!identical(old.notifications, widget.notifications)) {
+      _alertSub?.cancel();
+      _alertSub = widget.notifications?.alerts.listen(_showAlert);
+    }
     if (!identical(old.live.source, widget.live.source) || !identical(old.historyCache, widget.historyCache)) {
       _history = HistoryRepository(widget.live.source, cache: widget.historyCache);
     }
@@ -68,7 +103,7 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     final c = context.wb;
     return ListenableBuilder(
-      listenable: Listenable.merge([widget.live, widget.settings, ?widget.forecast]),
+      listenable: Listenable.merge([widget.live, widget.settings, ?widget.forecast, ?widget.notifications]),
       builder: (context, _) => Scaffold(
         body: SafeArea(
           bottom: false,
@@ -97,6 +132,7 @@ class _ShellState extends State<Shell> {
                       credentials: widget.credentials,
                       forecast: widget.forecast,
                       history: _history,
+                      notifications: widget.notifications,
                       onSignOut: widget.onSignOut,
                       onEditConnection: widget.onEditConnection,
                     ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'notifications.dart';
 import 'plant.dart';
 
 enum WallboxMode { auto, show, hide }
@@ -86,6 +87,19 @@ class AppSettings extends ChangeNotifier {
     _p.setBool('correctionEnabled', v);
     notifyListeners();
   }
+
+  /// Notification rules; the defaults until the user changes something.
+  List<NotificationRule> get rules {
+    final raw = _p.getString('rules');
+    if (raw == null) return NotificationRule.defaults();
+    try {
+      return [for (final j in jsonDecode(raw) as List) NotificationRule.fromJson(j as Map<String, dynamic>)];
+    } catch (_) {
+      return NotificationRule.defaults();
+    }
+  }
+
+  set rules(List<NotificationRule> r) => _put('rules', jsonEncode([for (final x in r) x.toJson()]));
 
   /// Raw storage for larger app data such as the forecast archive; does not notify listeners.
   String? readRaw(String key) => _p.getString(key);

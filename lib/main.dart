@@ -9,6 +9,7 @@ import 'data/credentials.dart';
 import 'data/energy_source.dart';
 import 'data/forecast.dart';
 import 'data/history_cache.dart';
+import 'data/notification_service.dart';
 import 'data/live_controller.dart';
 import 'theme/tokens.dart';
 import 'ui/setup/setup_page.dart';
@@ -60,6 +61,7 @@ class _WattburyAppState extends State<WattburyApp> {
   LiveController? _live;
   bool _editing = false;
   HistoryCache _cache = HistoryCache(null);
+  late final NotificationService _notifications = NotificationService(widget.settings)..init();
   late final ForecastService _forecast = ForecastService(
     widget.settings,
     solcastKey: widget.store.solcastKey,
@@ -96,6 +98,7 @@ class _WattburyAppState extends State<WattburyApp> {
     _live?.dispose();
     _live = LiveController(source)..start();
     _forecast.attach(_live!);
+    _notifications.attach(_live!);
   }
 
   Future<void> _connected(Credentials c) async {
@@ -126,6 +129,7 @@ class _WattburyAppState extends State<WattburyApp> {
   @override
   void dispose() {
     _forecast.dispose();
+    _notifications.dispose();
     _live?.dispose();
     super.dispose();
   }
@@ -154,6 +158,7 @@ class _WattburyAppState extends State<WattburyApp> {
                 credentials: _creds,
                 forecast: _forecast,
                 historyCache: _cache,
+                notifications: _notifications,
                 onSignOut: _signOut,
                 onEditConnection: () => setState(() => _editing = true),
               ),

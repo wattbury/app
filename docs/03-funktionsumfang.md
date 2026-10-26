@@ -94,6 +94,8 @@ Umgesetzt 26.10.2026: Strompreis und Einspeisevergütung in ct/kWh. Daraus „Er
 
 SOC unter x %, Netzbezug über x kW für n Minuten, Anlage offline, Temperatur, Wallbox fertig. Versand per ntfy (Stufe 1) oder APNs (Stufe 2). Phase 4.
 
+Umgesetzt 26.10.2026 (ohne Bridge): Regeln als Datenmodell und in Einstellungen › Benachrichtigungen. Arten: Batterie unter x %, Batterie voll, Netzbezug über x kW, Einspeisung über x kW, Anlage nicht erreichbar; je Regel Dauer (sofort bis 60 Min.) und optional ein Zeitfenster (auch über Mitternacht). Eine Regel meldet einmal, wenn die Bedingung ohne Unterbrechung lange genug anhält, und erst wieder, wenn sie mit Abstand weggefallen ist (2 Prozentpunkte bzw. 0,2 kW). Zustellung, solange die App läuft: Systembenachrichtigung (`flutter_local_notifications`: iOS, Linux per D-Bus) und Banner in der App. Voreinstellung: Batterie unter 10 % (18–23 Uhr), Netzbezug über 2 kW länger als 10 Min. (aus), Anlage offline länger als 5 Min. Der Schalter „Auch über die Bridge senden“ ist vorgesehen und ausgegraut. Temperatur und Wallbox fertig folgen, wenn die Werte im Live-Abruf sind bzw. eine Wallbox da ist. Für Android-Builds fehlt noch die Gradle-Einrichtung des Plugins (Desugaring), Android ist derzeit kein Ziel.
+
 ### 9 · Widgets, Watch (nur nativ)
 
 Home-Screen „Energiefluss“, „Tagesdiagramm“, Lock-Screen „SOC“, StandBy; Watch-App „Jetzt“ mit 2×2 Kacheln (SOC, PV, Verbrauch, Netz) und Komplikationen. Phase 5.

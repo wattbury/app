@@ -4,11 +4,13 @@ import '../../data/app_settings.dart';
 import '../../data/credentials.dart';
 import '../../data/forecast.dart';
 import '../../data/history.dart';
+import '../../data/notification_service.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
 import '../forecast/forecast_page.dart';
 import '../plant/plant_page.dart';
+import 'rules_section.dart';
 
 class SettingsPage extends StatelessWidget {
   final LiveController live;
@@ -16,6 +18,7 @@ class SettingsPage extends StatelessWidget {
   final Credentials? credentials;
   final ForecastService? forecast;
   final HistoryRepository? history;
+  final NotificationService? notifications;
   final VoidCallback onSignOut, onEditConnection;
   const SettingsPage({
     super.key,
@@ -24,6 +27,7 @@ class SettingsPage extends StatelessWidget {
     required this.credentials,
     this.forecast,
     this.history,
+    this.notifications,
     required this.onSignOut,
     required this.onEditConnection,
   });
@@ -192,6 +196,10 @@ class SettingsPage extends StatelessWidget {
             title: 'Verlauf',
             children: [_HistoryPreload(repo: history!)],
           ),
+        _Section(
+          title: 'Benachrichtigungen',
+          children: [RulesSection(settings: settings, service: notifications)],
+        ),
         _Section(
           title: 'Tarif & Kosten',
           children: [

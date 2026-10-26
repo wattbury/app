@@ -55,7 +55,7 @@ Beide RSCP-Transporte teilen sich einen **TLV-Codec** (Tag, Typ, Länge, Wert; C
 | `DataSource` | Protokoll mit `live()`, `system()`, `battery()`, `pv()`, `history(range)`, `settings()`, `set…()`; Implementierungen Local, Portal, Cloud. Automatische Wahl + Reconnect. |
 | `Store` | SQLite (drift) auf dem Gerät: Tageswerte und Monatswerte aus der S10-DB zwischengespeichert, damit Diagramme sofort erscheinen; Einstellungen; Änderungsprotokoll der Setter. |
 | `Features` | Energiemonitor, Diagramme, Energiefluss, Smart-Funktionen, Wallbox, Systemstatistik, Einstellungen (Screens aus dem Click-Dummy). |
-| `Services` | forecast.solar (Prognose), Tibber/aWATTar (optional), Tarif/Kosten-Rechnung. |
+| `Services` | Prognose (Open-Meteo, optional Solcast mit eigenem Key; gelernter Korrekturfaktor aus der S10-Datenbank), Tibber/aWATTar (optional), Tarif/Kosten-Rechnung. |
 | `Widgets` / `Watch` | WidgetKit-Timeline (nativer Swift-Teil, über `home_widget` angebunden) (alle 15 min ein kurzer Portal-Abruf), Watch-App „Jetzt“. |
 | `Notifications` (vorgesehen) | Regel-Modell und UI jetzt, Versand später über die Bridge. Ohne Bridge: lokale Hinweise nur, solange die App offen ist. |
 
@@ -73,7 +73,7 @@ Damit die Bridge später ohne Umbau andocken kann:
 - Portal-Login, RSCP-Passwort und Seriennummer liegen nur im iOS-Schlüsselbund.
 - Portal-Passwort wird als MD5 übertragen (Vorgabe des Relays), lokal als Rijndael-Schlüssel benutzt.
 - Setter werden zurückgelesen und protokolliert; `EMS_REQ_SET_POWER` (nicht persistent) wird nicht als Dauerfunktion angeboten.
-- Keine Daten an Dritte außer den bewusst konfigurierten Diensten (forecast.solar, Tibber/aWATTar).
+- Keine Daten an Dritte außer den bewusst konfigurierten Diensten (Open-Meteo oder Solcast für die Prognose, Tibber/aWATTar).
 
 ## Roadmap
 

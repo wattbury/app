@@ -80,7 +80,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .icon-btn svg{width:22px;height:22px}
 .abtns{display:flex;gap:2px}
 .views{flex:1;min-height:0;position:relative}
-.view{position:absolute;inset:0;overflow:auto;padding:0 10px 90px;display:none;scrollbar-width:none}
+.view{position:absolute;inset:0;overflow:auto;padding:0 10px 16px;display:none;scrollbar-width:none}
 .view.active{display:block}
 .view::-webkit-scrollbar{display:none}
 .svgicon{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -370,11 +370,28 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
 .kt .v{padding-left:12px;font-size:22px}
 .kp.three .kt .v{font-size:19px}
 
-/* Toolbar: Pille mit gefülltem aktiven Punkt */
-.toolbar{border-radius:999px;padding:6px 10px 6px 6px}
-.toolbar button{border-radius:50%;width:40px;height:40px}
-.toolbar button[aria-current="true"]{background:var(--c-solar);color:#1c1407}
-.toolbar .st{font-family:var(--font-app)}
+/* Tab-Leiste: fest am unteren Rand, fünf Einträge mit Icon und Beschriftung */
+.toolbar{position:relative;left:auto;right:auto;bottom:auto;flex:none;border-radius:0;box-shadow:none;display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:6px 4px 26px;
+  background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--sep)}
+.toolbar button{width:auto;height:auto;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 2px;color:var(--app-muted);font-size:10.5px;font-weight:500;text-align:center}
+.toolbar button svg{width:24px;height:24px}
+.toolbar button[aria-current="true"]{background:none;color:var(--app-fg);font-weight:600}
+.toolbar button[aria-current="true"] svg{color:var(--c-solar);stroke-width:2}
+@media (max-width:480px){.toolbar{padding-bottom:max(8px,env(safe-area-inset-bottom,0px))}}
+/* Prognose */
+.fcrow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--sep)}
+.fcrow:last-child{border-bottom:0}
+.fcrow .n{font-size:15px}
+.fcrow .n small{display:block;font-size:12px;color:var(--app-muted)}
+.fcrow .f{font-family:var(--font-disp);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.fcbar{grid-column:1/-1;position:relative;height:6px;border-radius:3px;background:color-mix(in srgb,var(--app-fg) 9%,transparent);margin-top:6px}
+.fcbar i{position:absolute;top:-3px;width:3px;height:12px;border-radius:2px;background:var(--c-solar)}
+.fcbar b{position:absolute;top:-2px;left:50%;width:1px;height:10px;background:var(--app-muted)}
+.keyin{font:inherit;font-size:14px;width:100%;border:1px solid var(--sep);border-radius:9px;padding:7px 9px;background:var(--app-bg);color:var(--app-fg);margin-top:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.keyin:focus{outline:2px solid var(--accent);outline-offset:1px}
+.errs{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:13px;margin-top:10px;font-variant-numeric:tabular-nums}
+.errs .t{height:8px;border-radius:4px;background:color-mix(in srgb,var(--app-fg) 9%,transparent);overflow:hidden}
+.errs .t i{display:block;height:100%;border-radius:4px}
 
 /* ===== Batterie-Details als Overlay auf der Karte ===== */
 .cc.batt{cursor:pointer}
@@ -461,6 +478,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
         <button type="button" data-sheet="battery"><span class="k">B</span>Sheet: Systemstatistik &amp; Info</button>
         <button type="button" data-sheet="setup"><span class="k">V</span>Sheet: Verbindung einrichten</button>
         <button type="button" data-sheet="anlage"><span class="k">A</span>Sheet: Anlage einrichten</button>
+        <button type="button" data-sheet="prognose"><span class="k">P</span>Sheet: Prognose</button>
       </nav>
     </div>
     <div class="group">
@@ -476,10 +494,9 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
         <div class="status"><span>09:41</span><span class="r">●●●● <span class="bat"></span></span></div>
 
         <div class="appbar">
-          <button type="button" class="icon-btn" aria-label="Einstellungen" data-go="more"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="7.5" r=".9" fill="currentColor"/><circle cx="12" cy="12" r=".9" fill="currentColor"/><circle cx="12" cy="16.5" r=".9" fill="currentColor"/></svg></button>
+          <span class="icon-btn" aria-hidden="true"></span>
           <div class="title"><h2 id="appTitle">Wattbury</h2><div class="conn"><span class="dot"></span><span id="connText">RSCP Verbindung · 1 Sek.</span></div></div>
           <div class="abtns">
-            <button type="button" class="icon-btn" aria-label="Diagramme" data-go="history"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 20h18M5 17V11M10 17V6M15 17v-4"/><circle cx="19" cy="7" r="3"/><path d="M19 5.5v3M17.5 7h3"/></svg></button>
             <button type="button" class="icon-btn" aria-label="Aktualisieren"><svg class="svgicon" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
           </div>
         </div>
@@ -592,7 +609,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
               </div>
 
               <div class="footline" id="hiddenLine">Ausgeblendet, bis vorhanden oder konfiguriert: Wallbox · Ext. Verbrauch · Ext. Quellen · Börsenstrompreise</div>
-              <div class="footline" style="margin-top:0">S10 E · 9,9 kWp · 13 kWh · Firmware S10_2025_04 · letzte Daten 09:41:07</div>
+              <div class="footline" style="margin-top:0">S10 E · 10,74 kWp · 13,1 kWh · Firmware S10_2026_027</div>
             </div>
           </section>
 
@@ -724,10 +741,19 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
             <div class="card">
               <h3>Anlage</h3>
               <div class="list">
-                <div class="row"><div class="l">PV-Leistung<small>aus dem S10</small></div><div class="v">10,74 kWp</div></div>
-                <div class="row"><div class="l">Batterie<small>aus dem S10</small></div><div class="v">13,1 kWh · 4 Module</div></div>
-                <div class="row"><div class="l">Ausrichtung<small>Azimut und Neigung je Tracker</small></div><div class="v" id="anlageSum">SO 35° · NW 35°</div></div>
+                <div class="row"><div class="l"><span>PV-Leistung<small>aus dem S10</small></span></div><div class="v">10,74 kWp</div></div>
+                <div class="row"><div class="l"><span>Batterie<small>aus dem S10</small></span></div><div class="v">13,1 kWh · 4 Module</div></div>
+                <div class="row"><div class="l"><span>Ausrichtung<small>Azimut und Neigung je Tracker</small></span></div><div class="v" id="anlageSum">SO 35° · NW 35°</div></div>
                 <div class="row"><div class="l">Anlage konfigurieren</div><div class="v"><button type="button" class="pill warn" data-sheet="anlage">Öffnen ›</button></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Prognose</h3>
+              <div class="list">
+                <div class="row"><div class="l">Anbieter</div><div class="v" id="fcProvSum">Open-Meteo · ohne Konto</div></div>
+                <div class="row"><div class="l"><span>Korrekturfaktor<small>aus den Messwerten des S10 gelernt</small></span></div><div class="v" id="fcCorrSum">0,93 · 30 Tage</div></div>
+                <div class="row"><div class="l">Genauigkeit Tagesertrag</div><div class="v">± 8 % statt ± 17 %</div></div>
+                <div class="row"><div class="l">Prognose einstellen</div><div class="v"><button type="button" class="pill warn" data-sheet="prognose">Öffnen ›</button></div></div>
               </div>
             </div>
             <div class="card">
@@ -741,8 +767,8 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
             <div class="card">
               <h3>Benachrichtigungen <span class="r">über Bridge</span></h3>
               <div class="list">
-                <div class="row"><div class="l">Batterie unter<small>10 % · nur abends</small></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Batterie-Warnung"></button></div></div>
-                <div class="row"><div class="l">Netzbezug über<small>2,0 kW länger als 10 Min.</small></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Netzbezug-Warnung"></button></div></div>
+                <div class="row"><div class="l"><span>Batterie unter<small>10 % · nur abends</small></span></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Batterie-Warnung"></button></div></div>
+                <div class="row"><div class="l"><span>Netzbezug über<small>2,0 kW länger als 10 Min.</small></span></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Netzbezug-Warnung"></button></div></div>
                 <div class="row"><div class="l">Anlage offline</div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="true" aria-label="Offline-Warnung"></button></div></div>
               </div>
             </div>
@@ -759,11 +785,11 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
         </div>
 
         <nav class="toolbar" id="toolbar" aria-label="Hauptnavigation">
-          <button type="button" data-go="monitor" aria-current="true" aria-label="Energiemonitor"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="8" height="7" rx="2"/><rect x="13" y="14" width="8" height="7" rx="2"/></svg></button>
-          <button type="button" data-go="history" aria-label="Diagramme"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 15l2 2 4-4"/></svg></button>
-          <button type="button" data-go="flow" aria-label="Energiefluss"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4"/><path d="M12 12L5.6 18.4"/></svg></button>
-          <button type="button" data-go="smart" aria-label="Smart-Funktionen"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>
-          <span class="st">✓ 09:41:07 · ✓ Lokal</span>
+          <button type="button" data-go="monitor" aria-current="true"><svg class="svgicon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="8" height="7" rx="2"/><rect x="13" y="14" width="8" height="7" rx="2"/></svg>Monitor</button>
+          <button type="button" data-go="history"><svg class="svgicon" viewBox="0 0 24 24"><path d="M3 20h18M6 17v-6M11 17V6M16 17v-4M21 17V9"/></svg>Diagramme</button>
+          <button type="button" data-go="flow"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg>Fluss</button>
+          <button type="button" data-go="smart"><svg class="svgicon" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>Smart</button>
+          <button type="button" data-go="more"><svg class="svgicon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Einstellungen</button>
         </nav>
 
         <!-- ===== Sheets ===== -->
@@ -792,10 +818,11 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     history:`<p><b>Diagramme</b>: Zeitraum (Tag/Woche/Monat/Jahr), gestapelte Balken. Oben Quellen (Solar, Netzbezug, Batterie entladen), unten Senken (Verbrauch, Einspeisung, Batterie laden).</p><ul><li>Legende blendet Serien aus, Tooltip per Tap.</li><li>Bilanz mit Pastell-KPIs wie in der Monatsstatistik, plus Kosten-Zeilen.</li></ul>`,
     flow:`<p><b>Energiefluss</b> mit dem Hauskraftwerk als Mitte: Solar oben, Batterie unten, Netz links, Haus rechts, Wallbox unten rechts (nur wenn vorhanden).</p><ul><li>Jede Leitung hat genau einen Wert und eine Richtung. Wandernde Pfeile in der Farbe des Teilnehmers zeigen sie an, schneller bei mehr Leistung.</li><li>Ruhende Leitungen bleiben als graue Spur.</li><li>„Heute“ als zwei Bilanzbalken: wohin die Sonne ging, woher der Verbrauch kam.</li></ul>`,
     smart:`<p><b>Smart-Funktionen</b> (nur mit RSCP): Sperrzeiten, Lade-/Entladeleistung, Notstromreserve. Wallbox-Steuerung als eigenes Sheet.</p><ul><li>Änderungen werden gesammelt und mit „Übernehmen“ gesendet, danach zurückgelesen.</li><li>Ohne RSCP ist der Bereich deaktiviert und erklärt warum.</li></ul>`,
-    more:`<p><b>Einstellungen</b>: Verbindungsarten, Dashboard-Sortierung, Anlage, Tarif, Benachrichtigungen, Widgets.</p><ul><li>Benachrichtigungen brauchen die Bridge, da iOS-Apps nicht dauerhaft im Hintergrund pollen dürfen.</li></ul>`,
+    more:`<p><b>Einstellungen</b>: Verbindungsarten, Dashboard-Sortierung, Anlage, Prognose, Tarif, Benachrichtigungen, Widgets.</p><ul><li>Navigation über die feste Tab-Leiste unten (Monitor, Diagramme, Fluss, Smart, Einstellungen). Oben rechts bleibt nur „Aktualisieren“.</li><li>Benachrichtigungen brauchen die Bridge, da iOS-Apps nicht dauerhaft im Hintergrund pollen dürfen.</li></ul>`,
     wallbox:`<p><b>Wallbox-Steuerung</b> wie my4E: Sonnen-/Mischmodus, Phasen, Ladestrom, Priorität, Batterie-Entladung in die Wallbox, Laden starten/stoppen.</p>`,
     battery:`<p><b>Systemstatistik &amp; Info</b>: Tabs Systeminfo · Energiefluss seit Inbetriebnahme · Berechnungen; hier die Batterie-Details.</p>`,
     anlage:`<p><b>Anlage einrichten</b> (Schritt 4 im Assistenten, später unter Einstellungen › Anlage).</p><ul><li>Oben steht, was das S10 per RSCP liefert: Modell, Firmware, Spitzenleistung, genutzte Tracker, Batterie, Wechselrichter, Postleitzahl.</li><li>Je Tracker: Name, Dachfläche (Ausrichtung, Neigung) und die angeschlossenen Strings. Die Live-Leistung hilft bei der Zuordnung: morgens liefert der östliche Tracker mehr.</li><li>Je Tracker eine Dachfläche: Ausrichtung (Kompass, ±1° oder Zahl) und Neigung (Schieberegler in 1°-Schritten oder Zahl).</li><li>Darunter die Strings an diesem Tracker, je String Module × Wp je Modul. Parallele Strings misst das S10 nur gemeinsam; die Prognose nutzt die Summe.</li><li>Die Summe wird mit der im S10 hinterlegten Spitzenleistung verglichen, nur als Hinweis.</li><li>Nichts ist fest eingebaut: Trackerzahl und Wechselrichter kommen vom Gerät. Links unter „Demo“ lassen sich 1, 2 oder 3 Tracker durchspielen.</li><li>Der Standort kommt aus der Postleitzahl und lässt sich per GPS verfeinern.</li><li>Speichern setzt die Kürzel (z. B. SO, NW) auf der Solarkarte.</li></ul>`,
+    prognose:`<p><b>Prognose</b> (Einstellungen › Prognose).</p><ul><li><b>Open-Meteo</b> ist der Standard: kostenlos, ohne Konto. Die App fragt je Tracker die Einstrahlung auf die geneigte Fläche ab (Ausrichtung und Neigung aus „Anlage“) und rechnet mit kWp, Modultemperatur und Systemverlusten die Leistung aus.</li><li><b>Solcast</b> als Alternative mit eigenem API-Key (Hobby-Zugang: 2 Dachflächen, 10 Abrufe am Tag). Weitere Tracker rechnen dann mit Open-Meteo.</li><li><b>Korrekturfaktor:</b> Die App vergleicht jede Nacht die Prognose mit dem gemessenen Ertrag aus der S10-Datenbank und lernt je Tageszeit einen Faktor (gleitend über 30 Tage). Das fängt Verschattung, Verschmutzung und Alterung ab.</li><li>Tage mit Abregelung oder Schnee zählen nicht, sonst würde die App eine falsche Anlage lernen.</li><li>Der Faktor gilt je Anbieter. Nach einem Wechsel lernt die App neu, erste Werte nach etwa 7 Tagen.</li></ul>`,
     setup:`<p><b>Verbindungs-Assistent</b>: lokal (IP, Portal-Login, RSCP-Passwort), optional Bridge, optional Cloud-Registry-Key.</p><ul><li>Zugangsdaten bleiben im iOS-Schlüsselbund.</li></ul>`,
     pv:`<p><b>PV-Details</b>: Leistung je Tracker, Spannung/Strom, Abregelung, Tagesverlauf.</p>`
   };
@@ -822,7 +849,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
       <div class="seg"><button type="button" aria-pressed="false">1 Phase</button><button type="button" aria-pressed="true">3 Phasen</button><button type="button" aria-pressed="false">Auto</button></div>
       <div class="slider"><div class="lbl"><span>Ladestrom</span><b id="ampVal">8 A · 5,5 kW</b></div><input type="range" id="amp" min="6" max="32" value="8"></div></div>
       <div class="card"><h3>Ladepriorität</h3><div class="seg"><button type="button" aria-pressed="true">Wallbox</button><button type="button" aria-pressed="false">Hauskraftwerk</button></div>
-      <div class="list"><div class="row"><div class="l">Batterie entlädt in Wallbox<small>bis min. SOC 30 %</small></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Batterie entlädt in Wallbox"></button></div></div></div></div>
+      <div class="list"><div class="row"><div class="l"><span>Batterie entlädt in Wallbox<small>bis min. SOC 30 %</small></span></div><div class="v"><button type="button" class="sw-toggle" role="switch" aria-checked="false" aria-label="Batterie entlädt in Wallbox"></button></div></div></div></div>
       <div class="card"><div class="list"><div class="row"><div class="l">Status</div><div class="v">Wagen lädt nicht</div></div><div class="row"><div class="l">Heute</div><div class="v">☀ 2,48 kWh · ⚡ 9 Wh</div></div></div></div>
       <button type="button" class="btn sec">Einstellungen übermitteln</button><button type="button" class="btn primary">Laden starten</button>
       <div class="hint">Fahrzeugseitige Einstellungen können den Ladestart verhindern oder verzögern.</div>`,
@@ -850,19 +877,102 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
         <div class="list"><div class="row"><div class="l">IP-Adresse des S10</div><div class="v">192.168.178.40</div></div>
         <div class="row"><div class="l">Portal-Benutzer</div><div class="v">name@beispiel.de</div></div>
         <div class="row"><div class="l">Portal-Passwort</div><div class="v">••••••••</div></div>
-        <div class="row"><div class="l">RSCP-Passwort<small>S10-Menü: Personalisieren › Benutzerprofil</small></div><div class="v">••••••</div></div></div>
+        <div class="row"><div class="l"><span>RSCP-Passwort<small>S10-Menü: Personalisieren › Benutzerprofil</small></span></div><div class="v">••••••</div></div></div>
         <button type="button" class="btn primary">Verbindung testen</button></div>
       <div class="card"><h3>2 · Unterwegs über Bridge <span class="r">optional</span></h3>
         <div class="list"><div class="row"><div class="l">Bridge-URL</div><div class="v">https://bridge.home…</div></div><div class="row"><div class="l">Token</div><div class="v">••••••••</div></div></div>
         <div class="hint">Die Bridge läuft zu Hause (z. B. Raspberry Pi), hält die RSCP-Verbindung, speichert den Verlauf und sendet Benachrichtigungen.</div></div>
       <div class="card"><h3>3 · E3/DC Cloud <span class="r">optional, nur lesend</span></h3>
-        <div class="list"><div class="row"><div class="l">Seriennummer</div><div class="v">S10-…</div></div><div class="row"><div class="l">Cloud-Registry-Key<small>my.e3dc.com › Rechteverwaltung</small></div><div class="v">••••••</div></div></div></div>
+        <div class="list"><div class="row"><div class="l">Seriennummer</div><div class="v">S10-…</div></div><div class="row"><div class="l"><span>Cloud-Registry-Key<small>my.e3dc.com › Rechteverwaltung</small></span></div><div class="v">••••••</div></div></div></div>
       <div class="card"><h3>4 · Anlage <span class="r">für die Prognose</span></h3>
         <div class="hint" style="margin-top:4px">Tracker, Leistung und Batterie liest die App aus dem S10. Ausrichtung, Neigung und Leistung je Tracker trägst du einmal selbst ein.</div>
         <button type="button" class="btn primary" data-sheet="anlage">Weiter zur Anlage</button></div>`,
     pv:''
   };
-  function openSheet(k){ const sh=$('#sheet'); sh.innerHTML=k==='anlage'?anlageHtml():k==='pv'?pvHtml():(sheets[k]||''); sh.classList.add('open'); $('#sheetBg').classList.add('open'); note(k); bindSliders(); if(k==='anlage') renderAnlSum(); sh.scrollTop=0; }
+  function openSheet(k){ const sh=$('#sheet'); sh.innerHTML=k==='anlage'?anlageHtml():k==='pv'?pvHtml():k==='prognose'?fcHtml():(sheets[k]||''); sh.classList.add('open'); $('#sheetBg').classList.add('open'); note(k); bindSliders(); if(k==='anlage') renderAnlSum(); if(k==='prognose') drawCorr(); sh.scrollTop=0; }
+
+  /* ---------- Prognose: Anbieter und gelernter Korrekturfaktor ---------- */
+  /* Faktor = gemessen ÷ Rohprognose je Stunde, gleitend über 30 Tage. Morgens niedriger (Beispiel: Verschattung durch einen Baum). */
+  const fc={prov:'om', learn:true, key:'', site:['','',''],
+    hours:[[7,.78],[8,.84],[9,.88],[10,.92],[11,.95],[12,.97],[13,.98],[14,.97],[15,.96],[16,.95],[17,.93],[18,.94]]};
+  const fcProvName=()=>fc.prov==='om'?'Open-Meteo':'Solcast';
+  function fcProvHtml(){
+    if(fc.prov==='om') return `<div class="list">
+        <div class="row"><div class="l">Konto</div><div class="v">keins nötig · kostenlos</div></div>
+        <div class="row"><div class="l"><span>Abfrage<small>je Tracker mit Ausrichtung und Neigung</small></span></div><div class="v">Einstrahlung, Temperatur</div></div>
+        <div class="row"><div class="l">Auflösung</div><div class="v">15 Min. · 7 Tage</div></div>
+        <div class="row"><div class="l">Aktualisiert</div><div class="v">stündlich</div></div></div>
+      <div class="hint">Open-Meteo liefert die Einstrahlung auf die geneigte Fläche, keine Leistung. Wattbury rechnet daraus mit den kWp je Tracker, der Modultemperatur und Systemverlusten die Leistung aus. Übertragen werden nur Standort, Ausrichtung und Neigung.</div>`;
+    const n=anlage.trk.length, extra=n>2?`<div class="hint" style="color:var(--app-fg)"><span class="pill warn">Hinweis</span> ${n} Tracker, der Hobby-Zugang erlaubt 2 Dachflächen. ${anlage.trk.slice(2).map(t=>t.name).join(', ')} rechnet weiter mit Open-Meteo.</div>`:'';
+    return `<div class="lbl2" style="margin-top:4px">API-Key</div>
+      <input class="keyin" type="password" data-fc="key" value="${fc.key}" placeholder="aus solcast.com › Account" autocomplete="off" aria-label="Solcast API-Key">
+      ${anlage.trk.slice(0,2).map((t,i)=>`<div class="lbl2" style="margin-top:10px">Dachfläche für ${t.name} (${dirOf(t.az)[0]})</div><input class="keyin" data-fc="site" data-i="${i}" value="${fc.site[i]}" placeholder="Resource-ID, z. B. abcd-1234-ef56-7890" autocomplete="off" aria-label="Solcast Resource-ID für ${t.name}">`).join('')}
+      ${extra}
+      <button type="button" class="btn sec sm" data-fc="test">Zugang prüfen</button>
+      <div class="hint">Kostenloser Hobby-Zugang bei solcast.com: höchstens 2 Dachflächen, 10 Abrufe am Tag. Wattbury ruft deshalb tagsüber alle 2 Stunden ab. Ausrichtung und Neigung legst du bei Solcast für jede Dachfläche selbst an. Der Key bleibt im Schlüsselbund.</div>`;
+  }
+  function fcCorrHtml(){
+    if(fc.prov!=='om') return `<h3>Korrekturfaktor <span class="pill warn">lernt neu</span></h3>
+      <div class="hint">Der Faktor gilt je Anbieter. Für Solcast sammelt Wattbury ab heute Vergleichswerte, erste Korrektur nach etwa 7 Tagen. Bis dahin zeigt die App die Prognose unkorrigiert.</div>`;
+    return `<h3>Korrekturfaktor <button type="button" class="sw-toggle" role="switch" aria-checked="${fc.learn}" data-fc="learn" aria-label="Korrekturfaktor lernen und anwenden"></button></h3>
+      <div class="row3" style="margin-top:2px"><span>gesamt, aus 30 Tagen</span><span class="sumv" style="font-family:var(--font-disp);font-size:22px">0,93</span></div>
+      <div class="lbl2" style="margin-top:10px">Faktor je Stunde · 1,0 = Prognose stimmt</div>
+      <div class="chart" id="corrChart" style="margin-top:4px"></div>
+      <div class="hint">Morgens liefert die Anlage weniger als berechnet, etwa durch Verschattung. Der Faktor fängt das ab, ebenso Verschmutzung, Alterung und Leitungsverluste.</div>
+      <div class="list" style="margin-top:4px">
+        <div class="row"><div class="l"><span>Grundlage<small>S10-Datenbank, 15 Min., gleitend</small></span></div><div class="v">26 von 30 Tagen</div></div>
+        <div class="row"><div class="l"><span>Nicht gezählt<small>3 × Abregelung, 1 × Schnee</small></span></div><div class="v">4 Tage</div></div>
+        <div class="row"><div class="l">Zuletzt gelernt</div><div class="v">heute 03:00</div></div>
+      </div>
+      <button type="button" class="btn sec sm" data-fc="reset">Gelerntes zurücksetzen</button>`;
+  }
+  function fcHtml(){
+    return `<div class="grab"></div><div class="shd"><h2>Prognose</h2><span class="pill good" id="fcPill">${fcProvName()}</span></div>
+      <div class="hint" style="margin:6px 4px 0">Die Prognose rechnet je Tracker mit Ausrichtung, Neigung und kWp aus „Anlage“ und gleicht sich mit den Messwerten des S10 ab.</div>
+      <div class="card"><h3>Anbieter</h3>
+        <div class="seg" id="fcSeg"><button type="button" data-fcprov="om" aria-pressed="${fc.prov==='om'}">Open-Meteo</button><button type="button" data-fcprov="sc" aria-pressed="${fc.prov==='sc'}">Solcast</button></div>
+        <div id="fcProv">${fcProvHtml()}</div></div>
+      <div class="card" id="fcCorr">${fcCorrHtml()}</div>
+      <div class="card"><h3>Genauigkeit <span class="r">Tagesertrag, 30 Tage</span></h3>
+        <div class="errs">
+          <span>ohne Korrektur</span><span class="t"><i style="width:68%;background:var(--app-muted)"></i></span><b>± 17 %</b>
+          <span>mit Korrektur</span><span class="t"><i style="width:32%;background:var(--c-solar)"></i></span><b>± 8 %</b>
+        </div>
+        <div class="hint">Mittlere Abweichung der Prognose vom gemessenen Tagesertrag. Bei wechselhaftem Wetter bleibt ein Rest, den kein Faktor ausgleicht.</div></div>`;
+  }
+  /* Abweichungsbalken um 1,0: nach unten = Anlage liefert weniger als berechnet. */
+  function drawCorr(){
+    const el=$('#corrChart'); if(!el) return;
+    const W=320,H=104,pl=28,pr=4,pt=6,pb=16, lo=.7, hi=1.1, ih=H-pt-pb, n=fc.hours.length, slot=(W-pl-pr)/n, bw=Math.min(16,slot*.62);
+    const Y=v=>pt+(hi-v)/(hi-lo)*ih, y1=Y(1);
+    let h=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Korrekturfaktor je Stunde, zwischen ${fmt(Math.min(...fc.hours.map(x=>x[1])),2)} und ${fmt(Math.max(...fc.hours.map(x=>x[1])),2)}">`;
+    [.8,.9,1.1].forEach(v=>h+=`<line class="gridl" x1="${pl}" x2="${W-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"/><text x="${pl-4}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end">${fmt(v,1)}</text>`);
+    fc.hours.forEach(([hr,v],i)=>{ const x=pl+slot*i+(slot-bw)/2, y=Y(v), top=Math.min(y,y1), ht=Math.abs(y-y1);
+      h+=`<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1,ht).toFixed(1)}" rx="2" fill="var(--c-solar)"/>`;
+      h+=`<rect class="hit" data-i="${i}" x="${(pl+slot*i).toFixed(1)}" y="${pt}" width="${slot.toFixed(1)}" height="${ih}" fill="transparent"/>`;
+      if(i%2===0) h+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-4}" text-anchor="middle">${String(hr).padStart(2,'0')}</text>`; });
+    h+=`<line class="base" x1="${pl}" x2="${W-pr}" y1="${y1.toFixed(1)}" y2="${y1.toFixed(1)}"/><text x="${pl-4}" y="${(y1+3).toFixed(1)}" text-anchor="end">1,0</text>`;
+    el.innerHTML=h+'</svg><div class="tip"></div>';
+    const tip=el.querySelector('.tip');
+    el.querySelectorAll('.hit').forEach(r=>{ const show=()=>{ const [hr,v]=fc.hours[+r.dataset.i], bb=r.getBoundingClientRect(), eb=el.getBoundingClientRect();
+        tip.innerHTML=`<b>${String(hr).padStart(2,'0')}–${String(hr+1).padStart(2,'0')} Uhr</b><br>Faktor ${fmt(v,2)} · ${fmt((v-1)*100,0).replace('-','−')} %`;
+        tip.style.left=(bb.left-eb.left+bb.width/2)+'px'; tip.style.top=(bb.top-eb.top+8)+'px'; tip.style.display='block'; };
+      r.addEventListener('mouseenter',show); r.addEventListener('click',show); r.addEventListener('mouseleave',()=>tip.style.display='none'); });
+  }
+  document.addEventListener('click',e=>{
+    const p=e.target.closest('[data-fcprov]');
+    if(p){ fc.prov=p.dataset.fcprov; $$('#fcSeg button').forEach(b=>b.setAttribute('aria-pressed',String(b===p)));
+      $('#fcProv').innerHTML=fcProvHtml(); $('#fcCorr').innerHTML=fcCorrHtml(); $('#fcPill').textContent=fcProvName(); drawCorr();
+      $('#fcProvSum').textContent=fc.prov==='om'?'Open-Meteo · ohne Konto':'Solcast · eigener API-Key';
+      $('#fcCorrSum').textContent=fc.prov==='om'?(fc.learn?'0,93 · 30 Tage':'aus'):'lernt neu';
+      return; }
+    const b=e.target.closest('[data-fc]'); if(!b||b.tagName==='INPUT') return;
+    if(b.dataset.fc==='learn'){ fc.learn=b.getAttribute('aria-checked')!=='true'; $('#fcCorrSum').textContent=fc.learn?'0,93 · 30 Tage':'aus'; }
+    if(b.dataset.fc==='reset'){ b.textContent='Zurückgesetzt, lernt neu'; }
+    if(b.dataset.fc==='test'){ b.textContent=fc.key.trim()?'✓ Zugang gültig · 8 von 10 Abrufen frei':'Bitte API-Key eintragen'; }
+  });
+  document.addEventListener('input',e=>{ const el=e.target; if(!el.dataset||!el.dataset.fc) return;
+    if(el.dataset.fc==='key') fc.key=el.value; if(el.dataset.fc==='site') fc.site[+el.dataset.i]=el.value; });
 
   /* ---------- Anlage einrichten ---------- */
   /* Werte aus dem S10 wie bei der Testanlage; Standort bewusst ein Beispiel (öffentliches Repo). */
@@ -884,7 +994,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   anlage.trk=cloneTrk(2);
   const DIRS=[['N','Nord'],['NO','Nordost'],['O','Ost'],['SO','Südost'],['S','Süd'],['SW','Südwest'],['W','West'],['NW','Nordwest']];
   const dirOf=az=>DIRS[Math.round((((az%360)+360)%360)/45)%8];
-  const fsAz=az=>{ let a=az-180; if(a>180) a-=360; if(a<=-180) a+=360; return String(a).replace('-','−'); };   /* forecast.solar: 0 = Süd, −90 = Ost, 90 = West */
+  const fsAz=az=>{ let a=az-180; if(a>180) a-=360; if(a<=-180) a+=360; return String(a).replace('-','−'); };   /* Open-Meteo: 0 = Süd, −90 = Ost, 90 = West */
   function compassSvg(az){
     const c=60,r=48, pt=(a,rr)=>{ const t=(a-90)*Math.PI/180; return [c+Math.cos(t)*rr, c+Math.sin(t)*rr]; };
     let ticks=''; for(let a=0;a<360;a+=30){ const [x1,y1]=pt(a,r-4),[x2,y2]=pt(a,r); ticks+=`<line class="tk" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`; }
@@ -921,7 +1031,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
         <div><div class="lbl2">Ausrichtung</div>
           <div class="field" style="margin-top:4px"><input class="nin sm" inputmode="numeric" data-anl="az" data-i="${i}" value="${t.az}" aria-label="Ausrichtung von Tracker ${i+1} in Grad, 0 ist Nord"><span class="unit" data-azn="${i}">° · ${lg}</span></div>
           <div class="stp"><button type="button" data-anl="az-" data-i="${i}" aria-label="1 Grad gegen den Uhrzeigersinn">−</button><button type="button" data-anl="az+" data-i="${i}" aria-label="1 Grad im Uhrzeigersinn">+</button></div>
-          <div class="hint" data-fs="${i}" style="margin-top:6px">Kürzel ${sh} · für forecast.solar ${fsAz(t.az)}°</div></div>
+          <div class="hint" data-fs="${i}" style="margin-top:6px">Kürzel ${sh} · für Open-Meteo ${fsAz(t.az)}°</div></div>
       </div>
       <div class="lblrow"><span>Neigung <span data-roof="${i}">${roofSvg(t.tilt)}</span></span><span class="field"><input class="nin sm" inputmode="numeric" data-anl="tiltn" data-i="${i}" value="${t.tilt}" aria-label="Neigung von Tracker ${i+1} in Grad"><span class="unit">°</span></span></div>
       <input type="range" min="0" max="90" step="1" value="${t.tilt}" data-anl="tilt" data-i="${i}" aria-label="Neigung von Tracker ${i+1}" style="margin-top:6px">
@@ -956,7 +1066,7 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
     const setVal=(sel,v)=>{ const el=$(sel); if(el&&el!==act) el.value=v; };
     const c=$(`.compass[data-i="${i}"]`); if(c) c.innerHTML=compassSvg(t.az);
     const azn=$(`[data-azn="${i}"]`); if(azn) azn.textContent=`° · ${lg}`;
-    const fs=$(`[data-fs="${i}"]`); if(fs) fs.textContent=`Kürzel ${sh} · für forecast.solar ${fsAz(t.az)}°`;
+    const fs=$(`[data-fs="${i}"]`); if(fs) fs.textContent=`Kürzel ${sh} · für Open-Meteo ${fsAz(t.az)}°`;
     const rf=$(`[data-roof="${i}"]`); if(rf) rf.innerHTML=roofSvg(t.tilt);
     setVal(`[data-anl="az"][data-i="${i}"]`,t.az);
     setVal(`[data-anl="tiltn"][data-i="${i}"]`,t.tilt);
@@ -1004,14 +1114,15 @@ svg.scurve text{font-family:var(--font-app);font-size:9.5px;fill:rgba(255,255,25
   }
   function pvHtml(){
     const tot=anlage.trk.reduce((a,t)=>a+t.live,0), kwp=anlage.trk.reduce((a,t)=>a+(trkKwp(t)||0),0);
-    const rows=anlage.trk.map(t=>{ const k=trkKwp(t); return `<div class="row"><div class="l">${t.name} (${dirOf(t.az)[0]})<small>${k==null?'—':fmt(k,2)+' kWp'}</small></div><div class="v">${fmt(t.live,2)} kW · ${t.v} V · ${fmt(t.live*1000/t.v,1)} A</div></div>`; }).join('');
+    const rows=anlage.trk.map(t=>{ const k=trkKwp(t); return `<div class="row"><div class="l"><span>${t.name} (${dirOf(t.az)[0]})<small>${k==null?'—':fmt(k,2)+' kWp'}</small></span></div><div class="v">${fmt(t.live,2)} kW · ${t.v} V · ${fmt(t.live*1000/t.v,1)} A</div></div>`; }).join('');
     return `<div class="grab"></div><div class="shd"><h2>Solarproduktion</h2><span class="pill good">${fmt(tot,2)} kW</span></div>
       <div class="card"><div class="list">${rows}
         <div class="row"><div class="l">Ertrag je kWp</div><div class="v">${kwp?fmt(tot*1000/kwp,0):'—'} W/kWp</div></div>
-        <div class="row"><div class="l">Heute</div><div class="v">14,2 kWh · Prognose 31,4 kWh</div></div>
+        <div class="row"><div class="l"><span>Heute<small>Prognose korrigiert, Open-Meteo</small></span></div><div class="v">14,2 von ≈ 31,4 kWh</div></div>
         <div class="row"><div class="l">Seit Inbetriebnahme</div><div class="v">22.505 kWh</div></div>
       </div></div>
-      <button type="button" class="btn sec" data-sheet="anlage">Anlage konfigurieren</button>`;
+      <button type="button" class="btn sec" data-sheet="anlage">Anlage konfigurieren</button>
+      <button type="button" class="btn sec" data-sheet="prognose">Prognose einstellen</button>`;
   }
   document.addEventListener('click',e=>{
     const b=e.target.closest('[data-demotrk]'); if(!b) return;

@@ -10,7 +10,7 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 
 | Karte | Inhalt | Quelle | Phase |
 |---|---|---|---|
-| Solar + Prognose | Festes Raster mit zwei gleich gebauten Spalten (Beschriftung, Wert, Balken, Unterschrift): **Jetzt** mit Leistung und geteiltem Balken der Tracker (SO/NW), **Heute** mit Ertrag und Fortschritt zur Tagesprognose (z. B. 45 % von ≈ 31,4 kWh). Darunter **Tagesverlauf** mit Kopfzeile „Spitze 4,44 kW · 12:00“, Kurve (Ist als Fläche, Prognose gestrichelt, „jetzt“, Spitze als Kreis) und eine Zeile für morgen. Entwürfe: [design/solarkarte-varianten.html](../design/solarkarte-varianten.html), [design/solarkarte-kopf-v2.html](../design/solarkarte-kopf-v2.html) | EMS_POWER_PV, PVI, DB (Tagesverlauf); forecast.solar | 1–2 |
+| Solar + Prognose | Festes Raster mit zwei gleich gebauten Spalten (Beschriftung, Wert, Balken, Unterschrift): **Jetzt** mit Leistung und geteiltem Balken der Tracker (SO/NW), **Heute** mit Ertrag und Fortschritt zur Tagesprognose (z. B. 45 % von ≈ 31,4 kWh). Darunter **Tagesverlauf** mit Kopfzeile „Spitze 4,44 kW · 12:00“, Kurve (Ist als Fläche, Prognose gestrichelt, „jetzt“, Spitze als Kreis) und eine Zeile für morgen. Entwürfe: [design/solarkarte-varianten.html](../design/solarkarte-varianten.html), [design/solarkarte-kopf-v2.html](../design/solarkarte-kopf-v2.html) | EMS_POWER_PV, PVI, DB (Tagesverlauf); Prognose (7b) | 1–2 |
 | Batterie | Ring mit SOC und kWh, Lade-/Entladeleistung, „voll/leer gegen“, Autarkie heute, heute geladen/entladen. **Tippen öffnet ein Overlay auf der Karte** mit Temperatur, Batteriezustand (SOH) und den Buttons Statistik & Info sowie Smart-Funktionen | EMS, BAT, DB | 1–2 |
 | Netz | Leistung mit Richtung, heute Bezug/Einspeisung | EMS_POWER_GRID, PM | 1 |
 | Haus | Leistung, heute Direkt/Gesamt | EMS_POWER_HOME | 1 |
@@ -18,7 +18,7 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 | Ext. Verbrauch / Ext. Quellen | Leistung, heute, Geräteliste | PM, EMS_POWER_ADD | 2 |
 | Börsenstrompreise | aktuelle/nächste Stunde, Tagestief, Details | Tibber/aWATTar | 4 |
 | Monatsstatistik | Pastell-KPIs (Autarkie, Direktverbrauch, Solar, Netzbezug, Einspeisung), Tagesproduktion als Mini-Balken mit Ø/Max | Bridge-Store | 2 |
-| Toolbar (schwebend) | Monitor · Diagramme · Energiefluss · Smart-Funktionen · Zeitstempel/Verbindung | | 3 |
+| Tab-Leiste (fest am unteren Rand) | Monitor · Diagramme · Fluss · Smart · Einstellungen, je Icon mit Beschriftung. Kopfzeile: Titel und Verbindungsstatus, rechts nur „Aktualisieren“. Kein Zeitstempel der letzten Aktualisierung, weder in der Leiste noch unter den Karten. | | 3 |
 
 ### 2 · Diagramme
 
@@ -63,7 +63,17 @@ Was das S10 per RSCP liefert, ist vorbelegt: Modell und Firmware, installierte S
 
 Begriffe: Was RSCP „String“ nennt, ist ein DC-Eingang des Wechselrichters, in der App **Tracker**. An einem Tracker können mehrere Strings parallel hängen; das S10 misst sie nur gemeinsam. Manuell je Tracker: Name, Dachfläche mit Ausrichtung (Kompass, 0° = Nord, ziehen, ±1° oder als Zahl) und Neigung (0–90°, Schieberegler in 1°-Schritten oder als Zahl), dazu die angeschlossenen Strings mit **Module × Wp je Modul**. Die kWp je Tracker ergeben sich daraus. `PVI_DC_MAX_POWER` (beim S10E 6.000 W je Eingang) wird nicht angezeigt: Es ist weder die Modulleistung noch eine harte Grenze, der Wechselrichter der Testanlage verarbeitet 12 kW DC über beide Eingänge, und an Tracker 1 liegen 7,1 kWp ohne Kappung. Die Summe wird mit der im S10 hinterlegten Spitzenleistung verglichen, aber nur als Hinweis, weil dieser Wert veraltet sein oder weitere Erzeuger enthalten kann. Eine automatische Aufteilung nach Lebenszeit-Ertrag gibt es bewusst nicht, weil Strings zu unterschiedlichen Zeiten angeschlossen worden sein können. Welche Tracker belegt sind, erkennt die App an Messwerten (Spannung, Ertrag), nicht allein an `PVI_USED_STRING_COUNT` (meldete bei der Testanlage 1 statt 2). **Geräteunabhängig:** Anzahl der Tracker und Wechselrichter und die Spitzenleistung kommen vom Gerät (`openrscp` `pvTrackers()` läuft über alle Wechselrichter-Indizes); nichts davon ist für das S10E fest eingebaut. Solarkarte, PV-Details und Energiefluss passen sich an 1 bis n Tracker an. Standort aus der Postleitzahl, optional per GPS verfeinert.
 
-Verwendung: Kürzel auf der Solarkarte (SO, NW …) und Prognose je Tracker über forecast.solar (Azimut dort 0 = Süd, −90 = Ost, 90 = West; die App rechnet um). Phase 2–3.
+Verwendung: Kürzel auf der Solarkarte (SO, NW …) und Prognose je Tracker (siehe 7b; Azimut bei Open-Meteo 0 = Süd, −90 = Ost, 90 = West, die App rechnet um). Phase 2–3.
+
+### 7b · Prognose (Einstellungen › Prognose)
+
+**Anbieter** (entschieden 26.10.2026):
+
+- **Open-Meteo** (Standard): kostenlos, ohne Konto. Je Tracker wird die Einstrahlung auf die geneigte Fläche (`global_tilted_irradiance` mit `tilt` und `azimuth` aus 7a) und die Lufttemperatur abgefragt, 15 Minuten aufgelöst, 7 Tage voraus, stündlich aktualisiert. Die Leistung rechnet die App selbst: Einstrahlung × kWp des Trackers × Temperaturkorrektur der Module × Systemverluste. Übertragen werden nur Standort, Ausrichtung und Neigung.
+- **Solcast** (Alternative mit eigenem API-Key): Der Nutzer legt seine Dachflächen bei Solcast an und trägt Key und Resource-ID je Tracker ein. Hobby-Zugang: höchstens 2 Dachflächen, 10 Abrufe am Tag; die App ruft deshalb tagsüber nur alle 2 Stunden ab. Weitere Tracker rechnen mit Open-Meteo. Key im Schlüsselbund.
+- forecast.solar wird nicht angeboten.
+
+**Gelernter Korrekturfaktor:** Jede Nacht vergleicht die App die Rohprognose mit dem gemessenen Ertrag aus der S10-Datenbank (15-Minuten-Werte, `DB_REQ_HISTORY_DATA_DAY`) und bildet je Stunde des Tages einen Faktor gemessen ÷ Prognose, gleitend über 30 Tage. Je Stunde statt einem Gesamtwert, weil sich Verschattung (morgens, abends) und unterschiedlich ausgerichtete Tracker über den Tag verteilen; die S10-Datenbank hat keine Werte je Tracker, die Tageszeit fängt das ab. Gewichtet nach Einstrahlung, damit Stunden mit wenig Licht nicht dominieren. Nicht gezählt werden Abschnitte mit Abregelung (Einspeisegrenze erreicht oder Batterie voll bei begrenzter Einspeisung), Schnee oder Ausfall (gemessen unter 10 % bei hoher Prognose), sonst lernt die App eine schlechtere Anlage als die echte. Der Faktor gilt je Anbieter; nach einem Wechsel startet die App unkorrigiert und wendet den Faktor ab etwa 7 gültigen Tagen an. Schalter zum Abschalten, Knopf zum Zurücksetzen. Angezeigt werden Gesamtfaktor, Faktor je Stunde als Abweichungsbalken um 1,0 und die mittlere Abweichung des Tagesertrags mit und ohne Korrektur. Phase 4.
 
 ### 8 · Benachrichtigungen (Bridge)
 
@@ -96,7 +106,7 @@ Home-Screen „Energiefluss“, „Tagesdiagramm“, Lock-Screen „SOC“, Stan
 | Fläche | Vollfarbige Karten in einer gedeckten, persönlichen Farbwelt (siehe unten) mit halbtransparenten Unterkacheln | Ruhige Papierfläche, Hairlines, Farbe nur in Datenmarken |
 | Hero | Solarkarte mit Tracker-Werten + Prognose | Ein großer Wert + Satz, dann der Energiefluss kompakt (Quellen links, Verwendung rechts) |
 | Messgrößen | Je Größe eine Karte, Autarkie/Eigenverbrauch nur einmal in „Heute“ | Liste mit 24-h-Sparkline je Zeile |
-| Navigation | Schwebende Toolbar unten, Einstellungen über Kopfzeile | Klassische Tab-Leiste mit fünf Einträgen |
+| Navigation | Feste Tab-Leiste unten mit fünf Einträgen inkl. Einstellungen (geändert 26.10.2026, vorher schwebende Toolbar) | Klassische Tab-Leiste mit fünf Einträgen |
 | Steuerung | Eigener Bereich mit Slidern, großer Übernehmen-Button | Listen mit Steppern/Schaltern, „Übernehmen“ erscheint in der Kopfzeile bei Änderung |
 | Typografie | Sora für Zahlen und Titel, iOS-System für Text | Figtree für Werte, IBM Plex Mono für Meta-Zeilen |
 | Stärke | Vertraut, sehr viel Information auf einen Blick | Ruhig, schnell erfassbar, gut für Dark Mode und Widgets |

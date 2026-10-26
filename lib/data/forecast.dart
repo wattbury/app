@@ -4,6 +4,11 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import 'app_settings.dart';
+import 'correction.dart';
+import 'energy_source.dart';
+import 'history.dart';
+import 'live_controller.dart';
 import 'plant.dart';
 
 /// Expected average PV power in one 15-minute slot, in W, before any learned correction.
@@ -151,39 +156,63 @@ class OpenMeteo {
   }
 }
 
-/// Keeps the forecast fresh (hourly) for the configured plant.
+/// Keeps the forecast fresh (hourly) for the configured plant, archives what it promised for each
+/// day, learns a correction from the unit's measurements once a day and applies it.
 class ForecastService extends ChangeNotifier {
+  final AppSettings settings;
   final OpenMeteo provider;
-  PlantConfig _plant;
-  Forecast? forecast;
+  Forecast? _raw;
   String? error;
+  Correction correction = Correction.none;
+  DateTime? learnedAt;
   Timer? _timer;
-  bool _loading = false;
+  bool _loading = false, _learning = false;
+  LiveController? _live;
 
-  ForecastService(this._plant, {OpenMeteo? provider}) : provider = provider ?? OpenMeteo() {
+  /// Provider id used in storage keys, so a change of provider starts learning afresh.
+  static const _id = 'om';
+  static const _keepDays = 40;
+  String get _archiveKey => 'fcArchive.$_id';
+  String get _recordsKey => 'fcRecords.$_id';
+
+  ForecastService(this.settings, {OpenMeteo? provider}) : provider = provider ?? OpenMeteo() {
+    correction = Correction.compute(_records());
     refresh();
     _timer = Timer.periodic(const Duration(hours: 1), (_) => refresh());
   }
 
-  PlantConfig get plant => _plant;
+  PlantConfig get plant => settings.plant;
   set plant(PlantConfig p) {
-    _plant = p;
-    forecast = null;
+    _raw = null;
     refresh();
   }
 
+  /// Forecast as shown: corrected when learning is on and has enough days.
+  Forecast? get forecast {
+    final r = _raw;
+    if (r == null || !settings.correctionEnabled || !correction.ready) return r;
+    return Forecast(
+      slots: [for (final s in r.slots) ForecastSlot(s.start, s.watts * correction.factorAt(s.start))],
+      weatherCodes: r.weatherCodes,
+      fetchedAt: r.fetchedAt,
+    );
+  }
+
+  Forecast? get rawForecast => _raw;
+
   Future<void> refresh() async {
-    if (_loading || !_plant.complete) {
-      if (!_plant.complete) {
-        forecast = null;
-        notifyListeners();
-      }
+    final p = settings.plant;
+    if (!p.complete) {
+      _raw = null;
+      notifyListeners();
       return;
     }
+    if (_loading) return;
     _loading = true;
     try {
-      forecast = await provider.fetch(_plant);
+      _raw = await provider.fetch(p);
       error = null;
+      await _archive(_raw!);
     } catch (e) {
       error = '$e';
     } finally {
@@ -192,9 +221,126 @@ class ForecastService extends ChangeNotifier {
     }
   }
 
+  // ---------- archive of what was forecast, per day and slot ----------
+
+  Map<String, dynamic> _readArchive() {
+    final raw = settings.readRaw(_archiveKey);
+    if (raw == null) return {};
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  static String _date(DateTime d) => d.toIso8601String().substring(0, 10);
+  static String _hm(DateTime d) => '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
+  /// Keeps the latest forecast for each day; the most recent one before a slot is the fairest
+  /// comparison for that slot.
+  Future<void> _archive(Forecast f) async {
+    final a = _readArchive();
+    final today = DateTime.now();
+    for (final s in f.slots) {
+      final day = DateTime(s.start.year, s.start.month, s.start.day);
+      if (day.isBefore(DateTime(today.year, today.month, today.day))) continue;
+      final m = (a[_date(day)] as Map<String, dynamic>?) ?? <String, dynamic>{};
+      m[_hm(s.start)] = s.watts.round();
+      a[_date(day)] = m;
+    }
+    final cutoff = _date(DateTime(today.year, today.month, today.day - _keepDays));
+    a.removeWhere((k, _) => k.compareTo(cutoff) < 0);
+    await settings.writeRaw(_archiveKey, jsonEncode(a));
+  }
+
+  List<DayRecord> _records() {
+    final raw = settings.readRaw(_recordsKey);
+    if (raw == null) return [];
+    try {
+      return [for (final j in jsonDecode(raw) as List) DayRecord.fromJson(j as Map<String, dynamic>)];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  List<DayRecord> get records => _records();
+
+  // ---------- learning ----------
+
+  /// Learns from [live]'s source whenever it is online and has not learned today.
+  void attach(LiveController live) {
+    _live?.removeListener(_onLive);
+    _live = live..addListener(_onLive);
+    _onLive();
+  }
+
+  void _onLive() {
+    final l = _live;
+    if (l == null || l.state != ConnState.online || _learning) return;
+    final now = DateTime.now();
+    if (learnedAt != null && learnedAt!.day == now.day && learnedAt!.month == now.month) return;
+    learn(l.source, feedLimitW: l.system?.derateAtPowerW);
+  }
+
+  /// Compares archived forecasts of past days with the 15-minute values from the unit's database.
+  Future<void> learn(EnergySource source, {int? feedLimitW, DateTime? now}) async {
+    if (_learning) return;
+    _learning = true;
+    try {
+      final t = now ?? DateTime.now();
+      final today = DateTime(t.year, t.month, t.day);
+      final archive = _readArchive();
+      final records = _records();
+      final known = {for (final r in records) _date(r.day)};
+      final kwp = settings.plant.kwp;
+      for (final key in archive.keys.toList()..sort()) {
+        final day = DateTime.parse(key);
+        if (!day.isBefore(today) || known.contains(key)) continue;
+        final next = DateTime(day.year, day.month, day.day + 1);
+        const step = Duration(minutes: 15);
+        final starts = [for (var s = day; s.isBefore(next); s = s.add(step)) s];
+        final h = await source.history(day, step, next.difference(day));
+        final pts = HistoryRepository.toPoints(h, starts);
+        final fc = archive[key] as Map<String, dynamic>;
+        records.add(
+          DayRecord.fromSlots(
+            day: day,
+            actualWh: [for (final p in pts) p.solar],
+            forecastWh: [for (final s in starts) ((fc[_hm(s)] as num?)?.toDouble() ?? 0) / 4],
+            feedInWh: [for (final p in pts) p.feedIn],
+            slotStarts: starts,
+            kwp: kwp,
+            feedLimitW: feedLimitW,
+          ),
+        );
+      }
+      final cutoff = DateTime(today.year, today.month, today.day - _keepDays);
+      records.removeWhere((r) => r.day.isBefore(cutoff));
+      records.sort((a, b) => a.day.compareTo(b.day));
+      await settings.writeRaw(_recordsKey, jsonEncode([for (final r in records) r.toJson()]));
+      correction = Correction.compute(records, today: today);
+      learnedAt = t;
+      error = null;
+    } catch (e) {
+      error = 'Lernen fehlgeschlagen: $e';
+    } finally {
+      _learning = false;
+      notifyListeners();
+    }
+  }
+
+  /// Forgets what was learned; the archive of forecasts stays, so learning restarts from tomorrow.
+  Future<void> resetLearning() async {
+    await settings.removeRaw(_recordsKey);
+    correction = Correction.none;
+    learnedAt = DateTime.now();
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _live?.removeListener(_onLive);
     super.dispose();
   }
 }

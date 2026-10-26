@@ -51,6 +51,18 @@ class AppSettings extends ChangeNotifier {
 
   set plant(PlantConfig c) => _put('plant', jsonEncode(c.toJson()));
 
+  /// Apply the learned forecast correction (on by default).
+  bool get correctionEnabled => _p.getBool('correctionEnabled') ?? true;
+  set correctionEnabled(bool v) {
+    _p.setBool('correctionEnabled', v);
+    notifyListeners();
+  }
+
+  /// Raw storage for larger app data such as the forecast archive; does not notify listeners.
+  String? readRaw(String key) => _p.getString(key);
+  Future<void> writeRaw(String key, String value) => _p.setString(key, value);
+  Future<void> removeRaw(String key) => _p.remove(key);
+
   /// True while the user looks at sample data instead of a real system.
   bool get demo => _p.getBool('demo') ?? false;
   set demo(bool v) {

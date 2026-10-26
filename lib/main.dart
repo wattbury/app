@@ -41,7 +41,7 @@ class _WattburyAppState extends State<WattburyApp> {
   Credentials? _creds;
   LiveController? _live;
   bool _editing = false;
-  late final ForecastService _forecast = ForecastService(widget.settings.plant);
+  late final ForecastService _forecast = ForecastService(widget.settings);
 
   @override
   void initState() {
@@ -63,6 +63,7 @@ class _WattburyAppState extends State<WattburyApp> {
   void _start(EnergySource source) {
     _live?.dispose();
     _live = LiveController(source)..start();
+    _forecast.attach(_live!);
   }
 
   Future<void> _connected(Credentials c) async {

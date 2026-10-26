@@ -6,6 +6,7 @@ import '../../data/forecast.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
+import '../forecast/forecast_page.dart';
 import '../plant/plant_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -164,6 +165,37 @@ class SettingsPage extends StatelessWidget {
               _Row(
                 label: 'Anlage einrichten',
                 trailing: TextButton(onPressed: () => _openPlant(context), child: const Text('Öffnen')),
+              ),
+            ],
+          ),
+        if (forecast != null)
+          _Section(
+            title: 'Prognose',
+            children: [
+              const _Row(label: 'Anbieter', value: 'Open-Meteo · ohne Konto'),
+              _Row(
+                label: 'Korrekturfaktor',
+                sub: 'aus den Messwerten des S10 gelernt',
+                value: !settings.correctionEnabled
+                    ? 'aus'
+                    : forecast!.correction.ready
+                    ? '${fmt(forecast!.correction.overall, 2)} · ${forecast!.correction.days} Tage'
+                    : 'lernt · ${forecast!.correction.days} von 7 Tagen',
+              ),
+              if (forecast!.correction.rawError != null)
+                _Row(
+                  label: 'Genauigkeit Tagesertrag',
+                  value:
+                      '± ${fmt(forecast!.correction.correctedError! * 100, 0)} % statt ± ${fmt(forecast!.correction.rawError! * 100, 0)} %',
+                ),
+              _Row(
+                label: 'Prognose einstellen',
+                trailing: TextButton(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute<void>(builder: (_) => ForecastPage(service: forecast!))),
+                  child: const Text('Öffnen'),
+                ),
               ),
             ],
           ),

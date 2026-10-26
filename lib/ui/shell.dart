@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 
 import '../data/app_settings.dart';
 import '../data/credentials.dart';
+import '../data/history.dart';
 import '../data/live_controller.dart';
 import '../theme/tokens.dart';
 import 'flow/flow_page.dart';
+import 'history/history_page.dart';
 import 'monitor/monitor_page.dart';
 import 'settings/settings_page.dart';
 
@@ -45,6 +47,13 @@ const _tabs = [
 
 class _ShellState extends State<Shell> {
   int _tab = 0;
+  late HistoryRepository _history = HistoryRepository(widget.live.source);
+
+  @override
+  void didUpdateWidget(Shell old) {
+    super.didUpdateWidget(old);
+    if (!identical(old.live.source, widget.live.source)) _history = HistoryRepository(widget.live.source);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +71,7 @@ class _ShellState extends State<Shell> {
                   index: _tab,
                   children: [
                     MonitorPage(live: widget.live, settings: widget.settings),
-                    const _Later(
-                      icon: Icons.bar_chart,
-                      text: 'Diagramme aus der Datenbank des S10 kommen mit Ausbaustufe 4.',
-                    ),
+                    HistoryPage(repo: _history),
                     // Animations run only while the tab is visible.
                     TickerMode(
                       enabled: _tab == 2,

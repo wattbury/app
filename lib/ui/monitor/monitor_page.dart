@@ -1,10 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:openrscp/openrscp.dart';
 
 import '../../data/app_settings.dart';
+import '../../data/history.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
@@ -32,7 +33,7 @@ class MonitorPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
       children: [
-        _SolarCard(snapshot: s, today: t, trackers: live.trackers),
+        _SolarCard(snapshot: s, today: t, trackers: live.trackers, curve: live.todayCurve),
         gap,
         _BatteryCard(snapshot: s, today: t),
         gap,
@@ -129,7 +130,8 @@ class _SolarCard extends StatelessWidget {
   final LiveSnapshot snapshot;
   final DbSummary? today;
   final List<PvTracker> trackers;
-  const _SolarCard({required this.snapshot, required this.today, required this.trackers});
+  final List<HistoryPoint> curve;
+  const _SolarCard({required this.snapshot, required this.today, required this.trackers, required this.curve});
 
   @override
   Widget build(BuildContext context) {
@@ -155,61 +157,190 @@ class _SolarCard extends StatelessWidget {
       color2: c.solar2,
       title: 'Solar',
       watermark: Icons.wb_sunny_outlined,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 14),
-                  child: col([
-                    _eyebrow('Jetzt'),
-                    BigValue(now.value, now.unit),
-                    Meter(
-                      trk.length > 1 && sum > 0
-                          ? [for (final t in trk) (t.powerW ?? 0) / sum]
-                          : [snapshot.solarW > 0 ? 1 : 0],
-                      track: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 14),
+                      child: col([
+                        _eyebrow('Jetzt'),
+                        BigValue(now.value, now.unit),
+                        Meter(
+                          trk.length > 1 && sum > 0
+                              ? [for (final t in trk) (t.powerW ?? 0) / sum]
+                              : [snapshot.solarW > 0 ? 1 : 0],
+                          track: true,
+                        ),
+                        _caption(
+                          trk.length > 1
+                              ? [
+                                  for (final t in trk)
+                                    Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          TextSpan(text: 'T${t.index + 1} '),
+                                          _b(power(t.powerW ?? 0).value),
+                                          TextSpan(text: ' ${power(t.powerW ?? 0).unit}'),
+                                        ],
+                                      ),
+                                    ),
+                                ]
+                              : [Text(trk.length == 1 ? '1 Tracker' : '')],
+                        ),
+                      ]),
                     ),
-                    _caption(
-                      trk.length > 1
-                          ? [
-                              for (final t in trk)
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(text: 'T${t.index + 1} '),
-                                      _b(power(t.powerW ?? 0).value),
-                                      TextSpan(text: ' ${power(t.powerW ?? 0).unit}'),
-                                    ],
-                                  ),
-                                ),
-                            ]
-                          : [Text(trk.length == 1 ? '1 Tracker' : '')],
+                  ),
+                  Container(width: 1, color: c.sub2),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 14),
+                      child: col([
+                        _eyebrow('Heute'),
+                        BigValue(today == null ? '–' : kwh(today!.solarWh), 'kWh'),
+                        const Meter([0]),
+                        _caption([const Text('Prognose folgt')]),
+                      ]),
                     ),
-                  ]),
-                ),
+                  ),
+                ],
               ),
-              Container(width: 1, color: c.sub2),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 14),
-                  child: col([
-                    _eyebrow('Heute'),
-                    BigValue(today == null ? '–' : kwh(today!.solarWh), 'kWh'),
-                    const Meter([0]),
-                    _caption([const Text('Prognose folgt')]),
-                  ]),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (curve.any((p) => p.solar > 0)) ..._daySection(context, curve),
+        ],
       ),
     );
   }
+
+  /// Section below the two columns: header with today's peak, then the curve up to now.
+  List<Widget> _daySection(BuildContext context, List<HistoryPoint> curve) {
+    var best = curve.first;
+    for (final p in curve) {
+      if (p.solar > best.solar) best = p;
+    }
+    // 15-minute energy to average power: Wh × 4 = W.
+    final peakW = best.solar * 4;
+    final hh = best.start.hour.toString().padLeft(2, '0'), mm = best.start.minute.toString().padLeft(2, '0');
+    return [
+      Container(
+        margin: const EdgeInsets.only(top: 14),
+        padding: const EdgeInsets.only(top: 12),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: Color(0x47FFFFFF))),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            _eyebrow('Tagesverlauf'),
+            const Spacer(),
+            Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: 'Spitze '),
+                  _b('${power(peakW).value} ${power(peakW).unit} · $hh:$mm'),
+                ],
+              ),
+              style: const TextStyle(fontSize: 12, color: WbColors.onDim),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 6),
+      Semantics(
+        label: 'Solarleistung heute bis jetzt, Spitze ${power(peakW).value} ${power(peakW).unit} um $hh:$mm',
+        child: AspectRatio(
+          aspectRatio: 332 / 80,
+          child: CustomPaint(painter: _CurvePainter(curve, best, DefaultTextStyle.of(context).style)),
+        ),
+      ),
+    ];
+  }
+}
+
+/// Today's solar power as a white area up to now, in 15-minute averages; the peak as a ring.
+class _CurvePainter extends CustomPainter {
+  final List<HistoryPoint> curve;
+  final HistoryPoint peak;
+
+  /// App body text style, so the labels use the app font.
+  final TextStyle base;
+  _CurvePainter(this.curve, this.peak, this.base);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.clipRect(Offset.zero & size);
+    double hourOf(DateTime t) => t.hour + t.minute / 60;
+    final sunny = curve.where((p) => p.solar > 0);
+    // Window from shortly before the first sun to shortly after the last value, at least 8 hours.
+    var from = (hourOf(sunny.first.start) - 1).floorToDouble().clamp(3.0, 12.0);
+    var to = (hourOf(curve.last.start) + 1.25).ceilToDouble().clamp(from + 8, 23.0);
+    if (to - from < 8) from = to - 8;
+    const floor = 0.8, top = 0.06;
+    final maxW = math.max(peak.solar * 4, 1000.0) * 1.08;
+    double x(double h) => (h - from) / (to - from) * size.width;
+    double y(double w) => size.height * floor - w / maxW * size.height * (floor - top);
+    final line = Path(), area = Path()..moveTo(x(hourOf(curve.first.start) + 0.125), y(0));
+    for (final (i, p) in curve.indexed) {
+      final pt = Offset(x(hourOf(p.start) + 0.125), y(p.solar * 4));
+      i == 0 ? line.moveTo(pt.dx, pt.dy) : line.lineTo(pt.dx, pt.dy);
+      area.lineTo(pt.dx, pt.dy);
+    }
+    final lastX = x(hourOf(curve.last.start) + 0.125);
+    area
+      ..lineTo(lastX, y(0))
+      ..close();
+    canvas.drawLine(Offset(0, y(0)), Offset(size.width, y(0)), Paint()..color = const Color(0x59FFFFFF));
+    canvas.drawPath(area, Paint()..color = const Color(0x47FFFFFF));
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeJoin = StrokeJoin.round,
+    );
+    canvas.drawLine(Offset(lastX, size.height * top), Offset(lastX, y(0)), Paint()..color = const Color(0x80FFFFFF));
+    canvas.drawCircle(
+      Offset(x(hourOf(peak.start) + 0.125), y(peak.solar * 4)),
+      3,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    final label = TextPainter(
+      text: TextSpan(
+        text: 'jetzt',
+        style: base.copyWith(fontSize: 9.5, color: const Color(0xD9FFFFFF)),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    label.paint(canvas, Offset(math.min(lastX + 6, size.width - label.width), size.height * top));
+    for (var h = (from / 4).ceil() * 4; h <= to; h += 4) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: h.toString().padLeft(2, '0'),
+          style: base.copyWith(fontSize: 9.5, color: const Color(0xD9FFFFFF)),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(
+        canvas,
+        Offset((x(h.toDouble()) - tp.width / 2).clamp(0, size.width - tp.width), size.height - tp.height),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CurvePainter old) => old.curve != curve;
 }
 
 class _BatteryCard extends StatelessWidget {

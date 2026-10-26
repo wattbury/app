@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:openrscp/openrscp.dart';
 
 import 'energy_source.dart';
+import 'history.dart';
 
 enum ConnState { connecting, online, offline }
 
@@ -16,6 +17,7 @@ class LiveController extends ChangeNotifier {
 
   static const _trackerEvery = Duration(seconds: 5);
   static const _todayEvery = Duration(minutes: 1);
+  static const _curveEvery = Duration(minutes: 5);
 
   ConnState state = ConnState.connecting;
   String? error;
@@ -25,9 +27,12 @@ class LiveController extends ChangeNotifier {
   List<PvTracker> trackers = const [];
   List<WallboxInfo> wallboxes = const [];
 
+  /// Today in 15-minute steps from midnight up to now (Wh per step), for the solar card curve.
+  List<HistoryPoint> todayCurve = const [];
+
   Timer? _timer;
   bool _busy = false, _disposed = false;
-  DateTime _trackersAt = DateTime(0), _todayAt = DateTime(0);
+  DateTime _trackersAt = DateTime(0), _todayAt = DateTime(0), _curveAt = DateTime(0);
   int _failures = 0;
 
   Future<void> start() => _connect();
@@ -43,7 +48,7 @@ class LiveController extends ChangeNotifier {
       system = await source.systemInfo();
       wallboxes = await source.wallboxes();
       _failures = 0;
-      _trackersAt = _todayAt = DateTime(0);
+      _trackersAt = _todayAt = _curveAt = DateTime(0);
       _set(() => state = ConnState.online);
       await _poll();
     } catch (e) {
@@ -59,7 +64,7 @@ class LiveController extends ChangeNotifier {
   /// Fetches everything now, also today's totals; for the refresh button.
   Future<void> refresh() async {
     if (state != ConnState.online) return _connect();
-    _trackersAt = _todayAt = DateTime(0);
+    _trackersAt = _todayAt = _curveAt = DateTime(0);
     await _poll();
   }
 
@@ -79,6 +84,10 @@ class LiveController extends ChangeNotifier {
         today = await source.today();
         _todayAt = now;
       }
+      if (now.difference(_curveAt) >= _curveEvery || now.day != _curveAt.day) {
+        todayCurve = await _loadCurve(now);
+        _curveAt = now;
+      }
       _set(() {
         state = ConnState.online;
         error = null;
@@ -89,6 +98,15 @@ class LiveController extends ChangeNotifier {
     } finally {
       _busy = false;
     }
+  }
+
+  Future<List<HistoryPoint>> _loadCurve(DateTime now) async {
+    final start = DateTime(now.year, now.month, now.day), end = DateTime(now.year, now.month, now.day + 1);
+    const step = Duration(minutes: 15);
+    final steps = [for (var t = start; t.isBefore(now); t = t.add(step)) t];
+    if (steps.isEmpty) return const [];
+    final h = await source.history(start, step, end.difference(start));
+    return HistoryRepository.toPoints(h, steps);
   }
 
   void _fail(Object e) {

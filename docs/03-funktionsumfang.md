@@ -22,6 +22,9 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 
 ### 2 · Diagramme
 
+Umgesetzt 26.10.2026: Tag (Stunden), Woche (Tage, ab Montag), Monat (Tage) und Jahr (zwölf Monatssummen) aus der S10-Datenbank (`openrscp` `dbHistory()`), gestapelte Balken mit Quellen oben und Verbrauch unten, Legende zum Ausblenden, Werte per Antippen oder Überfahren, Blättern mit ‹ ›, darunter die Bilanz. Ob die Datenbank je Intervall Energie (Wh) oder mittlere Leistung (W) liefert, ist undokumentiert; die App rechnet den Faktor aus der mitgelieferten Gesamtsumme, so stimmen die Balken in beiden Fällen (`example/db_history.dart` in openrscp zeigt es an der echten Anlage). Abgeschlossene Zeiträume bleiben im Speicher, bis die App beendet wird; ein dauerhafter Zwischenspeicher folgt. Auf der Solarkarte zeigt der **Tagesverlauf** die 15-Minuten-Werte bis jetzt und die Spitze; die gestrichelte Prognose kommt mit der Prognose.
+
+
 | Funktion | Phase |
 |---|---|
 | Zeitraum Tag / Woche / Monat / Jahr / frei, Blättern ‹ › | 3 |

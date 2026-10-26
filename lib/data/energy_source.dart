@@ -23,6 +23,9 @@ abstract class EnergySource {
   Future<List<PvTracker>> trackers();
   Future<List<WallboxInfo>> wallboxes();
 
+  /// Database time series from [start] over [span] in buckets of [interval].
+  Future<DbHistory> history(DateTime start, Duration interval, Duration span);
+
   /// Housekeeping between polls, e.g. switching back to a faster connection.
   Future<void> maintain();
 }
@@ -103,6 +106,10 @@ class RscpSource implements EnergySource {
   }
 
   @override
+  Future<DbHistory> history(DateTime start, Duration interval, Duration span) =>
+      _client.dbHistory(start, interval, span);
+
+  @override
   Future<List<PvTracker>> trackers() async => (await _client.pvTrackers()).where((t) => t.active).toList();
 
   @override
@@ -177,6 +184,8 @@ class AutoSource implements EnergySource {
   Future<SystemInfo> systemInfo() => _src.systemInfo();
   @override
   Future<DbSummary> today() => _src.today();
+  @override
+  Future<DbHistory> history(DateTime start, Duration interval, Duration span) => _src.history(start, interval, span);
   @override
   Future<List<PvTracker>> trackers() => _src.trackers();
   @override
@@ -262,6 +271,76 @@ class DemoSource implements EnergySource {
       autarkyPct: 96.6,
       consumedProductionPct: 70.4,
       socPct: 68,
+    );
+  }
+
+  /// Deterministic sample series: hourly or daily energy with a seasonal and a per-day weather factor.
+  @override
+  Future<DbHistory> history(DateTime start, Duration interval, Duration span) async {
+    final n = (span.inSeconds / interval.inSeconds).round();
+    final now = clock();
+    final buckets = <DbBucket>[];
+    for (var i = 0; i < n; i++) {
+      final t = start.add(interval * i);
+      if (t.isAfter(now)) break;
+      final season = 0.35 + 0.65 * math.pow(math.sin(math.pi * (t.month - 0.5) / 12), 2);
+      final weather = 0.35 + 0.65 * ((math.sin(t.year * 13.0 + t.month * 7.0 + t.day * 3.1) + 1) / 2);
+      double solar, house;
+      if (interval <= const Duration(hours: 1)) {
+        final h = t.hour + t.minute / 60 + interval.inMinutes / 120;
+        final sun = h > 6 && h < 20 ? math.pow(math.sin(math.pi * (h - 6) / 14), 1.5).toDouble() : 0.0;
+        solar = 7400 * season * weather * sun * interval.inMinutes / 60;
+        house = (300 + (h >= 7 && h < 9 ? 500 : 0) + (h >= 18 && h < 22 ? 900 : 0)) * interval.inMinutes / 60;
+      } else {
+        final days = interval.inHours / 24;
+        solar = 42000 * season * weather * days;
+        house = (11000 - 3000 * season) * days;
+      }
+      final direct = math.min(solar, house * 0.55);
+      // At most one full battery (13 kWh, used 9 kWh a day) per day of the interval.
+      final batteryIn = math.min(solar - direct, interval.inHours >= 24 ? 9000.0 * interval.inDays : 1500.0);
+      final feedIn = solar - direct - batteryIn;
+      // Within an hour the battery either charges or discharges; over days it does both.
+      final batteryOut = interval <= const Duration(hours: 1)
+          ? (solar >= house ? 0.0 : (house - direct) * 0.8)
+          : math.min(batteryIn * 0.9, (house - direct) * 0.8);
+      final purchase = math.max(0.0, house - direct - batteryOut);
+      buckets.add(
+        DbBucket(
+          index: i.toDouble(),
+          solar: solar,
+          house: house,
+          gridPurchase: purchase,
+          gridFeedIn: feedIn,
+          batteryIn: batteryIn,
+          batteryOut: batteryOut,
+          autarkyPct: house == 0 ? 0 : (1 - purchase / house) * 100,
+          consumedProductionPct: solar == 0 ? 0 : (1 - feedIn / solar) * 100,
+          socPct: 60,
+        ),
+      );
+    }
+    double s(double Function(DbBucket) f) => buckets.fold(0, (a, b) => a + f(b));
+    final solar = s((b) => b.solar), house = s((b) => b.house);
+    final purchase = s((b) => b.gridPurchase), feedIn = s((b) => b.gridFeedIn);
+    return DbHistory(
+      start: start,
+      interval: interval,
+      span: span,
+      buckets: buckets,
+      sum: DbSummary(
+        start: start,
+        span: span,
+        solarWh: solar,
+        houseWh: house,
+        gridPurchaseWh: purchase,
+        gridFeedInWh: feedIn,
+        batteryInWh: s((b) => b.batteryIn),
+        batteryOutWh: s((b) => b.batteryOut),
+        autarkyPct: house == 0 ? 0 : (1 - purchase / house) * 100,
+        consumedProductionPct: solar == 0 ? 0 : (1 - feedIn / solar) * 100,
+        socPct: 60,
+      ),
     );
   }
 

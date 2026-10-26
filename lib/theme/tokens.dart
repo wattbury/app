@@ -11,6 +11,9 @@ class WbColors extends ThemeExtension<WbColors> {
   /// Translucent sub-tiles on colour cards.
   final Color sub, sub2;
 
+  /// Chart series, validated for colour-vision deficiencies in the click dummy (dataviz check).
+  final Color sSolar, sPurchase, sBatteryOut, sHouse, sFeedIn, sBatteryIn, grid1, axis, ink3;
+
   const WbColors({
     required this.appBg,
     required this.card,
@@ -35,6 +38,15 @@ class WbColors extends ThemeExtension<WbColors> {
     required this.pastelGrey,
     required this.sub,
     required this.sub2,
+    required this.sSolar,
+    required this.sPurchase,
+    required this.sBatteryOut,
+    required this.sHouse,
+    required this.sFeedIn,
+    required this.sBatteryIn,
+    required this.grid1,
+    required this.axis,
+    required this.ink3,
   });
 
   static const light = WbColors(
@@ -61,6 +73,15 @@ class WbColors extends ThemeExtension<WbColors> {
     pastelGrey: Color(0xFFE9ECEE),
     sub: Color(0x29FFFFFF),
     sub2: Color(0x47FFFFFF),
+    sSolar: Color(0xFF9E7A23),
+    sPurchase: Color(0xFF36A3C8),
+    sBatteryOut: Color(0xFF8D6CC2),
+    sHouse: Color(0xFFC15C67),
+    sFeedIn: Color(0xFF547ECD),
+    sBatteryIn: Color(0xFF539344),
+    grid1: Color(0xFFE1E0D9),
+    axis: Color(0xFFC3C2B7),
+    ink3: Color(0xFF898781),
   );
 
   static const dark = WbColors(
@@ -87,6 +108,15 @@ class WbColors extends ThemeExtension<WbColors> {
     pastelGrey: Color(0xFF262B2F),
     sub: Color(0x1FFFFFFF),
     sub2: Color(0x38FFFFFF),
+    sSolar: Color(0xFF98741A),
+    sPurchase: Color(0xFF299ABE),
+    sBatteryOut: Color(0xFF8766BB),
+    sHouse: Color(0xFFBA5661),
+    sFeedIn: Color(0xFF4E78C7),
+    sBatteryIn: Color(0xFF4D8C3E),
+    grid1: Color(0xFF2C2C2A),
+    axis: Color(0xFF383835),
+    ink3: Color(0xFF898781),
   );
 
   /// Text on colour cards is always white, also on yellow.

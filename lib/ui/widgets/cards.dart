@@ -113,8 +113,11 @@ class ColorCard extends StatelessWidget {
 class WhiteCard extends StatelessWidget {
   final String title;
   final String? trailing;
+
+  /// Widget at the right of the title instead of [trailing], e.g. navigation buttons.
+  final Widget? action;
   final Widget child;
-  const WhiteCard({super.key, required this.title, required this.child, this.trailing});
+  const WhiteCard({super.key, required this.title, required this.child, this.trailing, this.action});
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +140,7 @@ class WhiteCard extends StatelessWidget {
                     child: Text(title, style: sora(18, color: c.fg)),
                   ),
                   if (trailing != null) Text(trailing!, style: TextStyle(fontSize: 13, color: c.muted)),
+                  ?action,
                 ],
               ),
             ),
@@ -362,18 +366,23 @@ class KpiTile extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 12, top: 2),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: value,
-                    style: sora(22, color: c.fg, height: 1.1),
-                  ),
-                  TextSpan(
-                    text: ' $unit',
-                    style: TextStyle(fontSize: 12, color: c.muted),
-                  ),
-                ],
+            // Large totals shrink instead of wrapping the unit onto a second line.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: value,
+                      style: sora(22, color: c.fg, height: 1.1),
+                    ),
+                    TextSpan(
+                      text: ' $unit',
+                      style: TextStyle(fontSize: 12, color: c.muted),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

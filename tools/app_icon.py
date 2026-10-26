@@ -270,11 +270,12 @@ def export():
         render(svg, 32, png)
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(png), str(web / "favicon.ico")], check=True)
     render(svg, 180, web / "apple-touch-icon.png")
+    # Not "icons/": Apache servers (All-Inkl among them) alias /icons/ to their own symbols.
     for n in (192, 512):
-        render(svg, n, web / "icons" / f"Icon-{n}.png")
+        render(svg, n, web / "app-icons" / f"Icon-{n}.png")
         # Maskable: launchers may cut a circle of 80 % diameter. The sun's far edge sits at 0.555 of
         # the size from the centre, so 0.7 keeps it inside (0.4 / 0.555 = 0.72).
-        render(svg, n, web / "icons" / f"Icon-maskable-{n}.png", scale=0.7)
+        render(svg, n, web / "app-icons" / f"Icon-maskable-{n}.png", scale=0.7)
 
     ios = ROOT / "ios/Runner/Assets.xcassets/AppIcon.appiconset"
     for img in json.loads((ios / "Contents.json").read_text())["images"]:

@@ -378,8 +378,8 @@ class _SmartPageState extends State<SmartPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Text(
-                    'Das Hauskraftwerk meldet keine Sperrzeiten. Neuere Firmware verwaltet sie womöglich anders; '
-                    'bis das geklärt ist, ändert die App hier nichts.',
+                    'Im Hauskraftwerk sind keine Sperrzeiten angelegt. Neue anlegen kann die App noch nicht: '
+                    'Neuere Firmware meldet nur angelegte Zeiten, und welche Schreibvariante sie erwartet, ist noch nicht geprüft.',
                     style: TextStyle(fontSize: 13, color: c.fg),
                   ),
                 ),

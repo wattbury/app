@@ -1,6 +1,7 @@
 import 'package:openrscp/openrscp.dart';
 
 import 'energy_source.dart';
+import 'history_cache.dart';
 
 enum HistoryRange { day, week, month, year }
 
@@ -44,12 +45,12 @@ class HistoryData {
   });
 }
 
-/// Loads chart data from the unit's database and keeps finished periods in memory, since the past
-/// does not change. The current period is always fetched fresh.
+/// Loads chart data from the unit's database. Finished periods go into a persistent
+/// [HistoryCache] and are never fetched again; weeks and years are assembled from cached months.
 class HistoryRepository {
   final EnergySource source;
-  final _cache = <String, HistoryData>{};
-  HistoryRepository(this.source);
+  final HistoryCache cache;
+  HistoryRepository(this.source, {HistoryCache? cache}) : cache = cache ?? HistoryCache(null);
 
   /// First and last moment of the period that contains [anchor]. Weeks start on Monday.
   static (DateTime, DateTime) bounds(HistoryRange r, DateTime anchor) {
@@ -73,47 +74,14 @@ class HistoryRepository {
     HistoryRange.year => DateTime(anchor.year + step),
   };
 
-  Future<HistoryData> load(HistoryRange r, DateTime anchor, {DateTime? now}) async {
-    final (start, end) = bounds(r, anchor);
-    final finished = !end.isAfter(now ?? DateTime.now());
-    final key = '${r.name}-${start.toIso8601String()}';
-    if (finished && _cache.containsKey(key)) return _cache[key]!;
-    final data = r == HistoryRange.year ? await _year(start, end) : await _series(r, start, end);
-    if (finished) _cache[key] = data;
-    return data;
-  }
-
-  Future<HistoryData> _series(HistoryRange r, DateTime start, DateTime end) async {
-    // Day in hours, week and month in days. Bucket times follow local calendar steps, so a day
-    // with a clock change has 23 or 25 hours.
-    final steps = <DateTime>[];
-    for (
-      var t = start;
-      t.isBefore(end);
-      t = r == HistoryRange.day ? t.add(const Duration(hours: 1)) : DateTime(t.year, t.month, t.day + 1)
-    ) {
-      steps.add(t);
-    }
-    final interval = r == HistoryRange.day ? const Duration(hours: 1) : const Duration(days: 1);
-    final h = await source.history(start, interval, end.difference(start));
-    final points = toPoints(h, steps);
-    return HistoryData(range: r, start: start, end: end, points: points, sum: h.sum);
-  }
-
-  /// Months differ in length, so a year is twelve monthly sums.
-  Future<HistoryData> _year(DateTime start, DateTime end) async {
-    final points = <HistoryPoint>[];
-    for (var m = 0; m < 12; m++) {
-      final a = DateTime(start.year, start.month + m), b = DateTime(start.year, start.month + m + 1);
-      final h = await source.history(a, b.difference(a), b.difference(a));
-      points.add(HistoryPoint.fromSummary(a, h.sum));
-    }
+  /// Totals of a period computed from its bars, for views assembled from the cache.
+  static DbSummary sumOf(DateTime start, DateTime end, List<HistoryPoint> points) {
     double s(double Function(HistoryPoint) f) => points.fold(0, (a, p) => a + f(p));
     final solar = s((p) => p.solar),
         house = s((p) => p.house),
         purchase = s((p) => p.purchase),
         feedIn = s((p) => p.feedIn);
-    final sum = DbSummary(
+    return DbSummary(
       start: start,
       span: end.difference(start),
       solarWh: solar,
@@ -126,7 +94,139 @@ class HistoryRepository {
       consumedProductionPct: solar == 0 ? 0 : (1 - feedIn / solar).clamp(0, 1) * 100,
       socPct: 0,
     );
-    return HistoryData(range: HistoryRange.year, start: start, end: end, points: points, sum: sum);
+  }
+
+  static List<DateTime> _steps(DateTime start, DateTime end, {required bool hourly}) => [
+    for (
+      var t = start;
+      t.isBefore(end);
+      t = hourly ? t.add(const Duration(hours: 1)) : DateTime(t.year, t.month, t.day + 1)
+    )
+      t,
+  ];
+
+  Future<HistoryData> load(HistoryRange r, DateTime anchor, {DateTime? now}) async {
+    final n = now ?? DateTime.now();
+    final (start, end) = bounds(r, anchor);
+    final finished = !end.isAfter(n);
+    switch (r) {
+      case HistoryRange.day:
+        final points = finished ? await _dayHours(start) : await _fetch(start, end, hourly: true);
+        return HistoryData(range: r, start: start, end: end, points: points, sum: sumOf(start, end, points));
+      case HistoryRange.month:
+        final points = finished ? await _monthDays(start) : await _fetch(start, end, hourly: false);
+        return HistoryData(range: r, start: start, end: end, points: points, sum: sumOf(start, end, points));
+      case HistoryRange.week:
+        // A finished week whose months are both over comes from the cached months.
+        final lastDay = end.subtract(const Duration(days: 1));
+        final monthsOver = !DateTime(lastDay.year, lastDay.month + 1).isAfter(n);
+        List<HistoryPoint> points;
+        if (finished && monthsOver) {
+          final all = [...await _monthDays(DateTime(start.year, start.month))];
+          if (lastDay.month != start.month) all.addAll(await _monthDays(DateTime(lastDay.year, lastDay.month)));
+          points = all.where((p) => !p.start.isBefore(start) && p.start.isBefore(end)).toList();
+        } else {
+          points = await _fetch(start, end, hourly: false);
+        }
+        return HistoryData(range: r, start: start, end: end, points: points, sum: sumOf(start, end, points));
+      case HistoryRange.year:
+        final points = <HistoryPoint>[];
+        for (var m = 0; m < 12; m++) {
+          final a = DateTime(start.year, start.month + m), b = DateTime(start.year, start.month + m + 1);
+          if (!b.isAfter(n)) {
+            points.add(_total(a, await _monthDays(a)));
+          } else if (a.isBefore(n)) {
+            final h = await source.history(a, b.difference(a), b.difference(a));
+            points.add(HistoryPoint.fromSummary(a, h.sum));
+          } else {
+            points.add(HistoryPoint.fromSummary(a, sumOf(a, b, const [])));
+          }
+        }
+        return HistoryData(range: r, start: start, end: end, points: points, sum: sumOf(start, end, points));
+    }
+  }
+
+  static HistoryPoint _total(DateTime start, List<HistoryPoint> ps) {
+    double s(double Function(HistoryPoint) f) => ps.fold(0, (a, p) => a + f(p));
+    return HistoryPoint(
+      start: start,
+      solar: s((p) => p.solar),
+      purchase: s((p) => p.purchase),
+      batteryOut: s((p) => p.batteryOut),
+      house: s((p) => p.house),
+      feedIn: s((p) => p.feedIn),
+      batteryIn: s((p) => p.batteryIn),
+    );
+  }
+
+  Future<List<HistoryPoint>> _fetch(DateTime start, DateTime end, {required bool hourly}) async {
+    final h = await source.history(
+      start,
+      hourly ? const Duration(hours: 1) : const Duration(days: 1),
+      end.difference(start),
+    );
+    return toPoints(h, _steps(start, end, hourly: hourly));
+  }
+
+  /// Daily values of a finished month, from the cache or fetched once and stored.
+  Future<List<HistoryPoint>> _monthDays(DateTime month) async {
+    final cached = await cache.days(month);
+    if (cached != null) return cached;
+    final points = await _fetch(month, DateTime(month.year, month.month + 1), hourly: false);
+    await cache.putDays(month, points);
+    return points;
+  }
+
+  /// Hourly values of a finished day, from the cache or fetched once and stored.
+  Future<List<HistoryPoint>> _dayHours(DateTime day) async {
+    final cached = await cache.hours(day);
+    if (cached != null) return cached;
+    final points = await _fetch(day, DateTime(day.year, day.month, day.day + 1), hourly: true);
+    await cache.putHours(day, points);
+    return points;
+  }
+
+  /// Fills the cache for the last [months] finished months: daily values (one request per month)
+  /// and, with [withHours], hourly values (one request per day). Reports progress as done/total and
+  /// stops when [cancelled] returns true. Pauses briefly between requests to spare the unit.
+  Future<void> preload({
+    required int months,
+    bool withHours = false,
+    DateTime? now,
+    void Function(int done, int total)? onProgress,
+    bool Function()? cancelled,
+    Duration pause = const Duration(milliseconds: 150),
+  }) async {
+    final n = now ?? DateTime.now();
+    final today = DateTime(n.year, n.month, n.day);
+    final list = [for (var m = 1; m <= months; m++) DateTime(n.year, n.month - m)];
+    // Finished days of the current month count for hourly values too.
+    final days = <DateTime>[
+      if (withHours) ...[
+        for (final m in list)
+          for (var d = m; d.isBefore(DateTime(m.year, m.month + 1)); d = DateTime(d.year, d.month, d.day + 1)) d,
+        for (var d = DateTime(n.year, n.month); d.isBefore(today); d = DateTime(d.year, d.month, d.day + 1)) d,
+      ],
+    ];
+    final total = list.length + days.length;
+    var done = 0;
+    onProgress?.call(done, total);
+    for (final m in list) {
+      if (cancelled?.call() ?? false) return;
+      if (await cache.days(m) == null) {
+        await _monthDays(m);
+        await Future<void>.delayed(pause);
+      }
+      onProgress?.call(++done, total);
+    }
+    for (final d in days) {
+      if (cancelled?.call() ?? false) return;
+      if (await cache.hours(d) == null) {
+        await _dayHours(d);
+        await Future<void>.delayed(pause);
+      }
+      onProgress?.call(++done, total);
+    }
   }
 
   /// Turns raw buckets into Wh per bar. The unit's bucket values are either energy per interval

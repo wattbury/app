@@ -6,6 +6,7 @@ import '../data/app_settings.dart';
 import '../data/credentials.dart';
 import '../data/forecast.dart';
 import '../data/history.dart';
+import '../data/history_cache.dart';
 import '../data/live_controller.dart';
 import '../theme/tokens.dart';
 import 'flow/flow_page.dart';
@@ -20,6 +21,7 @@ class Shell extends StatefulWidget {
   final AppSettings settings;
   final Credentials? credentials;
   final ForecastService? forecast;
+  final HistoryCache? historyCache;
   final VoidCallback onSignOut, onEditConnection;
   const Shell({
     super.key,
@@ -27,6 +29,7 @@ class Shell extends StatefulWidget {
     required this.settings,
     required this.credentials,
     this.forecast,
+    this.historyCache,
     required this.onSignOut,
     required this.onEditConnection,
   });
@@ -51,12 +54,14 @@ const _tabs = [
 
 class _ShellState extends State<Shell> {
   int _tab = 0;
-  late HistoryRepository _history = HistoryRepository(widget.live.source);
+  late HistoryRepository _history = HistoryRepository(widget.live.source, cache: widget.historyCache);
 
   @override
   void didUpdateWidget(Shell old) {
     super.didUpdateWidget(old);
-    if (!identical(old.live.source, widget.live.source)) _history = HistoryRepository(widget.live.source);
+    if (!identical(old.live.source, widget.live.source) || !identical(old.historyCache, widget.historyCache)) {
+      _history = HistoryRepository(widget.live.source, cache: widget.historyCache);
+    }
   }
 
   @override
@@ -87,6 +92,7 @@ class _ShellState extends State<Shell> {
                       settings: widget.settings,
                       credentials: widget.credentials,
                       forecast: widget.forecast,
+                      history: _history,
                       onSignOut: widget.onSignOut,
                       onEditConnection: widget.onEditConnection,
                     ),

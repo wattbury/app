@@ -21,8 +21,8 @@ void main() {
       final pts = HistoryRepository.toPoints(h, starts);
       archive[day.toIso8601String().substring(0, 10)] = {
         for (final p in pts)
-          '${p.start.hour.toString().padLeft(2, '0')}:${p.start.minute.toString().padLeft(2, '0')}': (p.solar * 4 * 1.25)
-              .round(),
+          '${p.start.hour.toString().padLeft(2, '0')}:${p.start.minute.toString().padLeft(2, '0')}':
+              (p.solar * 4 * 1.25).round(),
       };
     }
     SharedPreferences.setMockInitialValues({'fcArchive.om': jsonEncode(archive)});

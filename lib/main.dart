@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'data/app_settings.dart';
 import 'data/credentials.dart';
 import 'data/energy_source.dart';
 import 'data/forecast.dart';
+import 'data/history_cache.dart';
 import 'data/live_controller.dart';
 import 'theme/tokens.dart';
 import 'ui/setup/setup_page.dart';
@@ -23,7 +27,13 @@ Future<void> main() async {
     // On Linux this fails when no secret service (gnome-keyring) is running.
     storeError = 'Schlüsselbund nicht erreichbar: $e';
   }
-  runApp(WattburyApp(settings: settings, store: store, initial: creds, storeError: storeError));
+  Directory? support;
+  try {
+    support = await getApplicationSupportDirectory();
+  } catch (_) {
+    // Without a support folder the history cache stays in memory.
+  }
+  runApp(WattburyApp(settings: settings, store: store, initial: creds, storeError: storeError, supportDir: support));
 }
 
 class WattburyApp extends StatefulWidget {
@@ -31,7 +41,15 @@ class WattburyApp extends StatefulWidget {
   final CredentialStore store;
   final Credentials? initial;
   final String? storeError;
-  const WattburyApp({super.key, required this.settings, required this.store, this.initial, this.storeError});
+  final Directory? supportDir;
+  const WattburyApp({
+    super.key,
+    required this.settings,
+    required this.store,
+    this.initial,
+    this.storeError,
+    this.supportDir,
+  });
 
   @override
   State<WattburyApp> createState() => _WattburyAppState();
@@ -41,6 +59,7 @@ class _WattburyAppState extends State<WattburyApp> {
   Credentials? _creds;
   LiveController? _live;
   bool _editing = false;
+  HistoryCache _cache = HistoryCache(null);
   late final ForecastService _forecast = ForecastService(
     widget.settings,
     solcastKey: widget.store.solcastKey,
@@ -64,7 +83,16 @@ class _WattburyAppState extends State<WattburyApp> {
     portalInterval: () => Duration(seconds: widget.settings.portalIntervalS),
   );
 
+  /// History of a real system is kept on disk, one folder per serial number; demo data is not.
+  HistoryCache _cacheFor(EnergySource source) {
+    final base = widget.supportDir;
+    if (base == null || source is DemoSource) return HistoryCache(null);
+    final id = (_creds?.serial ?? _creds?.local?.host ?? 'default').replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return HistoryCache(Directory('${base.path}/history/$id'));
+  }
+
   void _start(EnergySource source) {
+    _cache = _cacheFor(source);
     _live?.dispose();
     _live = LiveController(source)..start();
     _forecast.attach(_live!);
@@ -125,6 +153,7 @@ class _WattburyAppState extends State<WattburyApp> {
                 settings: widget.settings,
                 credentials: _creds,
                 forecast: _forecast,
+                historyCache: _cache,
                 onSignOut: _signOut,
                 onEditConnection: () => setState(() => _editing = true),
               ),

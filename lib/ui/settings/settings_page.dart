@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/app_settings.dart';
 import '../../data/credentials.dart';
 import '../../data/forecast.dart';
+import '../../data/history.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
@@ -14,6 +15,7 @@ class SettingsPage extends StatelessWidget {
   final AppSettings settings;
   final Credentials? credentials;
   final ForecastService? forecast;
+  final HistoryRepository? history;
   final VoidCallback onSignOut, onEditConnection;
   const SettingsPage({
     super.key,
@@ -21,6 +23,7 @@ class SettingsPage extends StatelessWidget {
     required this.settings,
     required this.credentials,
     this.forecast,
+    this.history,
     required this.onSignOut,
     required this.onEditConnection,
   });
@@ -198,6 +201,11 @@ class SettingsPage extends StatelessWidget {
                 trailing: TextButton(onPressed: () => _openPlant(context), child: const Text('Öffnen')),
               ),
             ],
+          ),
+        if (history != null && credentials != null)
+          _Section(
+            title: 'Verlauf',
+            children: [_HistoryPreload(repo: history!)],
           ),
         _Section(
           title: 'Tarif & Kosten',
@@ -413,6 +421,168 @@ class _Row extends StatelessWidget {
           ?trailing,
         ],
       ),
+    );
+  }
+}
+
+/// Shows what the history cache holds and loads the last months in advance.
+class _HistoryPreload extends StatefulWidget {
+  final HistoryRepository repo;
+  const _HistoryPreload({required this.repo});
+
+  @override
+  State<_HistoryPreload> createState() => _HistoryPreloadState();
+}
+
+class _HistoryPreloadState extends State<_HistoryPreload> {
+  int _months = 12;
+  bool _hours = false, _running = false, _cancel = false;
+  int _done = 0, _total = 0;
+  String? _error;
+  ({int months, int days, int bytes})? _stats;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshStats();
+  }
+
+  @override
+  void didUpdateWidget(_HistoryPreload old) {
+    super.didUpdateWidget(old);
+    if (!identical(old.repo, widget.repo)) _refreshStats();
+  }
+
+  Future<void> _refreshStats() async {
+    final s = await widget.repo.cache.stats();
+    if (mounted) setState(() => _stats = s);
+  }
+
+  Future<void> _run() async {
+    setState(() {
+      _running = true;
+      _cancel = false;
+      _error = null;
+      _done = 0;
+      _total = 0;
+    });
+    try {
+      await widget.repo.preload(
+        months: _months,
+        withHours: _hours,
+        onProgress: (d, t) {
+          if (mounted) {
+            setState(() {
+              _done = d;
+              _total = t;
+            });
+          }
+        },
+        cancelled: () => _cancel || !mounted,
+      );
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Abgebrochen: $e');
+    } finally {
+      if (mounted) setState(() => _running = false);
+      await _refreshStats();
+    }
+  }
+
+  Future<void> _clear() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Zwischenspeicher löschen?'),
+        content: const Text('Die Diagramme laden die Daten danach wieder vom Hauskraftwerk.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await widget.repo.cache.clear();
+    await _refreshStats();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.wb;
+    final st = _stats;
+    final size = st == null
+        ? ''
+        : (st.bytes < 1024 * 1024 ? '${fmt(st.bytes / 1024, 0)} KB' : '${fmt(st.bytes / 1024 / 1024, 1)} MB');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Row(
+          label: 'Gespeichert',
+          sub: 'Abgeschlossene Zeiträume, bleiben auf dem Gerät',
+          value: st == null ? '…' : '${st.months} Monate · ${st.days} Tage · $size',
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Text('Vorladen', style: TextStyle(fontSize: 15, color: c.fg)),
+            ),
+            DropdownButton<int>(
+              value: _months,
+              underline: const SizedBox(),
+              items: [
+                for (final m in const [3, 6, 12, 24, 36]) DropdownMenuItem(value: m, child: Text('letzte $m Monate')),
+              ],
+              onChanged: _running ? null : (v) => setState(() => _months = v!),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Mit Stundenwerten', style: TextStyle(fontSize: 15, color: c.fg)),
+                  Text(
+                    'Für die Tagesansicht; eine Abfrage je Tag, dauert länger',
+                    style: TextStyle(fontSize: 12, color: c.muted),
+                  ),
+                ],
+              ),
+            ),
+            Switch(
+              value: _hours,
+              activeTrackColor: c.accent,
+              onChanged: _running ? null : (v) => setState(() => _hours = v),
+            ),
+          ],
+        ),
+        if (_running) ...[
+          const SizedBox(height: 8),
+          LinearProgressIndicator(value: _total == 0 ? null : _done / _total, color: c.accent, backgroundColor: c.sep),
+          const SizedBox(height: 4),
+          Text('$_done von $_total geladen', style: TextStyle(fontSize: 12, color: c.muted)),
+        ],
+        if (_error != null) Text(_error!, style: TextStyle(fontSize: 12, color: c.crit)),
+        Row(
+          children: [
+            TextButton(
+              onPressed: _running ? () => setState(() => _cancel = true) : _run,
+              child: Text(_running ? 'Abbrechen' : 'Jetzt laden'),
+            ),
+            const Spacer(),
+            TextButton(onPressed: _running ? null : _clear, child: const Text('Löschen')),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(
+            'Bereits geladene Zeiträume fragt die App nie wieder ab. Vorladen füllt den Speicher im Voraus, '
+            'damit Wochen-, Monats- und Jahresansichten sofort erscheinen.',
+            style: TextStyle(fontSize: 12, color: c.muted),
+          ),
+        ),
+      ],
     );
   }
 }

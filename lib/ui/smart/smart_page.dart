@@ -14,7 +14,10 @@ String _hm(int h, int m) => '${h.toString().padLeft(2, '0')}:${m.toString().padL
 /// Changes are collected as a draft; "Übernehmen" asks once, sends them and reads the unit back.
 class SmartPage extends StatefulWidget {
   final EnergySource source;
-  const SmartPage({super.key, required this.source});
+
+  /// Built at app start in the background; reads the unit once the connection is up.
+  final bool online;
+  const SmartPage({super.key, required this.source, this.online = true});
 
   @override
   State<SmartPage> createState() => _SmartPageState();
@@ -31,13 +34,14 @@ class _SmartPageState extends State<SmartPage> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.online) _load();
   }
 
   @override
   void didUpdateWidget(SmartPage old) {
     super.didUpdateWidget(old);
-    if (!identical(old.source, widget.source)) _load();
+    final cameOnline = !old.online && widget.online;
+    if (!identical(old.source, widget.source) || (cameOnline && _power == null)) _load();
   }
 
   Future<void> _load() async {

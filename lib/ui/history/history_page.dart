@@ -35,7 +35,10 @@ class HistoryPage extends StatefulWidget {
 
   /// For the cost lines in the balance; without a tariff they are left out.
   final AppSettings? settings;
-  const HistoryPage({super.key, required this.repo, this.settings});
+
+  /// The page is built at app start in the background; it loads once the connection is up.
+  final bool online;
+  const HistoryPage({super.key, required this.repo, this.settings, this.online = true});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -51,18 +54,32 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.online) _load();
   }
 
   @override
   void didUpdateWidget(HistoryPage old) {
     super.didUpdateWidget(old);
-    if (!identical(old.repo, widget.repo)) _load();
+    final cameOnline = !old.online && widget.online;
+    if (!identical(old.repo, widget.repo) || (cameOnline && _failedOrMissing)) _load();
   }
 
+  bool _failed = false;
+  bool get _failedOrMissing => _data == null || _failed;
+
   void _load() {
+    if (!widget.online) return;
     _selected = null;
-    _data = widget.repo.load(_range, _anchor);
+    _failed = false;
+    final f = widget.repo.load(_range, _anchor);
+    // Mark errors as handled right away; the FutureBuilder still shows them.
+    f.then(
+      (_) {},
+      onError: (_) {
+        _failed = true;
+      },
+    );
+    _data = f;
   }
 
   bool get _canForward {
@@ -140,7 +157,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: snap.hasError
+                    child: _data == null
+                        ? const _Message(text: 'Wartet auf die Verbindung zum Hauskraftwerk …')
+                        : snap.hasError
                         ? _Message(text: 'Daten konnten nicht geladen werden: ${snap.error}')
                         : d == null
                         ? SizedBox(

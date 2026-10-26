@@ -80,13 +80,17 @@ class _ShellState extends State<Shell> {
                   index: _tab,
                   children: [
                     MonitorPage(live: widget.live, settings: widget.settings, forecast: widget.forecast?.forecast),
-                    HistoryPage(repo: _history, settings: widget.settings),
+                    HistoryPage(
+                      repo: _history,
+                      settings: widget.settings,
+                      online: widget.live.state == ConnState.online,
+                    ),
                     // Animations run only while the tab is visible.
                     TickerMode(
                       enabled: _tab == 2,
                       child: FlowPage(live: widget.live, settings: widget.settings),
                     ),
-                    SmartPage(source: widget.live.source),
+                    SmartPage(source: widget.live.source, online: widget.live.state == ConnState.online),
                     SettingsPage(
                       live: widget.live,
                       settings: widget.settings,

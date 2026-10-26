@@ -300,6 +300,7 @@ class _SmartPageState extends State<SmartPage> {
               ),
               _PowerSlider(
                 label: 'Max. Ladeleistung',
+                recommendedMin: _specs['recommendedMinChargeLimit'],
                 value: p.maxChargePowerW,
                 min: 100,
                 max: maxCharge,
@@ -309,6 +310,7 @@ class _SmartPageState extends State<SmartPage> {
               ),
               _PowerSlider(
                 label: 'Max. Entladeleistung',
+                recommendedMin: _specs['recommendedMinDischargeLimit'],
                 value: p.maxDischargePowerW,
                 min: 100,
                 max: maxDischarge,
@@ -372,6 +374,15 @@ class _SmartPageState extends State<SmartPage> {
                 onSelectionChanged: (s) => setState(() => _idleType = s.first),
               ),
               const SizedBox(height: 4),
+              if (_idleDraft!.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Text(
+                    'Das Hauskraftwerk meldet keine Sperrzeiten. Neuere Firmware verwaltet sie womöglich anders; '
+                    'bis das geklärt ist, ändert die App hier nichts.',
+                    style: TextStyle(fontSize: 13, color: c.fg),
+                  ),
+                ),
               for (final x in _idleDraft!.where((x) => x.type == _idleType))
                 _IdleRow(
                   period: x,
@@ -476,10 +487,14 @@ class _SwitchRow extends StatelessWidget {
 class _PowerSlider extends StatelessWidget {
   final String label;
   final int value, min, max, step;
+
+  /// Lower limit E3/DC recommends (system specs); below it the slider shows a warning.
+  final int? recommendedMin;
   final bool enabled;
   final ValueChanged<int> onChanged;
   const _PowerSlider({
     required this.label,
+    this.recommendedMin,
     required this.value,
     required this.min,
     required this.max,
@@ -532,6 +547,11 @@ class _PowerSlider extends StatelessWidget {
                 onChanged: enabled && divisions > 0 ? (v) => onChanged((v / step).round() * step) : null,
               ),
             ),
+            if (enabled && recommendedMin != null && value < recommendedMin!)
+              Text(
+                'Unter der Empfehlung von E3/DC (${fmt(recommendedMin!.toDouble(), 0)} W).',
+                style: TextStyle(fontSize: 12, color: c.crit),
+              ),
           ],
         ),
       ),

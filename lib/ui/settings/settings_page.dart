@@ -30,25 +30,10 @@ class SettingsPage extends StatelessWidget {
 
   /// Asks for a price in ct/kWh; an empty field removes it.
   Future<void> _editCt(BuildContext context, String title, double? current, ValueChanged<double?> set) async {
-    final ctl = TextEditingController(text: current == null ? '' : fmt(current, 2));
     final v = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: ctl,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(suffixText: 'ct/kWh', hintText: 'z. B. 31,2'),
-          onSubmitted: (t) => Navigator.pop(context, t),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
-          FilledButton(onPressed: () => Navigator.pop(context, ctl.text), child: const Text('Übernehmen')),
-        ],
-      ),
+      builder: (context) => _CtDialog(title: title, initial: current == null ? '' : fmt(current, 2)),
     );
-    ctl.dispose();
     if (v == null) return;
     // Comma or point as decimal separator ("31,2" and "31.2").
     final n = double.tryParse(v.trim().replaceAll(',', '.'));
@@ -413,10 +398,14 @@ class _Row extends StatelessWidget {
               ],
             ),
           ),
+          // Long values wrap instead of pushing the row off screen (large text, narrow phones).
           if (value != null)
-            Text(
-              value!,
-              style: TextStyle(fontSize: 14, color: c.muted, fontFeatures: const [FontFeature.tabularFigures()]),
+            Flexible(
+              child: Text(
+                value!,
+                textAlign: TextAlign.right,
+                style: TextStyle(fontSize: 14, color: c.muted, fontFeatures: const [FontFeature.tabularFigures()]),
+              ),
             ),
           ?trailing,
         ],
@@ -585,4 +574,40 @@ class _HistoryPreloadState extends State<_HistoryPreload> {
       ],
     );
   }
+}
+
+/// Price entry. Owns its text controller, so the controller lives until the dialog has finished
+/// its closing animation; disposing it earlier broke the still visible text field.
+class _CtDialog extends StatefulWidget {
+  final String title, initial;
+  const _CtDialog({required this.title, required this.initial});
+
+  @override
+  State<_CtDialog> createState() => _CtDialogState();
+}
+
+class _CtDialogState extends State<_CtDialog> {
+  late final _ctl = TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: TextField(
+      controller: _ctl,
+      autofocus: true,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: const InputDecoration(suffixText: 'ct/kWh', hintText: 'z. B. 31,2'),
+      onSubmitted: (t) => Navigator.pop(context, t),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+      FilledButton(onPressed: () => Navigator.pop(context, _ctl.text), child: const Text('Übernehmen')),
+    ],
+  );
 }

@@ -2,7 +2,7 @@
 
 Open-Source-App für E3/DC Hauskraftwerke (S10-Familie). Live-Werte, Energiefluss, Verlauf und Smart-Funktionen direkt vom Gerät, im WLAN per RSCP und unterwegs über den Portal-Tunnel. Keine eigene Cloud, keine Zugangsdaten außerhalb des Geräts.
 
-Status: Konzept und Click-Dummy fertig, App in Entwicklung (Flutter, Ziel iOS, Android läuft mit).
+Status: erste lauffähige App (Flutter, Ziel iOS, entwickelt und getestet unter Linux): Verbindung über den Portal-Tunnel, Energiemonitor mit Live-Werten, Einstellungen, Demo-Modus.
 
 - [docs/01-rahmenbedingungen.md](docs/01-rahmenbedingungen.md) – Datenquellen, Technik, Apple-Konto, offene Entscheidungen
 - [docs/02-architektur.md](docs/02-architektur.md) – App direkt am Hauskraftwerk, optionale Bridge, Roadmap
@@ -19,6 +19,8 @@ Das Protokoll steckt im eigenständigen Paket [wattbury/openrscp](https://github
 flutter pub get
 flutter run -d linux
 ```
+
+Unter Linux braucht der Schlüsselbund `libsecret-1-dev` zum Bauen und einen laufenden Secret Service (z. B. `gnome-keyring`) zur Laufzeit. Ohne Zugangsdaten zeigt „Erst mal mit Beispieldaten ansehen“ einen Demo-Modus.
 
 Für lokale Arbeit am Protokoll-Paket daneben auschecken und eine `pubspec_overrides.yaml` anlegen (nicht versioniert):
 

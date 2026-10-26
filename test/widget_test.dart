@@ -1,30 +1,39 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:wattbury/main.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wattbury/data/app_settings.dart';
+import 'package:wattbury/data/energy_source.dart';
+import 'package:wattbury/data/live_controller.dart';
+import 'package:wattbury/theme/tokens.dart';
+import 'package:wattbury/ui/shell.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUpAll(() => initializeDateFormatting('de_DE'));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('dashboard shows demo values and switches tabs', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    final live = LiveController(DemoSource(clock: () => DateTime(2026, 10, 24, 12)));
+    await tester.runAsync(live.start);
+    await tester.binding.setSurfaceSize(const Size(393, 852));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(Brightness.light),
+        home: Shell(live: live, settings: settings, account: null, onSignOut: () {}),
+      ),
+    );
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Solar'), findsWidgets);
+    expect(find.text('Batterie'), findsOneWidget);
+    expect(find.textContaining('Demo'), findsOneWidget);
+    expect(find.text('68%'), findsOneWidget);
+
+    await tester.tap(find.text('Einstellungen').last);
+    await tester.pump();
+    expect(find.text('Geräte am Hauskraftwerk'), findsOneWidget);
+
+    live.dispose();
   });
 }

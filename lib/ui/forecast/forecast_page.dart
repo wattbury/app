@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../data/forecast.dart';
+import '../../data/solcast.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
 import '../widgets/cards.dart';
@@ -38,13 +39,28 @@ class ForecastPage extends StatelessWidget {
               ),
               WhiteCard(
                 title: 'Anbieter',
-                trailing: 'Open-Meteo',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _Row('Konto', 'keins nötig · kostenlos'),
-                    const _Row('Abfrage', 'Einstrahlung, Temperatur je Tracker'),
-                    const _Row('Auflösung', '15 Min. · 3 Tage'),
+                    const SizedBox(height: 8),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'om', label: Text('Open-Meteo')),
+                        ButtonSegment(value: 'sc', label: Text('Solcast')),
+                      ],
+                      selected: {s.forecastProvider},
+                      showSelectedIcon: false,
+                      onSelectionChanged: (v) {
+                        s.forecastProvider = v.first;
+                        service.providerChanged();
+                      },
+                    ),
+                    if (s.forecastProvider == 'om') ...[
+                      const _Row('Konto', 'keins nötig · kostenlos'),
+                      const _Row('Abfrage', 'Einstrahlung, Temperatur je Tracker'),
+                      const _Row('Auflösung', '15 Min. · 3 Tage, stündlich'),
+                    ] else
+                      _SolcastSettings(service: service),
                     _Row(
                       'Zuletzt geladen',
                       service.rawForecast == null
@@ -59,8 +75,12 @@ class ForecastPage extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Open-Meteo liefert die Einstrahlung auf die geneigte Fläche, keine Leistung. Wattbury rechnet daraus mit den kWp je Tracker, '
-                        'der Modultemperatur und Systemverlusten die Leistung aus. Übertragen werden nur Standort, Ausrichtung und Neigung.',
+                        s.forecastProvider == 'om'
+                            ? 'Open-Meteo liefert die Einstrahlung auf die geneigte Fläche, keine Leistung. Wattbury rechnet daraus mit den kWp je Tracker, '
+                                  'der Modultemperatur und Systemverlusten die Leistung aus. Übertragen werden nur Standort, Ausrichtung und Neigung.'
+                            : 'Kostenloser Hobby-Zugang bei solcast.com: höchstens 2 Dachflächen und wenige Abrufe am Tag. Wattbury ruft deshalb höchstens '
+                                  'alle 3 Stunden tagsüber ab. Ausrichtung und Neigung legst du bei Solcast für jede Dachfläche selbst an. Der Key bleibt im Schlüsselbund. '
+                                  'Der Korrekturfaktor gilt je Anbieter; nach einem Wechsel lernt die App neu.',
                         style: TextStyle(fontSize: 12, color: c.muted),
                       ),
                     ),
@@ -194,6 +214,144 @@ class ForecastPage extends StatelessWidget {
   }
 
   static int _minDays() => 7;
+}
+
+class _SolcastSettings extends StatefulWidget {
+  final ForecastService service;
+  const _SolcastSettings({required this.service});
+
+  @override
+  State<_SolcastSettings> createState() => _SolcastSettingsState();
+}
+
+class _SolcastSettingsState extends State<_SolcastSettings> {
+  final _key = TextEditingController();
+  late final Map<String, TextEditingController> _sites = {
+    for (final t in widget.service.settings.plant.trackers)
+      Solcast.trackerKey(t): TextEditingController(text: widget.service.settings.solcastSites[Solcast.trackerKey(t)]),
+  };
+  bool _hasKey = false, _busy = false;
+  String? _status;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.service.solcastKey().then((k) {
+      if (mounted) setState(() => _hasKey = k != null && k.isNotEmpty);
+    }, onError: (_) {});
+  }
+
+  @override
+  void dispose() {
+    _key.dispose();
+    for (final c in _sites.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _saveAndTest() async {
+    setState(() {
+      _busy = true;
+      _status = null;
+    });
+    try {
+      if (_key.text.trim().isNotEmpty) await widget.service.saveSolcastKey(_key.text.trim());
+      widget.service.settings.solcastSites = {
+        for (final e in _sites.entries)
+          if (e.value.text.trim().isNotEmpty) e.key: e.value.text.trim(),
+      };
+      await widget.service.refresh(force: true);
+      final ok = widget.service.error == null && widget.service.rawForecast != null;
+      if (mounted) {
+        setState(() {
+          _hasKey = _hasKey || _key.text.trim().isNotEmpty;
+          _key.clear();
+          _status = ok ? '✓ Zugang gültig, Prognose geladen' : (widget.service.error ?? 'Keine Prognose');
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _status = '$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.wb;
+    final trackers = widget.service.settings.plant.trackers;
+    InputDecoration deco(String label, {String? hint}) => InputDecoration(
+      labelText: label,
+      hintText: hint,
+      isDense: true,
+      filled: true,
+      fillColor: c.appBg,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: BorderSide(color: c.sep),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(9),
+        borderSide: BorderSide(color: c.sep),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 10),
+        TextField(
+          controller: _key,
+          obscureText: true,
+          autocorrect: false,
+          decoration: deco(
+            'API-Key',
+            hint: _hasKey ? 'gespeichert · zum Ändern neu eingeben' : 'aus solcast.com › Account',
+          ),
+        ),
+        for (final (i, t) in trackers.indexed) ...[
+          const SizedBox(height: 8),
+          TextField(
+            controller: _sites[Solcast.trackerKey(t)],
+            autocorrect: false,
+            enabled: i < 2,
+            decoration: deco(
+              'Dachfläche für ${t.name} (${t.direction})',
+              hint: i < 2 ? 'Resource-ID, z. B. abcd-1234-ef56-7890' : 'rechnet mit Open-Meteo',
+            ),
+          ),
+        ],
+        if (trackers.length > 2)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              '${trackers.length} Tracker, der Hobby-Zugang erlaubt 2 Dachflächen. ${trackers.skip(2).map((t) => t.name).join(', ')} rechnet weiter mit Open-Meteo.',
+              style: TextStyle(fontSize: 12, color: c.fg),
+            ),
+          ),
+        if (trackers.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'Erst unter Einstellungen › Anlage die Tracker einrichten.',
+              style: TextStyle(fontSize: 12, color: c.crit),
+            ),
+          ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: _busy || trackers.isEmpty ? null : _saveAndTest,
+          child: _busy
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Speichern und Zugang prüfen'),
+        ),
+        if (_status != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(_status!, style: TextStyle(fontSize: 12, color: _status!.startsWith('✓') ? c.good : c.crit)),
+          ),
+      ],
+    );
+  }
 }
 
 extension on String {

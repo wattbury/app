@@ -92,6 +92,12 @@ class CredentialStore {
     }
   }
 
+  static const _solcast = 'solcast.apiKey';
+
+  Future<String?> solcastKey() => _s.read(key: _solcast);
+  Future<void> setSolcastKey(String? key) =>
+      key == null || key.isEmpty ? _s.delete(key: _solcast) : _s.write(key: _solcast, value: key);
+
   Future<void> clear() async {
     for (final k in [_key, _oldUser, _oldPass, _oldSerial]) {
       await _s.delete(key: k);

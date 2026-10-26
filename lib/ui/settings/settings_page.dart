@@ -172,7 +172,10 @@ class SettingsPage extends StatelessWidget {
           _Section(
             title: 'Prognose',
             children: [
-              const _Row(label: 'Anbieter', value: 'Open-Meteo · ohne Konto'),
+              _Row(
+                label: 'Anbieter',
+                value: settings.forecastProvider == 'sc' ? 'Solcast · eigener API-Key' : 'Open-Meteo · ohne Konto',
+              ),
               _Row(
                 label: 'Korrekturfaktor',
                 sub: 'aus den Messwerten des S10 gelernt',

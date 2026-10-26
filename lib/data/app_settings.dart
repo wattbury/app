@@ -51,6 +51,23 @@ class AppSettings extends ChangeNotifier {
 
   set plant(PlantConfig c) => _put('plant', jsonEncode(c.toJson()));
 
+  /// Forecast provider: 'om' (Open-Meteo, default) or 'sc' (Solcast with own key).
+  String get forecastProvider => _p.getString('forecastProvider') == 'sc' ? 'sc' : 'om';
+  set forecastProvider(String v) => _put('forecastProvider', v);
+
+  /// Solcast resource id per tracker ("pvi-index" → id). Not secret; the API key is in the keychain.
+  Map<String, String> get solcastSites {
+    final raw = _p.getString('solcastSites');
+    if (raw == null) return const {};
+    try {
+      return (jsonDecode(raw) as Map<String, dynamic>).map((k, v) => MapEntry(k, v as String));
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  set solcastSites(Map<String, String> m) => _put('solcastSites', jsonEncode(m));
+
   /// Apply the learned forecast correction (on by default).
   bool get correctionEnabled => _p.getBool('correctionEnabled') ?? true;
   set correctionEnabled(bool v) {

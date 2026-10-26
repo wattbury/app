@@ -10,6 +10,7 @@ import 'energy_source.dart';
 import 'history.dart';
 import 'live_controller.dart';
 import 'plant.dart';
+import 'solcast.dart';
 
 /// Expected average PV power in one 15-minute slot, in W, before any learned correction.
 class ForecastSlot {
@@ -37,6 +38,22 @@ class Forecast {
     final d = DateTime(day.year, day.month, day.day);
     return wh(d, DateTime(d.year, d.month, d.day + 1));
   }
+
+  Map<String, Object> toJson() => {
+    'at': fetchedAt.toIso8601String(),
+    's': [
+      for (final x in slots) [x.start.toIso8601String(), x.watts.round()],
+    ],
+    'w': {for (final e in weatherCodes.entries) e.key.toIso8601String(): e.value},
+  };
+
+  static Forecast fromJson(Map<String, dynamic> j) => Forecast(
+    fetchedAt: DateTime.parse(j['at'] as String),
+    slots: [for (final x in j['s'] as List) ForecastSlot(DateTime.parse(x[0] as String), (x[1] as num).toDouble())],
+    weatherCodes: {
+      for (final e in (j['w'] as Map<String, dynamic>).entries) DateTime.parse(e.key): (e.value as num).toInt(),
+    },
+  );
 }
 
 /// Short German weather text for a WMO weather code.
@@ -125,6 +142,22 @@ class OpenMeteo {
     return Forecast(slots: slots, weatherCodes: codes, fetchedAt: DateTime.now());
   }
 
+  /// Daily weather codes only, for providers that deliver power but no weather.
+  Future<Map<DateTime, int>> weather(double lat, double lon, {int days = 3}) async {
+    final j = await _get(
+      Uri.https('api.open-meteo.com', '/v1/forecast', {
+        'latitude': lat.toStringAsFixed(4),
+        'longitude': lon.toStringAsFixed(4),
+        'daily': 'weather_code',
+        'forecast_days': '$days',
+        'timezone': 'auto',
+      }),
+    ) as Map<String, dynamic>;
+    final d = j['daily'] as Map<String, dynamic>;
+    final dt = (d['time'] as List).cast<String>(), wc = d['weather_code'] as List;
+    return {for (var i = 0; i < dt.length; i++) DateTime.parse(dt[i]): (wc[i] as num?)?.toInt() ?? -1};
+  }
+
   /// Coordinates for a postcode and city via Open-Meteo's geocoding (GeoNames). Searches by city
   /// and prefers the result that lists the postcode.
   Future<({double lat, double lon, String label})?> locate(
@@ -161,6 +194,11 @@ class OpenMeteo {
 class ForecastService extends ChangeNotifier {
   final AppSettings settings;
   final OpenMeteo provider;
+  final Solcast solcast;
+
+  /// Reads and stores the Solcast API key in the keychain.
+  final Future<String?> Function() solcastKey;
+  final Future<void> Function(String?) saveSolcastKey;
   Forecast? _raw;
   String? error;
   Correction correction = Correction.none;
@@ -170,12 +208,26 @@ class ForecastService extends ChangeNotifier {
   LiveController? _live;
 
   /// Provider id used in storage keys, so a change of provider starts learning afresh.
-  static const _id = 'om';
+  String get _id => settings.forecastProvider;
   static const _keepDays = 40;
+
+  /// Solcast's free plan allows few requests a day: fetch at most every 3 hours, only in daylight,
+  /// and keep the last result across restarts.
+  static const _solcastEvery = Duration(hours: 3);
+  String get _cacheKey => 'fcCache.$_id';
   String get _archiveKey => 'fcArchive.$_id';
   String get _recordsKey => 'fcRecords.$_id';
 
-  ForecastService(this.settings, {OpenMeteo? provider}) : provider = provider ?? OpenMeteo() {
+  ForecastService(
+    this.settings, {
+    OpenMeteo? provider,
+    Solcast? solcast,
+    Future<String?> Function()? solcastKey,
+    Future<void> Function(String?)? saveSolcastKey,
+  }) : provider = provider ?? OpenMeteo(),
+       solcast = solcast ?? Solcast(fallback: provider),
+       solcastKey = solcastKey ?? (() async => null),
+       saveSolcastKey = saveSolcastKey ?? ((_) async {}) {
     correction = Correction.compute(_records());
     refresh();
     _timer = Timer.periodic(const Duration(hours: 1), (_) => refresh());
@@ -200,7 +252,16 @@ class ForecastService extends ChangeNotifier {
 
   Forecast? get rawForecast => _raw;
 
-  Future<void> refresh() async {
+  /// Call after switching the provider: shows that provider's forecast and learning.
+  void providerChanged() {
+    _raw = null;
+    correction = Correction.compute(_records());
+    learnedAt = null;
+    refresh(force: true);
+  }
+
+  /// [force] ignores Solcast's request budget, e.g. for "Zugang prüfen".
+  Future<void> refresh({bool force = false}) async {
     final p = settings.plant;
     if (!p.complete) {
       _raw = null;
@@ -210,7 +271,21 @@ class ForecastService extends ChangeNotifier {
     if (_loading) return;
     _loading = true;
     try {
-      _raw = await provider.fetch(p);
+      if (_id == 'sc') {
+        final cached = _readCache();
+        final now = DateTime.now();
+        final daylight = now.hour >= 5 && now.hour < 21;
+        if (!force && cached != null && (now.difference(cached.fetchedAt) < _solcastEvery || !daylight)) {
+          _raw = cached;
+        } else {
+          final key = await solcastKey();
+          if (key == null || key.isEmpty) throw StateError('Solcast: API-Key fehlt');
+          _raw = await solcast.fetch(p, key, settings.solcastSites);
+          await settings.writeRaw(_cacheKey, jsonEncode(_raw!.toJson()));
+        }
+      } else {
+        _raw = await provider.fetch(p);
+      }
       error = null;
       await _archive(_raw!);
     } catch (e) {
@@ -218,6 +293,16 @@ class ForecastService extends ChangeNotifier {
     } finally {
       _loading = false;
       notifyListeners();
+    }
+  }
+
+  Forecast? _readCache() {
+    final raw = settings.readRaw(_cacheKey);
+    if (raw == null) return null;
+    try {
+      return Forecast.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
     }
   }
 

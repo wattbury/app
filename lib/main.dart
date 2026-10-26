@@ -41,7 +41,11 @@ class _WattburyAppState extends State<WattburyApp> {
   Credentials? _creds;
   LiveController? _live;
   bool _editing = false;
-  late final ForecastService _forecast = ForecastService(widget.settings);
+  late final ForecastService _forecast = ForecastService(
+    widget.settings,
+    solcastKey: widget.store.solcastKey,
+    saveSolcastKey: widget.store.setSolcastKey,
+  );
 
   @override
   void initState() {

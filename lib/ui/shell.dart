@@ -10,6 +10,7 @@ import '../theme/tokens.dart';
 import 'flow/flow_page.dart';
 import 'history/history_page.dart';
 import 'monitor/monitor_page.dart';
+import 'smart/smart_page.dart';
 import 'settings/settings_page.dart';
 
 /// App frame: header with title, connection state and refresh; fixed tab bar at the bottom.
@@ -77,10 +78,7 @@ class _ShellState extends State<Shell> {
                       enabled: _tab == 2,
                       child: FlowPage(live: widget.live, settings: widget.settings),
                     ),
-                    const _Later(
-                      icon: Icons.auto_awesome_outlined,
-                      text: 'Sperrzeiten, Lade-/Entladeleistung und Notstrom kommen mit Ausbaustufe 4.',
-                    ),
+                    SmartPage(source: widget.live.source),
                     SettingsPage(
                       live: widget.live,
                       settings: widget.settings,
@@ -215,32 +213,4 @@ class _Header extends StatelessWidget {
   }
 
   static String _seconds(Duration d) => '${d.inSeconds} Sek.';
-}
-
-class _Later extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _Later({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.wb;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: c.muted),
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: c.muted),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -28,6 +28,20 @@ abstract class EnergySource {
 
   /// Housekeeping between polls, e.g. switching back to a faster connection.
   Future<void> maintain();
+
+  // Smart functions. Setters change the unit; callers read back afterwards.
+  Future<PowerSettings> powerSettings();
+  Future<Map<String, int>> sysSpecs();
+  Future<SetResult> setPowerSettings({
+    bool? limitsUsed,
+    int? maxChargePowerW,
+    int? maxDischargePowerW,
+    int? dischargeStartPowerW,
+    bool? powerSave,
+    bool? weatherRegulatedCharge,
+  });
+  Future<List<IdlePeriod>> idlePeriods();
+  Future<bool> setIdlePeriods(List<IdlePeriod> periods);
 }
 
 /// RSCP over any [RscpTransport]; the transport decides whether it goes local or through the portal.
@@ -110,6 +124,31 @@ class RscpSource implements EnergySource {
       _client.dbHistory(start, interval, span);
 
   @override
+  Future<PowerSettings> powerSettings() => _client.powerSettings();
+  @override
+  Future<Map<String, int>> sysSpecs() => _client.sysSpecs();
+  @override
+  Future<SetResult> setPowerSettings({
+    bool? limitsUsed,
+    int? maxChargePowerW,
+    int? maxDischargePowerW,
+    int? dischargeStartPowerW,
+    bool? powerSave,
+    bool? weatherRegulatedCharge,
+  }) => _client.setPowerSettings(
+    limitsUsed: limitsUsed,
+    maxChargePowerW: maxChargePowerW,
+    maxDischargePowerW: maxDischargePowerW,
+    dischargeStartPowerW: dischargeStartPowerW,
+    powerSave: powerSave,
+    weatherRegulatedCharge: weatherRegulatedCharge,
+  );
+  @override
+  Future<List<IdlePeriod>> idlePeriods() => _client.idlePeriods();
+  @override
+  Future<bool> setIdlePeriods(List<IdlePeriod> periods) => _client.setIdlePeriods(periods);
+
+  @override
   Future<List<PvTracker>> trackers() async => (await _client.pvTrackers()).where((t) => t.active).toList();
 
   @override
@@ -186,6 +225,30 @@ class AutoSource implements EnergySource {
   Future<DbSummary> today() => _src.today();
   @override
   Future<DbHistory> history(DateTime start, Duration interval, Duration span) => _src.history(start, interval, span);
+  @override
+  Future<PowerSettings> powerSettings() => _src.powerSettings();
+  @override
+  Future<Map<String, int>> sysSpecs() => _src.sysSpecs();
+  @override
+  Future<SetResult> setPowerSettings({
+    bool? limitsUsed,
+    int? maxChargePowerW,
+    int? maxDischargePowerW,
+    int? dischargeStartPowerW,
+    bool? powerSave,
+    bool? weatherRegulatedCharge,
+  }) => _src.setPowerSettings(
+    limitsUsed: limitsUsed,
+    maxChargePowerW: maxChargePowerW,
+    maxDischargePowerW: maxDischargePowerW,
+    dischargeStartPowerW: dischargeStartPowerW,
+    powerSave: powerSave,
+    weatherRegulatedCharge: weatherRegulatedCharge,
+  );
+  @override
+  Future<List<IdlePeriod>> idlePeriods() => _src.idlePeriods();
+  @override
+  Future<bool> setIdlePeriods(List<IdlePeriod> periods) => _src.setIdlePeriods(periods);
   @override
   Future<List<PvTracker>> trackers() => _src.trackers();
   @override
@@ -355,4 +418,64 @@ class DemoSource implements EnergySource {
 
   @override
   Future<List<WallboxInfo>> wallboxes() async => const [];
+
+  // Smart functions act on in-memory sample settings, so the screens can be tried without a unit.
+  PowerSettings _power = const PowerSettings(
+    powerLimitsUsed: true,
+    powerSaveEnabled: false,
+    weatherRegulatedChargeEnabled: true,
+    maxChargePowerW: 4500,
+    maxDischargePowerW: 4500,
+    dischargeStartPowerW: 65,
+  );
+  List<IdlePeriod> _idle = [
+    for (final type in IdleType.values)
+      for (var d = 0; d < 7; d++)
+        IdlePeriod(
+          type: type,
+          day: d,
+          active: type == IdleType.discharge && d < 5,
+          startHour: 0,
+          startMinute: 0,
+          endHour: type == IdleType.discharge ? 6 : 23,
+          endMinute: type == IdleType.discharge ? 0 : 59,
+        ),
+  ];
+
+  @override
+  Future<PowerSettings> powerSettings() async => _power;
+  @override
+  Future<Map<String, int>> sysSpecs() async => const {
+    'maxBatChargePower': 4500,
+    'maxBatDischargPower': 4500,
+    'startDischargeDefault': 65,
+    'maxAcPower': 12000,
+  };
+  @override
+  Future<SetResult> setPowerSettings({
+    bool? limitsUsed,
+    int? maxChargePowerW,
+    int? maxDischargePowerW,
+    int? dischargeStartPowerW,
+    bool? powerSave,
+    bool? weatherRegulatedCharge,
+  }) async {
+    _power = PowerSettings(
+      powerLimitsUsed: limitsUsed ?? _power.powerLimitsUsed,
+      powerSaveEnabled: powerSave ?? _power.powerSaveEnabled,
+      weatherRegulatedChargeEnabled: weatherRegulatedCharge ?? _power.weatherRegulatedChargeEnabled,
+      maxChargePowerW: maxChargePowerW ?? _power.maxChargePowerW,
+      maxDischargePowerW: maxDischargePowerW ?? _power.maxDischargePowerW,
+      dischargeStartPowerW: dischargeStartPowerW ?? _power.dischargeStartPowerW,
+    );
+    return const SetResult({});
+  }
+
+  @override
+  Future<List<IdlePeriod>> idlePeriods() async => List.of(_idle);
+  @override
+  Future<bool> setIdlePeriods(List<IdlePeriod> periods) async {
+    _idle = List.of(periods);
+    return true;
+  }
 }

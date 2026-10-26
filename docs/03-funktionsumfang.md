@@ -48,6 +48,8 @@ Das Hauskraftwerk (S10 E) ist der Mittelpunkt, an dem alle Teilnehmer hängen: S
 | Manuelles Laden (Wh), 1× pro Tag begrenzt | EMS_REQ_START_MANUAL_CHARGE | später |
 | Übernehmen-Button, Rücklesen, Änderungsprotokoll | | 4 |
 
+Umgesetzt 26.10.2026 (an einer echten Anlage noch nicht geschrieben): Sperrzeiten über `EMS_REQ_GET/SET_IDLE_PERIODS` (je Typ und Wochentag eine Zeitspanne, Ende nach Beginn am selben Tag), Lade-/Entladeleistung, Entladestart, wetterabhängiges Laden und PowerSave über `EMS_REQ_SET_POWER_SETTINGS` mit den Datentypen aus python-e3dc; die Grenzen der Regler kommen aus `EMS_REQ_GET_SYS_SPECS`. Änderungen sammeln sich als Entwurf; „Übernehmen“ zeigt sie in einer Rückfrage, sendet nur die geänderten Werte, liest danach zurück und meldet Abweichungen. Die Wochentage nimmt die App mit 0 = Montag an; `example/smart_read.dart` in openrscp zeigt die Zählung an der echten Anlage zum Abgleich mit dem Display. **Notstromreserve** bleibt vorerst draußen: Sie liegt im `SE_`-Bereich, für den es keine erprobte Vorlage gibt. Ein Änderungsprotokoll fehlt noch.
+
 ### 5 · Wallbox-Steuerung (Sheet)
 
 Sonnen-/Mischmodus, 1/3 Phasen/Auto, Ladestrom 6–32 A, Priorität Wallbox/Hauskraftwerk, Batterie-Entladung in die Wallbox bis min. SOC, Laden starten/stoppen, Status. Phase 4.

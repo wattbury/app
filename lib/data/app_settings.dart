@@ -16,6 +16,24 @@ class AppSettings extends ChangeNotifier {
   WallboxMode get wallboxMode => WallboxMode.values.byName(_p.getString('wallboxMode') ?? 'auto');
   set wallboxMode(WallboxMode m) => _put('wallboxMode', m.name);
 
+  /// Refresh interval choices in seconds. One second only locally; the portal relay is shared
+  /// infrastructure and should not be polled that often.
+  static const localIntervals = [1, 5, 10, 30, 60];
+  static const portalIntervals = [5, 10, 30, 60];
+
+  int get localIntervalS => _pick(_p.getInt('localIntervalS'), localIntervals, 1);
+  set localIntervalS(int v) => _putInt('localIntervalS', v);
+
+  int get portalIntervalS => _pick(_p.getInt('portalIntervalS'), portalIntervals, 5);
+  set portalIntervalS(int v) => _putInt('portalIntervalS', v);
+
+  static int _pick(int? v, List<int> allowed, int fallback) => allowed.contains(v) ? v! : fallback;
+
+  void _putInt(String k, int v) {
+    _p.setInt(k, v);
+    notifyListeners();
+  }
+
   /// True while the user looks at sample data instead of a real system.
   bool get demo => _p.getBool('demo') ?? false;
   set demo(bool v) {

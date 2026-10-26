@@ -46,10 +46,29 @@ class SettingsPage extends StatelessWidget {
                 sub: credentials!.hasLocal ? 'Wird bevorzugt, wenn erreichbar' : null,
                 value: credentials!.hasLocal ? credentials!.local!.host : 'nicht eingerichtet',
               ),
+              if (credentials!.hasLocal)
+                _IntervalSlider(
+                  choices: AppSettings.localIntervals,
+                  value: settings.localIntervalS,
+                  onChanged: (v) {
+                    settings.localIntervalS = v;
+                    live.intervalChanged();
+                  },
+                ),
               _Row(
                 label: 'Unterwegs über das Portal',
                 value: credentials!.hasPortal ? credentials!.serial! : 'nicht eingerichtet',
               ),
+              if (credentials!.hasPortal)
+                _IntervalSlider(
+                  choices: AppSettings.portalIntervals,
+                  value: settings.portalIntervalS,
+                  hint: 'Mindestens 5 Sekunden, um die Server von E3/DC zu schonen.',
+                  onChanged: (v) {
+                    settings.portalIntervalS = v;
+                    live.intervalChanged();
+                  },
+                ),
               _Row(
                 label: 'Verbindung ändern',
                 trailing: TextButton(onPressed: onEditConnection, child: const Text('Bearbeiten')),
@@ -127,6 +146,89 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Refresh interval as a slider with fixed stops; shows the chosen value next to the label.
+class _IntervalSlider extends StatelessWidget {
+  final List<int> choices;
+  final int value;
+  final String? hint;
+  final ValueChanged<int> onChanged;
+  const _IntervalSlider({required this.choices, required this.value, required this.onChanged, this.hint});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.wb;
+    final i = choices.indexOf(value).clamp(0, choices.length - 1);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Aktualisierung', style: TextStyle(fontSize: 13, color: c.muted)),
+              ),
+              Text(
+                'alle ${choices[i]} Sek.',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: c.fg),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: c.accent,
+              thumbColor: c.accent,
+              inactiveTrackColor: c.sep,
+              overlayShape: SliderComponentShape.noOverlay,
+            ),
+            child: Slider(
+              value: i.toDouble(),
+              max: (choices.length - 1).toDouble(),
+              divisions: choices.length - 1,
+              label: '${choices[i]} Sek.',
+              semanticFormatterCallback: (v) => 'alle ${choices[v.round()]} Sekunden',
+              onChanged: (v) {
+                final next = choices[v.round()];
+                if (next != value) onChanged(next);
+              },
+            ),
+          ),
+          // Labels centred under the stops; the track is inset by the thumb radius on both sides.
+          LayoutBuilder(
+            builder: (context, box) {
+              const inset = 10.0, w = 28.0;
+              final step = (box.maxWidth - 2 * inset) / (choices.length - 1);
+              return SizedBox(
+                height: 14,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    for (final (j, s) in choices.indexed)
+                      Positioned(
+                        left: inset + j * step - w / 2,
+                        width: w,
+                        child: Text(
+                          '$s',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 11, color: c.muted),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+          if (hint != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(hint!, style: TextStyle(fontSize: 12, color: c.muted)),
+            ),
+        ],
+      ),
     );
   }
 }

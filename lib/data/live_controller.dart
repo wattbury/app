@@ -51,6 +51,11 @@ class LiveController extends ChangeNotifier {
     }
   }
 
+  /// Applies a changed polling interval right away instead of after the current wait.
+  void intervalChanged() {
+    if (state == ConnState.online && !_busy) _schedule(Duration.zero, _poll);
+  }
+
   /// Fetches everything now, also today's totals; for the refresh button.
   Future<void> refresh() async {
     if (state != ConnState.online) return _connect();

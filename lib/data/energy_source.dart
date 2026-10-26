@@ -32,15 +32,19 @@ class RscpSource implements EnergySource {
   final RscpTransport Function() _create;
   @override
   final String label;
-  @override
-  final Duration liveInterval;
+
+  /// Read on every poll, so a changed setting applies without reconnecting.
+  final Duration Function() interval;
   RscpTransport? _t;
   E3dcClient? _c;
 
-  RscpSource(this._create, {required this.label, required this.liveInterval});
+  RscpSource(this._create, {required this.label, required this.interval});
+
+  @override
+  Duration get liveInterval => interval();
 
   /// Direct connection in the home network; fast enough for one-second updates.
-  factory RscpSource.local(Credentials c) => RscpSource(
+  factory RscpSource.local(Credentials c, {Duration Function()? interval}) => RscpSource(
     () => LocalTransport(
       host: c.local!.host,
       port: c.local!.port,
@@ -50,14 +54,14 @@ class RscpSource implements EnergySource {
       timeout: const Duration(seconds: 4),
     ),
     label: 'RSCP lokal',
-    liveInterval: const Duration(seconds: 1),
+    interval: interval ?? () => const Duration(seconds: 1),
   );
 
   /// Through the E3/DC portal relay. The relay is shared infrastructure; poll it more gently.
-  factory RscpSource.portal(Credentials c) => RscpSource(
+  factory RscpSource.portal(Credentials c, {Duration Function()? interval}) => RscpSource(
     () => PortalTransport(username: c.username, password: c.passwordMd5, passwordIsMd5: true, serial: c.serial!),
     label: 'RSCP Portal',
-    liveInterval: const Duration(seconds: 2),
+    interval: interval ?? () => const Duration(seconds: 5),
   );
 
   E3dcClient get _client => _c ?? (throw RscpTransportException('not connected'));
@@ -113,9 +117,9 @@ class AutoSource implements EnergySource {
   DateTime _lastLocalTry = DateTime(0);
   static const _retryLocal = Duration(minutes: 1);
 
-  AutoSource(Credentials c)
-    : local = c.hasLocal ? RscpSource.local(c) : null,
-      portal = c.hasPortal ? RscpSource.portal(c) : null;
+  AutoSource(Credentials c, {Duration Function()? localInterval, Duration Function()? portalInterval})
+    : local = c.hasLocal ? RscpSource.local(c, interval: localInterval) : null,
+      portal = c.hasPortal ? RscpSource.portal(c, interval: portalInterval) : null;
 
   RscpSource get _src => _active ?? (throw RscpTransportException('not connected'));
 
@@ -123,7 +127,7 @@ class AutoSource implements EnergySource {
   String get label => _active?.label ?? (local != null ? 'RSCP lokal' : 'RSCP Portal');
 
   @override
-  Duration get liveInterval => _active?.liveInterval ?? const Duration(seconds: 2);
+  Duration get liveInterval => (_active ?? local ?? portal)!.liveInterval;
 
   @override
   Future<void> connect() async {

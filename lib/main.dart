@@ -46,11 +46,17 @@ class _WattburyAppState extends State<WattburyApp> {
     super.initState();
     _creds = widget.initial;
     if (_creds != null) {
-      _start(AutoSource(_creds!));
+      _start(_auto(_creds!));
     } else if (widget.settings.demo) {
       _start(DemoSource());
     }
   }
+
+  AutoSource _auto(Credentials c) => AutoSource(
+    c,
+    localInterval: () => Duration(seconds: widget.settings.localIntervalS),
+    portalInterval: () => Duration(seconds: widget.settings.portalIntervalS),
+  );
 
   void _start(EnergySource source) {
     _live?.dispose();
@@ -63,7 +69,7 @@ class _WattburyAppState extends State<WattburyApp> {
     setState(() {
       _creds = c;
       _editing = false;
-      _start(AutoSource(c));
+      _start(_auto(c));
     });
   }
 

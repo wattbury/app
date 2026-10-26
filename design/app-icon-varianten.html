@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App-Icon Varianten</title>
+<style>
+  :root { --bg: #f2f2f7; --card: #fff; --fg: #111; --muted: #6b6f76; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #000; --card: #1c1c1e; --fg: #f2f2f7; --muted: #9a9ea6; } }
+  body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 15px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 20px; max-width: 720px; }
+  .card { background: var(--card); border-radius: 18px; padding: 18px; margin-bottom: 16px; max-width: 760px; }
+  .card h2 { margin: 0; font-size: 18px; }
+  .card p { margin: 4px 0 14px; color: var(--muted); }
+  .row { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+  img { border-radius: 22.37%; display: block; }
+  .big { width: 256px; height: 256px; box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+  .small { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .home { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 16px; border-radius: 14px; font-size: 12px; }
+  .home.light { background: linear-gradient(160deg, #cfe3f7, #f7e7cf); color: #111; }
+  .home.dark { background: linear-gradient(160deg, #0d1626, #29213a); color: #eee; }
+</style>
+</head>
+<body>
+<h1>App-Icon</h1>
+<p class="lead">Low-Poly-W in PV-Modul-Blau, Sonnenstrahlen fallen von oben rechts darauf. Groß, in Home-Screen-Größen und auf hellem und dunklem Hintergrund. Erzeugt von tools/app_icon.py.</p>
+
+    <section class="card">
+      <h2>Tag, Sonne dezent (gewählt)</h2>
+      <p>Kleinere Sonne in weicheren Tönen, Strahlen etwas zurückgenommen.</p>
+      <div class="row">
+        <img class="big" src="icon/tag-dezent.svg" alt="Tag, Sonne dezent (gewählt)">
+        <div class="small">
+          <img src="icon/tag-dezent.svg" width="120" alt=""><img src="icon/tag-dezent.svg" width="60" alt=""><img src="icon/tag-dezent.svg" width="40" alt="">
+          <div class="home light"><img src="icon/tag-dezent.svg" width="60" alt=""><span>Wattbury</span></div>
+          <div class="home dark"><img src="icon/tag-dezent.svg" width="60" alt=""><span>Wattbury</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Tag, Sonne leise</h2>
+      <p>Noch kleiner und blasser; das W trägt das Icon allein, die Sonne ist nur noch Absender des Lichts.</p>
+      <div class="row">
+        <img class="big" src="icon/tag-leise.svg" alt="Tag, Sonne leise">
+        <div class="small">
+          <img src="icon/tag-leise.svg" width="120" alt=""><img src="icon/tag-leise.svg" width="60" alt=""><img src="icon/tag-leise.svg" width="40" alt="">
+          <div class="home light"><img src="icon/tag-leise.svg" width="60" alt=""><span>Wattbury</span></div>
+          <div class="home dark"><img src="icon/tag-leise.svg" width="60" alt=""><span>Wattbury</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Tag (erste Fassung)</h2>
+      <p>Heller Grund wie die App im Hellmodus, goldene Strahlen.</p>
+      <div class="row">
+        <img class="big" src="icon/tag.svg" alt="Tag (erste Fassung)">
+        <div class="small">
+          <img src="icon/tag.svg" width="120" alt=""><img src="icon/tag.svg" width="60" alt=""><img src="icon/tag.svg" width="40" alt="">
+          <div class="home light"><img src="icon/tag.svg" width="60" alt=""><span>Wattbury</span></div>
+          <div class="home dark"><img src="icon/tag.svg" width="60" alt=""><span>Wattbury</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Nacht</h2>
+      <p>Tiefes Blau, das W hebt sich mit helleren Facetten ab; Strahlen als warmes Licht.</p>
+      <div class="row">
+        <img class="big" src="icon/nacht.svg" alt="Nacht">
+        <div class="small">
+          <img src="icon/nacht.svg" width="120" alt=""><img src="icon/nacht.svg" width="60" alt=""><img src="icon/nacht.svg" width="40" alt="">
+          <div class="home light"><img src="icon/nacht.svg" width="60" alt=""><span>Wattbury</span></div>
+          <div class="home dark"><img src="icon/nacht.svg" width="60" alt=""><span>Wattbury</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Sonnenkarte</h2>
+      <p>Grund im Verlauf der Solar-Karte der App, Strahlen hell.</p>
+      <div class="row">
+        <img class="big" src="icon/himmel.svg" alt="Sonnenkarte">
+        <div class="small">
+          <img src="icon/himmel.svg" width="120" alt=""><img src="icon/himmel.svg" width="60" alt=""><img src="icon/himmel.svg" width="40" alt="">
+          <div class="home light"><img src="icon/himmel.svg" width="60" alt=""><span>Wattbury</span></div>
+          <div class="home dark"><img src="icon/himmel.svg" width="60" alt=""><span>Wattbury</span></div>
+        </div>
+      </div>
+    </section>
+</body>
+</html>

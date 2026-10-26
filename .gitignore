@@ -32,3 +32,6 @@ linux/flutter/ephemeral/
 
 # Lokaler Override auf ../openrscp
 pubspec_overrides.yaml
+
+# Flutter DevTools settings, created when running the app
+devtools_options.yaml

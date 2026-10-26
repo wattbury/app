@@ -14,7 +14,7 @@ Future<void> main() async {
   await initializeDateFormatting('de_DE');
   final settings = await AppSettings.load();
   final store = CredentialStore();
-  PortalCredentials? creds;
+  Credentials? creds;
   String? storeError;
   try {
     creds = await store.load();
@@ -28,7 +28,7 @@ Future<void> main() async {
 class WattburyApp extends StatefulWidget {
   final AppSettings settings;
   final CredentialStore store;
-  final PortalCredentials? initial;
+  final Credentials? initial;
   final String? storeError;
   const WattburyApp({super.key, required this.settings, required this.store, this.initial, this.storeError});
 
@@ -37,15 +37,16 @@ class WattburyApp extends StatefulWidget {
 }
 
 class _WattburyAppState extends State<WattburyApp> {
-  PortalCredentials? _creds;
+  Credentials? _creds;
   LiveController? _live;
+  bool _editing = false;
 
   @override
   void initState() {
     super.initState();
     _creds = widget.initial;
     if (_creds != null) {
-      _start(PortalSource(_creds!));
+      _start(AutoSource(_creds!));
     } else if (widget.settings.demo) {
       _start(DemoSource());
     }
@@ -56,12 +57,13 @@ class _WattburyAppState extends State<WattburyApp> {
     _live = LiveController(source)..start();
   }
 
-  Future<void> _connected(PortalCredentials c) async {
+  Future<void> _connected(Credentials c) async {
     await widget.store.save(c);
     widget.settings.demo = false;
     setState(() {
       _creds = c;
-      _start(PortalSource(c));
+      _editing = false;
+      _start(AutoSource(c));
     });
   }
 
@@ -96,13 +98,20 @@ class _WattburyAppState extends State<WattburyApp> {
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
         themeMode: widget.settings.themeMode,
-        home: _live == null
-            ? SetupPage(onConnected: _connected, onDemo: _demo, notice: widget.storeError)
+        home: _live == null || _editing
+            ? SetupPage(
+                onConnected: _connected,
+                onDemo: _demo,
+                notice: widget.storeError,
+                initial: _creds,
+                onCancel: _editing ? () => setState(() => _editing = false) : null,
+              )
             : Shell(
                 live: _live!,
                 settings: widget.settings,
-                account: _creds == null ? null : '${_creds!.username} · ${_creds!.serial}',
+                credentials: _creds,
                 onSignOut: _signOut,
+                onEditConnection: () => setState(() => _editing = true),
               ),
       ),
     );

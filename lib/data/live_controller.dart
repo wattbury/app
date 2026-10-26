@@ -8,7 +8,8 @@ import 'energy_source.dart';
 enum ConnState { connecting, online, offline }
 
 /// Keeps one [EnergySource] connected and polls it: live values at the source's interval,
-/// PV trackers every few seconds, today's totals once a minute. Reconnects with backoff.
+/// PV trackers every few seconds, today's totals once a minute (with [EnergySource.maintain], which
+/// may switch from the portal back to the local connection). Reconnects with backoff.
 class LiveController extends ChangeNotifier {
   final EnergySource source;
   LiveController(this.source);
@@ -69,6 +70,7 @@ class LiveController extends ChangeNotifier {
         _trackersAt = now;
       }
       if (now.difference(_todayAt) >= _todayEvery) {
+        await source.maintain();
         today = await source.today();
         _todayAt = now;
       }

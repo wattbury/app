@@ -20,7 +20,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buildTheme(Brightness.light),
-        home: Shell(live: live, settings: settings, account: null, onSignOut: () {}),
+        home: Shell(live: live, settings: settings, credentials: null, onSignOut: () {}, onEditConnection: () {}),
       ),
     );
     await tester.pump();

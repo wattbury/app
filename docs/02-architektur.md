@@ -82,7 +82,7 @@ Damit die Bridge später ohne Umbau andocken kann:
 | 0 | Konzept, Click-Dummy, Farbwelt Signal, Tunnel-Recherche | abgeschlossen |
 | 1 | Tunnel-Test mit `tools/portal-tunnel-test.py` (Lesen, Latenz, ein harmloser Setter) | Klarheit über Reichweite des Tunnels |
 | 2 | `openrscp`: TLV-Codec + Portal-Transport + Tests; Flutter-Projekt, Design-Tokens aus dem Click-Dummy, Verbindungs-Assistent, Live-Werte (Linux-Fenster, Android, iOS via TestFlight) | Erste lauffähige App |
-| 3 | Lokaler Transport (Rijndael), automatische Wahl; Energiemonitor komplett, Energiefluss | my4E-Grundumfang |
+| 3 | Lokaler Transport (Rijndael), automatische Wahl; Energiemonitor komplett, Energiefluss | my4E-Grundumfang · Transport, Wahl, Assistent und Energiefluss umgesetzt 26.10.2026, Test an der echten Anlage offen |
 | 4 | Diagramme aus der S10-DB mit Zwischenspeicher, Prognose, Kosten; Smart-Funktionen und Wallbox mit Rücklesen | my4E-Premium-Umfang |
 | 5 | Widgets, Watch, Benachrichtigungs-Regeln als UI | Komfort |
 | 6 (optional) | Bridge für Push und Langzeitverlauf | Mehr als my4E |

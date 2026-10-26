@@ -4,8 +4,8 @@ import 'package:openrscp/openrscp.dart';
 
 import 'credentials.dart';
 
-/// Where the app gets its data from. Portal tunnel now; local RSCP, cloud API and bridge follow
-/// as further implementations (docs/02-architektur.md).
+/// Where the app gets its data from: local RSCP or the portal tunnel, picked by [AutoSource].
+/// Cloud API and bridge may follow as further implementations (docs/02-architektur.md).
 abstract class EnergySource {
   /// Short label for the header, e.g. "RSCP Portal".
   String get label;
@@ -22,34 +22,56 @@ abstract class EnergySource {
   Future<DbSummary> today();
   Future<List<PvTracker>> trackers();
   Future<List<WallboxInfo>> wallboxes();
+
+  /// Housekeeping between polls, e.g. switching back to a faster connection.
+  Future<void> maintain();
 }
 
-/// RSCP through the E3/DC portal relay (wss://s10.e3dc.com/ws).
-class PortalSource implements EnergySource {
-  final PortalCredentials credentials;
-  PortalTransport? _t;
+/// RSCP over any [RscpTransport]; the transport decides whether it goes local or through the portal.
+class RscpSource implements EnergySource {
+  final RscpTransport Function() _create;
+  @override
+  final String label;
+  @override
+  final Duration liveInterval;
+  RscpTransport? _t;
   E3dcClient? _c;
-  PortalSource(this.credentials);
 
-  @override
-  String get label => 'RSCP Portal';
+  RscpSource(this._create, {required this.label, required this.liveInterval});
 
-  /// The relay is shared infrastructure; poll it more gently than the local connection.
-  @override
-  Duration get liveInterval => const Duration(seconds: 2);
+  /// Direct connection in the home network; fast enough for one-second updates.
+  factory RscpSource.local(Credentials c) => RscpSource(
+    () => LocalTransport(
+      host: c.local!.host,
+      port: c.local!.port,
+      username: c.username,
+      password: c.password!,
+      rscpPassword: c.local!.rscpPassword,
+      timeout: const Duration(seconds: 4),
+    ),
+    label: 'RSCP lokal',
+    liveInterval: const Duration(seconds: 1),
+  );
+
+  /// Through the E3/DC portal relay. The relay is shared infrastructure; poll it more gently.
+  factory RscpSource.portal(Credentials c) => RscpSource(
+    () => PortalTransport(username: c.username, password: c.passwordMd5, passwordIsMd5: true, serial: c.serial!),
+    label: 'RSCP Portal',
+    liveInterval: const Duration(seconds: 2),
+  );
 
   E3dcClient get _client => _c ?? (throw RscpTransportException('not connected'));
 
   @override
   Future<void> connect() async {
     await _t?.close();
-    final t = PortalTransport(
-      username: credentials.username,
-      password: credentials.passwordMd5,
-      passwordIsMd5: true,
-      serial: credentials.serial,
-    );
-    await t.connect();
+    final t = _create();
+    try {
+      await t.connect();
+    } catch (_) {
+      await t.close();
+      rethrow;
+    }
     _t = t;
     _c = E3dcClient(t);
   }
@@ -60,6 +82,9 @@ class PortalSource implements EnergySource {
     _t = null;
     _c = null;
   }
+
+  @override
+  Future<void> maintain() async {}
 
   @override
   Future<LiveSnapshot> live() => _client.live();
@@ -80,6 +105,80 @@ class PortalSource implements EnergySource {
   Future<List<WallboxInfo>> wallboxes() => _client.detectWallboxes();
 }
 
+/// Picks the best way like my4E: local first when configured, the portal otherwise. While on the
+/// portal it tries the local connection again every minute, so coming home switches back by itself.
+class AutoSource implements EnergySource {
+  final RscpSource? local, portal;
+  RscpSource? _active;
+  DateTime _lastLocalTry = DateTime(0);
+  static const _retryLocal = Duration(minutes: 1);
+
+  AutoSource(Credentials c)
+    : local = c.hasLocal ? RscpSource.local(c) : null,
+      portal = c.hasPortal ? RscpSource.portal(c) : null;
+
+  RscpSource get _src => _active ?? (throw RscpTransportException('not connected'));
+
+  @override
+  String get label => _active?.label ?? (local != null ? 'RSCP lokal' : 'RSCP Portal');
+
+  @override
+  Duration get liveInterval => _active?.liveInterval ?? const Duration(seconds: 2);
+
+  @override
+  Future<void> connect() async {
+    await _active?.close();
+    _active = null;
+    Object? localError;
+    if (local != null) {
+      _lastLocalTry = DateTime.now();
+      try {
+        await local!.connect();
+        _active = local;
+        return;
+      } catch (e) {
+        localError = e;
+      }
+    }
+    if (portal == null) throw localError ?? RscpTransportException('no connection configured');
+    await portal!.connect();
+    _active = portal;
+  }
+
+  @override
+  Future<void> maintain() async {
+    if (local == null || identical(_active, local)) return;
+    if (DateTime.now().difference(_lastLocalTry) < _retryLocal) return;
+    _lastLocalTry = DateTime.now();
+    try {
+      await local!.connect();
+    } catch (_) {
+      return;
+    }
+    final old = _active;
+    _active = local;
+    await old?.close();
+  }
+
+  @override
+  Future<void> close() async {
+    await local?.close();
+    await portal?.close();
+    _active = null;
+  }
+
+  @override
+  Future<LiveSnapshot> live() => _src.live();
+  @override
+  Future<SystemInfo> systemInfo() => _src.systemInfo();
+  @override
+  Future<DbSummary> today() => _src.today();
+  @override
+  Future<List<PvTracker>> trackers() => _src.trackers();
+  @override
+  Future<List<WallboxInfo>> wallboxes() => _src.wallboxes();
+}
+
 /// Sample values for trying the app without an E3/DC login, and for tests and screenshots.
 /// Shaped like the test system: two trackers, no wallbox.
 class DemoSource implements EnergySource {
@@ -97,6 +196,9 @@ class DemoSource implements EnergySource {
 
   @override
   Future<void> close() async {}
+
+  @override
+  Future<void> maintain() async {}
 
   /// Clear-sky bell between 07:50 and 18:20 with a little jitter, 7.4 kW peak.
   double _solarW(DateTime t) {

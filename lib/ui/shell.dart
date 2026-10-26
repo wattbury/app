@@ -3,8 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../data/app_settings.dart';
+import '../data/credentials.dart';
 import '../data/live_controller.dart';
 import '../theme/tokens.dart';
+import 'flow/flow_page.dart';
 import 'monitor/monitor_page.dart';
 import 'settings/settings_page.dart';
 
@@ -12,9 +14,16 @@ import 'settings/settings_page.dart';
 class Shell extends StatefulWidget {
   final LiveController live;
   final AppSettings settings;
-  final String? account;
-  final VoidCallback onSignOut;
-  const Shell({super.key, required this.live, required this.settings, required this.account, required this.onSignOut});
+  final Credentials? credentials;
+  final VoidCallback onSignOut, onEditConnection;
+  const Shell({
+    super.key,
+    required this.live,
+    required this.settings,
+    required this.credentials,
+    required this.onSignOut,
+    required this.onEditConnection,
+  });
 
   @override
   State<Shell> createState() => _ShellState();
@@ -57,7 +66,11 @@ class _ShellState extends State<Shell> {
                       icon: Icons.bar_chart,
                       text: 'Diagramme aus der Datenbank des S10 kommen mit Ausbaustufe 4.',
                     ),
-                    const _Later(icon: Icons.hub_outlined, text: 'Der Energiefluss kommt mit Ausbaustufe 3.'),
+                    // Animations run only while the tab is visible.
+                    TickerMode(
+                      enabled: _tab == 2,
+                      child: FlowPage(live: widget.live, settings: widget.settings),
+                    ),
                     const _Later(
                       icon: Icons.auto_awesome_outlined,
                       text: 'Sperrzeiten, Lade-/Entladeleistung und Notstrom kommen mit Ausbaustufe 4.',
@@ -65,8 +78,9 @@ class _ShellState extends State<Shell> {
                     SettingsPage(
                       live: widget.live,
                       settings: widget.settings,
-                      account: widget.account,
+                      credentials: widget.credentials,
                       onSignOut: widget.onSignOut,
+                      onEditConnection: widget.onEditConnection,
                     ),
                   ],
                 ),

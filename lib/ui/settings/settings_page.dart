@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/app_settings.dart';
+import '../../data/credentials.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
@@ -8,14 +9,15 @@ import '../../theme/tokens.dart';
 class SettingsPage extends StatelessWidget {
   final LiveController live;
   final AppSettings settings;
-  final String? account;
-  final VoidCallback onSignOut;
+  final Credentials? credentials;
+  final VoidCallback onSignOut, onEditConnection;
   const SettingsPage({
     super.key,
     required this.live,
     required this.settings,
-    required this.account,
+    required this.credentials,
     required this.onSignOut,
+    required this.onEditConnection,
   });
 
   @override
@@ -30,19 +32,35 @@ class SettingsPage extends StatelessWidget {
           title: 'Verbindung',
           children: [
             _Row(
-              label: live.source.label,
-              sub: account ?? 'Beispieldaten, keine echte Anlage',
+              label: online ? 'Verbunden über ${live.source.label}' : 'Nicht verbunden',
+              sub: credentials == null ? 'Beispieldaten, keine echte Anlage' : credentials!.username,
               trailing: Container(
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(color: online ? c.good : c.crit, shape: BoxShape.circle),
               ),
             ),
-            if (sys != null) _Row(label: 'Seriennummer', value: sys.serial),
+            if (credentials != null) ...[
+              _Row(
+                label: 'Zu Hause im WLAN',
+                sub: credentials!.hasLocal ? 'Wird bevorzugt, wenn erreichbar' : null,
+                value: credentials!.hasLocal
+                    ? '${credentials!.local!.host}:${credentials!.local!.port}'
+                    : 'nicht eingerichtet',
+              ),
+              _Row(
+                label: 'Unterwegs über das Portal',
+                value: credentials!.hasPortal ? credentials!.serial! : 'nicht eingerichtet',
+              ),
+              _Row(
+                label: 'Verbindung ändern',
+                trailing: TextButton(onPressed: onEditConnection, child: const Text('Bearbeiten')),
+              ),
+            ],
             _Row(
-              label: account == null ? 'Echte Anlage verbinden' : 'Abmelden',
-              sub: account == null ? null : 'Löscht die Zugangsdaten von diesem Gerät',
-              trailing: TextButton(onPressed: onSignOut, child: Text(account == null ? 'Einrichten' : 'Abmelden')),
+              label: credentials == null ? 'Echte Anlage verbinden' : 'Abmelden',
+              sub: credentials == null ? null : 'Löscht die Zugangsdaten von diesem Gerät',
+              trailing: TextButton(onPressed: onSignOut, child: Text(credentials == null ? 'Einrichten' : 'Abmelden')),
             ),
           ],
         ),

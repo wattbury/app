@@ -33,7 +33,7 @@ Vertikal gestapelte Farbkarten, frei sortier- und ausblendbar, eigenes Layout f�
 
 ### 3 · Energiefluss (live)
 
-Das Hauskraftwerk (S10 E) ist der Mittelpunkt, an dem alle Teilnehmer hängen: Solar oben, Batterie unten, Netz links, Haus rechts, Wallbox unten rechts (nur wenn vorhanden). Jeder Knoten ist eine kleine Karte in seiner Farbe mit Icon, Wert und Zustand. Jede Leitung hat genau einen Wert und eine Richtung; wandernde Pfeile in der Farbe des Teilnehmers zeigen die Richtung, ihre Geschwindigkeit die Leistung. Ruhende Leitungen bleiben als graue Spur. Darüber ein Satz, der den Zustand erklärt. „Heute“ als zwei Bilanzbalken (wohin die Sonne ging, woher der Verbrauch kam), dazu Autarkie, Eigenverbrauch, „Batterie voll um“ und Phasenwerte. Entschieden aus vier Varianten, siehe [design/energiefluss-varianten.html](../design/energiefluss-varianten.html). Phase 3.
+Das Hauskraftwerk (S10 E) ist der Mittelpunkt, an dem alle Teilnehmer hängen: Solar oben, Batterie unten, Netz links, Haus rechts, Wallbox unten rechts (nur wenn vorhanden). Jeder Knoten ist eine kleine Karte in seiner Farbe mit Icon, Wert und Zustand. Jede Leitung hat genau einen Wert und eine Richtung; wandernde Pfeile in der Farbe des Teilnehmers zeigen die Richtung, ihre Geschwindigkeit die Leistung. Ruhende Leitungen bleiben als graue Spur. Darüber ein Satz, der den Zustand erklärt. „Heute“ als zwei Bilanzbalken (wohin die Sonne ging, woher der Verbrauch kam), dazu Autarkie, Eigenverbrauch, „Batterie voll um“ und Phasenwerte. Entschieden aus vier Varianten, siehe [design/energiefluss-varianten.html](../design/energiefluss-varianten.html). Phase 3. **Umgesetzt** (26.10.2026) bis auf „Batterie voll um“ und die Phasenwerte; die Animation läuft nur, solange der Tab sichtbar ist, und steht bei „Bewegung reduzieren“ still.
 
 ### 4 · Smart-Funktionen (nur mit RSCP)
 
@@ -56,6 +56,10 @@ Tabs Systeminfo (Seriennummer, Firmware, Module), Batterie-Details (SOH, Zyklen,
 ### 7 · Einstellungen
 
 Verbindung (Lokal, Bridge, Cloud-Fallback, Assistent), Dashboard-Sortierung, Anlage (kWp, kWh, Ausrichtungen), Tarif und Kosten, Benachrichtigungen, Widgets und Watch, Über. Phase 3–4.
+
+### 6a · Verbindung einrichten (Assistent)
+
+Umgesetzt 26.10.2026. Drei Karten: **E3/DC-Login** (Portal-Benutzer und Passwort, immer nötig), **Zu Hause im WLAN** (IP-Adresse, Port 5033 oder 5034, RSCP-Passwort; empfohlen) und **Unterwegs über das Portal** (Seriennummer). Mit lokaler Verbindung liest die App die Seriennummer selbst aus (`INFO_REQ_SERIAL_NUMBER`) und trägt sie für den Tunnel ein; ohne lokale Verbindung muss man sie eintippen (automatisches Auslesen über die Cloud ist geprüft und verworfen, siehe 01). Gespeichert wird alles im Schlüsselbund; das Klartext-Passwort nur, wenn eine lokale Verbindung eingerichtet ist, weil RSCP lokal es im verschlüsselten Kanal verlangt. **Automatische Wahl** wie bei my4E: zuerst lokal (Anmeldung mit 4 s Zeitlimit), sonst Portal; auf dem Portal prüft die App jede Minute, ob das Hauskraftwerk lokal wieder erreichbar ist, und wechselt dann zurück. Die Kopfzeile zeigt den Weg („RSCP lokal · 1 Sek.“, „RSCP Portal · 2 Sek.“). Einstellungen › Verbindung zeigt beide Wege und öffnet den Assistenten zum Bearbeiten.
 
 ### 7a · Anlage einrichten (Schritt 4 im Assistenten, später Einstellungen › Anlage)
 

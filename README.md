@@ -30,6 +30,16 @@ dependency_overrides:
     path: ../openrscp
 ```
 
+## Web-App (PWA)
+
+```bash
+flutter run -d web-server --web-port 8080
+```
+
+Im Browser gibt es nur den Portal-Tunnel, denn Browser können keine TCP-Verbindung zum Hauskraftwerk öffnen. Benachrichtigungen erscheinen nur als Banner, solange die Seite offen ist. Die Zugangsdaten liegen verschlüsselt im Browser, das setzt HTTPS voraus (oder `localhost`).
+
+Jeder Push auf `main` baut die PWA und lädt sie per FTPS auf wattbury.de hoch ([deploy-web.yml](.github/workflows/deploy-web.yml), Secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`). HTTPS-Weiterleitung, Content-Security-Policy und Cache-Regeln stehen in [web/.htaccess](web/.htaccess).
+
 ## Hinweis
 
 Wattbury ist nicht mit E3/DC oder HagerEnergy GmbH verbunden. „E3/DC“ ist eine Marke ihres Inhabers.

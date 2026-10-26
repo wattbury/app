@@ -1,0 +1,34 @@
+# Apache configuration for the PWA on All-Inkl (deployed by .github/workflows/deploy-web.yml).
+
+RewriteEngine On
+
+# HTTPS only: the browser stores the credentials with WebCrypto, which needs a secure context.
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Bookkeeping of the FTP deploy action (file hashes); nobody needs to read it over HTTP.
+<Files ".ftp-deploy-sync-state.json">
+  Require all denied
+</Files>
+
+<IfModule mod_headers.c>
+  # Only the E3/DC relay and the forecast services may be contacted; everything else comes from this host.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss://s10.e3dc.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.solcast.com.au; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; object-src 'none'"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "no-referrer"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+
+  # Flutter's file names carry no content hash, so every file is revalidated (cheap 304 via ETag);
+  # otherwise a deploy could mix old and new parts.
+  Header set Cache-Control "no-cache"
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/wasm .wasm
+  AddType application/manifest+json .webmanifest
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/wasm
+</IfModule>

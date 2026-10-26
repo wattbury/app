@@ -1,0 +1,71 @@
+# Builds the PWA and uploads it to the All-Inkl web space behind wattbury.de via FTPS.
+# Secrets: FTP_SERVER (the kasserver.com host name, not the domain), FTP_USERNAME, FTP_PASSWORD.
+name: Deploy web
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "design/**"
+      - "tools/**"
+      - "android/**"
+      - "ios/**"
+      - "linux/**"
+      - "**.md"
+  workflow_dispatch:
+
+# Never run two uploads at the same time; a newer push waits for the running one.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: wattbury.de
+      url: https://wattbury.de
+    steps:
+      - name: Check secrets
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          if [ -z "$FTP_SERVER" ] || [ -z "$FTP_USERNAME" ] || [ -z "$FTP_PASSWORD" ]; then
+            echo "::error::FTP_SERVER, FTP_USERNAME and FTP_PASSWORD must be set as repository or environment secrets."
+            exit 1
+          fi
+
+      # Third-party actions are pinned to commits because this job handles the FTP password.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.8
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+      # Without the CDN, CanvasKit and fonts come from wattbury.de itself instead of Google's servers.
+      - run: flutter build web --release --no-web-resources-cdn
+
+      # flutter build skips dot files in web/.
+      - run: cp web/.htaccess build/web/.htaccess
+
+      - name: Upload via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: build/web/
+          server-dir: ./

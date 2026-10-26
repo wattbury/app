@@ -6,15 +6,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// Direct RSCP in the home network.
 class LocalConfig {
   final String host;
+
+  /// Always 5033, the RSCP port of the unit.
   final int port;
 
   /// "RSCP password" set on the unit (Personalisieren › Benutzerprofil); the encryption key.
   final String rscpPassword;
-  const LocalConfig({required this.host, required this.port, required this.rscpPassword});
+  const LocalConfig({required this.host, this.port = 5033, required this.rscpPassword});
 
   Map<String, Object> toJson() => {'host': host, 'port': port, 'rscpPassword': rscpPassword};
   static LocalConfig fromJson(Map<String, dynamic> j) =>
-      LocalConfig(host: j['host'] as String, port: j['port'] as int, rscpPassword: j['rscpPassword'] as String);
+      LocalConfig(host: j['host'] as String, rscpPassword: j['rscpPassword'] as String);
 }
 
 /// Everything needed to reach the unit. The portal login is always required: the tunnel sends it as

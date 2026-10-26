@@ -44,9 +44,7 @@ class SettingsPage extends StatelessWidget {
               _Row(
                 label: 'Zu Hause im WLAN',
                 sub: credentials!.hasLocal ? 'Wird bevorzugt, wenn erreichbar' : null,
-                value: credentials!.hasLocal
-                    ? '${credentials!.local!.host}:${credentials!.local!.port}'
-                    : 'nicht eingerichtet',
+                value: credentials!.hasLocal ? credentials!.local!.host : 'nicht eingerichtet',
               ),
               _Row(
                 label: 'Unterwegs über das Portal',

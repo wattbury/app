@@ -14,11 +14,11 @@ void main() {
     final c = Credentials.create(
       username: 'u',
       password: 'secret',
-      local: const LocalConfig(host: '192.168.1.2', port: 5034, rscpPassword: 'k'),
+      local: const LocalConfig(host: '192.168.1.2', rscpPassword: 'k'),
     ).withSerial('S10-123');
     final back = Credentials.fromJson(c.toJson());
     expect(back.password, 'secret');
-    expect(back.local!.port, 5034);
+    expect(back.local!.port, 5033);
     expect(back.serial, 'S10-123');
     expect(back.hasLocal && back.hasPortal, isTrue);
   });

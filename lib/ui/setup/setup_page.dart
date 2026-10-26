@@ -37,7 +37,6 @@ class _SetupPageState extends State<SetupPage> {
   late final _serial = TextEditingController(text: widget.initial?.serial);
   late final _host = TextEditingController(text: widget.initial?.local?.host);
   late final _rscp = TextEditingController(text: widget.initial?.local?.rscpPassword);
-  late int _port = widget.initial?.local?.port ?? 5033;
   bool _busy = false, _hide = true;
   String? _error, _status;
 
@@ -67,7 +66,7 @@ class _SetupPageState extends State<SetupPage> {
     if (problem != null) return;
 
     setState(() => _busy = true);
-    final local = host.isEmpty ? null : LocalConfig(host: host, port: _port, rscpPassword: rscp);
+    final local = host.isEmpty ? null : LocalConfig(host: host, rscpPassword: rscp);
     var creds = Credentials.create(
       username: user,
       password: pass,
@@ -124,7 +123,7 @@ class _SetupPageState extends State<SetupPage> {
     if (s.contains('RSCP password wrong')) return 'keine Antwort auf die Anmeldung. Stimmt das RSCP-Passwort?';
     if (s.contains('login rejected')) return 'Anmeldung abgelehnt. Stimmen Portal-Benutzer und Passwort?';
     if (s.contains('SocketException') || s.contains('Connection refused') || s.contains('timed out')) {
-      return 'Hauskraftwerk nicht erreichbar. Stimmen IP-Adresse und Port, und ist das Gerät im selben Netz?';
+      return 'Hauskraftwerk nicht erreichbar. Stimmt die IP-Adresse, und ist das Gerät im selben Netz?';
     }
     return s;
   }
@@ -227,22 +226,6 @@ class _SetupPageState extends State<SetupPage> {
                     controller: _host,
                     decoration: deco('IP-Adresse des Hauskraftwerks', hint: '192.168.178.40'),
                     keyboardType: TextInputType.url,
-                  ),
-                  gap,
-                  Row(
-                    children: [
-                      Text('Port', style: TextStyle(fontSize: 14, color: c.fg)),
-                      const Spacer(),
-                      SegmentedButton<int>(
-                        segments: const [
-                          ButtonSegment(value: 5033, label: Text('5033')),
-                          ButtonSegment(value: 5034, label: Text('5034')),
-                        ],
-                        selected: {_port},
-                        showSelectedIcon: false,
-                        onSelectionChanged: (s) => setState(() => _port = s.first),
-                      ),
-                    ],
                   ),
                   gap,
                   TextField(controller: _rscp, obscureText: _hide, decoration: deco('RSCP-Passwort')),

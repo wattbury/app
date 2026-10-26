@@ -25,6 +25,37 @@ class SettingsPage extends StatelessWidget {
     required this.onEditConnection,
   });
 
+  /// Asks for a price in ct/kWh; an empty field removes it.
+  Future<void> _editCt(BuildContext context, String title, double? current, ValueChanged<double?> set) async {
+    final ctl = TextEditingController(text: current == null ? '' : fmt(current, 2));
+    final v = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: ctl,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(suffixText: 'ct/kWh', hintText: 'z. B. 31,2'),
+          onSubmitted: (t) => Navigator.pop(context, t),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Abbrechen')),
+          FilledButton(onPressed: () => Navigator.pop(context, ctl.text), child: const Text('Übernehmen')),
+        ],
+      ),
+    );
+    ctl.dispose();
+    if (v == null) return;
+    // Comma or point as decimal separator ("31,2" and "31.2").
+    final n = double.tryParse(v.trim().replaceAll(',', '.'));
+    if (v.trim().isEmpty) {
+      set(null);
+    } else if (n != null && n >= 0 && n < 200) {
+      set(n);
+    }
+  }
+
   void _openPlant(BuildContext context) => Navigator.of(context).push(
     MaterialPageRoute<void>(
       builder: (_) => PlantPage(
@@ -168,6 +199,29 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
+        _Section(
+          title: 'Tarif & Kosten',
+          children: [
+            _Row(
+              label: 'Strompreis',
+              sub: 'für Netzbezug und die Ersparnis',
+              value: settings.priceCt == null ? 'nicht eingetragen' : '${fmt(settings.priceCt!, 2)} ct/kWh',
+              trailing: TextButton(
+                onPressed: () => _editCt(context, 'Strompreis', settings.priceCt, (v) => settings.priceCt = v),
+                child: const Text('Ändern'),
+              ),
+            ),
+            _Row(
+              label: 'Einspeisevergütung',
+              value: settings.feedInCt == null ? 'nicht eingetragen' : '${fmt(settings.feedInCt!, 2)} ct/kWh',
+              trailing: TextButton(
+                onPressed: () =>
+                    _editCt(context, 'Einspeisevergütung', settings.feedInCt, (v) => settings.feedInCt = v),
+                child: const Text('Ändern'),
+              ),
+            ),
+          ],
+        ),
         if (forecast != null)
           _Section(
             title: 'Prognose',

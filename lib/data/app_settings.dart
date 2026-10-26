@@ -68,6 +68,18 @@ class AppSettings extends ChangeNotifier {
 
   set solcastSites(Map<String, String> m) => _put('solcastSites', jsonEncode(m));
 
+  /// Electricity price and feed-in tariff in ct/kWh; null until the user enters them.
+  double? get priceCt => _p.getDouble('priceCt');
+  set priceCt(double? v) => _putDouble('priceCt', v);
+  double? get feedInCt => _p.getDouble('feedInCt');
+  set feedInCt(double? v) => _putDouble('feedInCt', v);
+  bool get hasTariff => priceCt != null && feedInCt != null;
+
+  void _putDouble(String k, double? v) {
+    v == null ? _p.remove(k) : _p.setDouble(k, v);
+    notifyListeners();
+  }
+
   /// Apply the learned forecast correction (on by default).
   bool get correctionEnabled => _p.getBool('correctionEnabled') ?? true;
   set correctionEnabled(bool v) {

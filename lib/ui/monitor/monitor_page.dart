@@ -6,6 +6,7 @@ import 'package:openrscp/openrscp.dart';
 
 import '../../data/app_settings.dart';
 import '../../data/forecast.dart';
+import '../../data/tariff.dart';
 import '../../data/history.dart';
 import '../../data/live_controller.dart';
 import '../../format.dart';
@@ -57,7 +58,7 @@ class MonitorPage extends StatelessWidget {
         ),
         if (_showWallbox) ...[gap, _WallboxCard(snapshot: s)],
         gap,
-        _TodayCard(today: t),
+        _TodayCard(today: t, settings: settings),
         if (live.system != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -667,7 +668,8 @@ class _WallboxCard extends StatelessWidget {
 
 class _TodayCard extends StatelessWidget {
   final DbSummary? today;
-  const _TodayCard({required this.today});
+  final AppSettings settings;
+  const _TodayCard({required this.today, required this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -701,6 +703,20 @@ class _TodayCard extends StatelessWidget {
                     unit: '%',
                   ),
                 ),
+                if (settings.hasTariff) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: KpiTile(
+                      background: c.pastelBlue,
+                      dot: c.grid,
+                      label: 'Ersparnis',
+                      value: t == null
+                          ? '–'
+                          : fmt(Costs.of(t, priceCt: settings.priceCt!, feedInCt: settings.feedInCt!).savingsEur, 2),
+                      unit: '€',
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 8),

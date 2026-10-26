@@ -86,6 +86,10 @@ Stand 26.10.2026: **Anlage einrichten** (Einstellungen › Anlage) mit Kompass, 
 
 **Gelernter Korrekturfaktor:** Jede Nacht vergleicht die App die Rohprognose mit dem gemessenen Ertrag aus der S10-Datenbank (15-Minuten-Werte, `DB_REQ_HISTORY_DATA_DAY`) und bildet je Stunde des Tages einen Faktor gemessen ÷ Prognose, gleitend über 30 Tage. Je Stunde statt einem Gesamtwert, weil sich Verschattung (morgens, abends) und unterschiedlich ausgerichtete Tracker über den Tag verteilen; die S10-Datenbank hat keine Werte je Tracker, die Tageszeit fängt das ab. Gewichtet nach Einstrahlung, damit Stunden mit wenig Licht nicht dominieren. Nicht gezählt werden Abschnitte mit Abregelung (Einspeisegrenze erreicht oder Batterie voll bei begrenzter Einspeisung), Schnee oder Ausfall (gemessen unter 10 % bei hoher Prognose), sonst lernt die App eine schlechtere Anlage als die echte. Der Faktor gilt je Anbieter; nach einem Wechsel startet die App unkorrigiert und wendet den Faktor ab etwa 7 gültigen Tagen an. Schalter zum Abschalten, Knopf zum Zurücksetzen. Angezeigt werden Gesamtfaktor, Faktor je Stunde als Abweichungsbalken um 1,0 und die mittlere Abweichung des Tagesertrags mit und ohne Korrektur. Phase 4.
 
+### 7c · Tarif & Kosten (Einstellungen)
+
+Umgesetzt 26.10.2026: Strompreis und Einspeisevergütung in ct/kWh. Daraus „Ersparnis“ in der Karte „Heute“ und in der Bilanz der Diagramme die Zeilen Einspeisevergütung, Netzbezugskosten und Ersparnis gegenüber Vollbezug (selbst genutzte Energie × Strompreis + Vergütung). Ohne eingetragenen Tarif bleiben die Zeilen weg. Börsenpreise (Tibber/aWATTar) folgen.
+
 ### 8 · Benachrichtigungen (Bridge)
 
 SOC unter x %, Netzbezug über x kW für n Minuten, Anlage offline, Temperatur, Wallbox fertig. Versand per ntfy (Stufe 1) oder APNs (Stufe 2). Phase 4.

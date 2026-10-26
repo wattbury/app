@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../data/app_settings.dart';
 import '../../data/history.dart';
+import '../../data/tariff.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
 import '../widgets/cards.dart';
@@ -30,7 +32,10 @@ final _series = <_Series>[
 /// with the balance of the period below.
 class HistoryPage extends StatefulWidget {
   final HistoryRepository repo;
-  const HistoryPage({super.key, required this.repo});
+
+  /// For the cost lines in the balance; without a tariff they are left out.
+  final AppSettings? settings;
+  const HistoryPage({super.key, required this.repo, this.settings});
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -161,7 +166,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                   ),
                 ),
-                if (d != null) ...[const SizedBox(height: 10), _Balance(data: d)],
+                if (d != null) ...[const SizedBox(height: 10), _Balance(data: d, settings: widget.settings)],
               ],
             );
           },
@@ -445,7 +450,8 @@ class _Legend extends StatelessWidget {
 
 class _Balance extends StatelessWidget {
   final HistoryData data;
-  const _Balance({required this.data});
+  final AppSettings? settings;
+  const _Balance({required this.data, this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -520,9 +526,45 @@ class _Balance extends StatelessWidget {
                 ),
               ],
             ),
+            if (settings?.hasTariff ?? false) ..._costs(context, settings!),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _costs(BuildContext context, AppSettings t) {
+    final c = context.wb, s = data.sum;
+    final k = Costs.of(s, priceCt: t.priceCt!, feedInCt: t.feedInCt!);
+    String eur(double v) => '${fmt(v, 2)} €';
+    String ct(double v) => '${fmt(v, 1)} ct';
+    Widget row(String l, String v, {bool strong = false}) => Container(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: c.sep)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(l, style: TextStyle(fontSize: 14, color: c.fg)),
+          ),
+          Text(
+            v,
+            style: TextStyle(
+              fontSize: 13,
+              color: strong ? c.fg : c.muted,
+              fontWeight: strong ? FontWeight.w600 : FontWeight.w400,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+    return [
+      const SizedBox(height: 8),
+      row('Einspeisevergütung', '${kwh(s.gridFeedInWh)} kWh × ${ct(t.feedInCt!)} = ${eur(k.feedInEur)}'),
+      row('Netzbezugskosten', '${kwh(s.gridPurchaseWh)} kWh × ${ct(t.priceCt!)} = ${eur(k.purchaseEur)}'),
+      row('Ersparnis ggü. Vollbezug', eur(k.savingsEur), strong: true),
+    ];
   }
 }

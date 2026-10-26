@@ -75,7 +75,7 @@ class _ShellState extends State<Shell> {
                   index: _tab,
                   children: [
                     MonitorPage(live: widget.live, settings: widget.settings, forecast: widget.forecast?.forecast),
-                    HistoryPage(repo: _history),
+                    HistoryPage(repo: _history, settings: widget.settings),
                     // Animations run only while the tab is visible.
                     TickerMode(
                       enabled: _tab == 2,

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import 'app_settings.dart';
 import 'correction.dart';
@@ -71,19 +71,12 @@ String weatherText(int code) => switch (code) {
   _ => '',
 };
 
-/// Small JSON GET without extra packages; works on iOS, Android and desktop.
+/// Small JSON GET; package:http uses dart:io natively and fetch in the browser.
 Future<Object?> getJson(Uri url, {Map<String, String> headers = const {}}) async {
-  final http = HttpClient()..connectionTimeout = const Duration(seconds: 10);
-  try {
-    final req = await http.getUrl(url);
-    headers.forEach(req.headers.set);
-    final res = await req.close().timeout(const Duration(seconds: 20));
-    final body = await res.transform(utf8.decoder).join();
-    if (res.statusCode != 200) throw HttpException('HTTP ${res.statusCode}: $body', uri: url);
-    return jsonDecode(body);
-  } finally {
-    http.close(force: true);
-  }
+  final res = await http.get(url, headers: headers).timeout(const Duration(seconds: 30));
+  final body = utf8.decode(res.bodyBytes);
+  if (res.statusCode != 200) throw http.ClientException('HTTP ${res.statusCode}: $body', url);
+  return jsonDecode(body);
 }
 
 /// Open-Meteo: free, no account. Asks per tracker for the irradiance on the tilted plane and the

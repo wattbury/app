@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/app_settings.dart';
@@ -84,11 +85,12 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
             if (credentials != null) ...[
-              _Row(
-                label: 'Zu Hause im WLAN',
-                sub: credentials!.hasLocal ? 'Wird bevorzugt, wenn erreichbar' : null,
-                value: credentials!.hasLocal ? credentials!.local!.host : 'nicht eingerichtet',
-              ),
+              if (!kIsWeb)
+                _Row(
+                  label: 'Zu Hause im WLAN',
+                  sub: credentials!.hasLocal ? 'Wird bevorzugt, wenn erreichbar' : null,
+                  value: credentials!.hasLocal ? credentials!.local!.host : 'nicht eingerichtet',
+                ),
               if (credentials!.hasLocal)
                 _IntervalSlider(
                   choices: AppSettings.localIntervals,

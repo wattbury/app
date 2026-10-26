@@ -5,6 +5,9 @@ import 'package:openrscp/openrscp.dart';
 import 'package:wattbury/data/energy_source.dart';
 import 'package:wattbury/data/history.dart';
 import 'package:wattbury/data/history_cache.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wattbury/data/history_store_io.dart';
+import 'package:wattbury/data/history_store_web.dart';
 
 /// Demo unit that counts database requests.
 class CountingSource extends DemoSource {
@@ -25,7 +28,7 @@ void main() {
 
   test('finished periods are fetched once and survive a restart', () async {
     final src = CountingSource(now);
-    final repo = HistoryRepository(src, cache: HistoryCache(dir));
+    final repo = HistoryRepository(src, cache: HistoryCache(FileHistoryStore(dir)));
     final a = await repo.load(HistoryRange.day, DateTime(2026, 10, 20), now: now);
     await repo.load(HistoryRange.day, DateTime(2026, 10, 20), now: now);
     expect(src.requests, 1);
@@ -37,7 +40,7 @@ void main() {
     expect(w.points.length, 7);
     // New repository and cache object, same folder: nothing is fetched again.
     final src2 = CountingSource(now);
-    final repo2 = HistoryRepository(src2, cache: HistoryCache(dir));
+    final repo2 = HistoryRepository(src2, cache: HistoryCache(FileHistoryStore(dir)));
     final b = await repo2.load(HistoryRange.day, DateTime(2026, 10, 20), now: now);
     await repo2.load(HistoryRange.month, DateTime(2026, 9, 1), now: now);
     expect(src2.requests, 0);
@@ -46,7 +49,7 @@ void main() {
 
   test('the current period is always fetched fresh', () async {
     final src = CountingSource(now);
-    final repo = HistoryRepository(src, cache: HistoryCache(dir));
+    final repo = HistoryRepository(src, cache: HistoryCache(FileHistoryStore(dir)));
     await repo.load(HistoryRange.day, now, now: now);
     await repo.load(HistoryRange.day, now, now: now);
     await repo.load(HistoryRange.month, now, now: now);
@@ -56,7 +59,7 @@ void main() {
 
   test('preload fills months and days; the year then needs one request for the current month', () async {
     final src = CountingSource(now);
-    final repo = HistoryRepository(src, cache: HistoryCache(dir));
+    final repo = HistoryRepository(src, cache: HistoryCache(FileHistoryStore(dir)));
     final progress = <int>[];
     await repo.preload(
       months: 10,
@@ -72,7 +75,7 @@ void main() {
     }
     expect(src.requests, 10 + days);
     expect(progress.last, 10 + days);
-    final stats = await HistoryCache(dir).stats();
+    final stats = await HistoryCache(FileHistoryStore(dir)).stats();
     expect(stats.months, 10);
     expect(stats.days, days);
     expect(stats.bytes, greaterThan(0));
@@ -87,8 +90,30 @@ void main() {
 
   test('preload stops when cancelled', () async {
     final src = CountingSource(now);
-    final repo = HistoryRepository(src, cache: HistoryCache(dir));
+    final repo = HistoryRepository(src, cache: HistoryCache(FileHistoryStore(dir)));
     await repo.preload(months: 6, now: now, pause: Duration.zero, cancelled: () => src.requests >= 2);
     expect(src.requests, 2);
+  });
+
+  test('browser storage keeps months per system', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final src = CountingSource(now);
+    final repo = HistoryRepository(src, cache: HistoryCache(PrefsHistoryStore(prefs, 'history/a/')));
+    await repo.load(HistoryRange.day, DateTime(2026, 10, 20), now: now);
+    final other = PrefsHistoryStore(prefs, 'history/b/');
+    await other.write('2026-01', '{}');
+    final stats = await HistoryCache(PrefsHistoryStore(prefs, 'history/a/')).stats();
+    expect(stats.days, 1);
+    expect(stats.bytes, greaterThan(0));
+    final src2 = CountingSource(now);
+    await HistoryRepository(
+      src2,
+      cache: HistoryCache(PrefsHistoryStore(prefs, 'history/a/')),
+    ).load(HistoryRange.day, DateTime(2026, 10, 20), now: now);
+    expect(src2.requests, 0);
+    await PrefsHistoryStore(prefs, 'history/a/').clear();
+    expect(await PrefsHistoryStore(prefs, 'history/a/').list(), isEmpty);
+    expect(await other.list(), {'2026-01': 2});
   });
 }

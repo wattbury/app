@@ -1,14 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'data/app_settings.dart';
 import 'data/credentials.dart';
 import 'data/energy_source.dart';
 import 'data/forecast.dart';
 import 'data/history_cache.dart';
+import 'data/history_store.dart';
 import 'data/notification_service.dart';
 import 'data/live_controller.dart';
 import 'theme/tokens.dart';
@@ -28,13 +26,11 @@ Future<void> main() async {
     // On Linux this fails when no secret service (gnome-keyring) is running.
     storeError = 'Schlüsselbund nicht erreichbar: $e';
   }
-  Directory? support;
-  try {
-    support = await getApplicationSupportDirectory();
-  } catch (_) {
-    // Without a support folder the history cache stays in memory.
-  }
-  runApp(WattburyApp(settings: settings, store: store, initial: creds, storeError: storeError, supportDir: support));
+  // Without storage the history cache stays in memory.
+  final historyStore = await openHistoryStorage();
+  runApp(
+    WattburyApp(settings: settings, store: store, initial: creds, storeError: storeError, historyStore: historyStore),
+  );
 }
 
 class WattburyApp extends StatefulWidget {
@@ -42,14 +38,14 @@ class WattburyApp extends StatefulWidget {
   final CredentialStore store;
   final Credentials? initial;
   final String? storeError;
-  final Directory? supportDir;
+  final HistoryStore Function(String id)? historyStore;
   const WattburyApp({
     super.key,
     required this.settings,
     required this.store,
     this.initial,
     this.storeError,
-    this.supportDir,
+    this.historyStore,
   });
 
   @override
@@ -85,12 +81,13 @@ class _WattburyAppState extends State<WattburyApp> {
     portalInterval: () => Duration(seconds: widget.settings.portalIntervalS),
   );
 
-  /// History of a real system is kept on disk, one folder per serial number; demo data is not.
+  /// History of a real system is kept on disk (in the browser: local storage), one store per serial
+  /// number; demo data is not.
   HistoryCache _cacheFor(EnergySource source) {
-    final base = widget.supportDir;
-    if (base == null || source is DemoSource) return HistoryCache(null);
+    final open = widget.historyStore;
+    if (open == null || source is DemoSource) return HistoryCache(null);
     final id = (_creds?.serial ?? _creds?.local?.host ?? 'default').replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    return HistoryCache(Directory('${base.path}/history/$id'));
+    return HistoryCache(open(id));
   }
 
   void _start(EnergySource source) {

@@ -1,17 +1,17 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'history.dart';
+import 'history_store.dart';
 
 /// Persistent store for finished history: past values never change, so fetching them again only
-/// loads the unit (and the portal). One JSON file per month holds the daily values of the whole
+/// loads the unit (and the portal). One JSON document per month holds the daily values of the whole
 /// month, once it is over, and the hourly values of each finished day that has been loaded.
 class HistoryCache {
-  /// Folder for the month files; null keeps everything in memory only (tests, unsupported platforms).
-  final Directory? dir;
+  /// Where the months are kept; null keeps everything in memory only (tests, unsupported platforms).
+  final HistoryStore? store;
   final _months = <String, _MonthFile>{};
 
-  HistoryCache(this.dir);
+  HistoryCache(this.store);
 
   static String _mkey(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}';
   static String _dkey(DateTime d) => '${_mkey(d)}-${d.day.toString().padLeft(2, '0')}';
@@ -21,10 +21,10 @@ class HistoryCache {
     final cached = _months[k];
     if (cached != null) return cached;
     var m = _MonthFile();
-    final f = _file(k);
-    if (f != null && await f.exists()) {
+    final raw = await store?.read(k);
+    if (raw != null) {
       try {
-        m = _MonthFile.fromJson(jsonDecode(await f.readAsString()) as Map<String, dynamic>);
+        m = _MonthFile.fromJson(jsonDecode(raw) as Map<String, dynamic>);
       } catch (_) {
         // A damaged file is dropped; the data is fetched again.
       }
@@ -32,17 +32,7 @@ class HistoryCache {
     return _months[k] = m;
   }
 
-  File? _file(String monthKey) => dir == null ? null : File('${dir!.path}/$monthKey.json');
-
-  Future<void> _save(DateTime d) async {
-    final f = _file(_mkey(d));
-    if (f == null) return;
-    await f.parent.create(recursive: true);
-    // Write to a temporary file first, so an interrupted write never leaves a broken month.
-    final tmp = File('${f.path}.tmp');
-    await tmp.writeAsString(jsonEncode(_months[_mkey(d)]!.toJson()));
-    await tmp.rename(f.path);
-  }
+  Future<void> _save(DateTime d) async => await store?.write(_mkey(d), jsonEncode(_months[_mkey(d)]!.toJson()));
 
   /// Daily values of a finished month, or null.
   Future<List<HistoryPoint>?> days(DateTime month) async => (await _month(month)).days;
@@ -62,8 +52,8 @@ class HistoryCache {
 
   /// What is stored: complete months, days with hourly values, size on disk.
   Future<({int months, int days, int bytes})> stats() async {
-    final d = dir;
-    if (d == null || !await d.exists()) {
+    final stored = await store?.list() ?? const {};
+    if (stored.isEmpty) {
       return (
         months: _months.values.where((m) => m.days != null).length,
         days: _months.values.fold(0, (a, m) => a + m.hours.length),
@@ -71,10 +61,8 @@ class HistoryCache {
       );
     }
     var months = 0, days = 0, bytes = 0;
-    await for (final e in d.list()) {
-      if (e is! File || !e.path.endsWith('.json')) continue;
-      bytes += await e.length();
-      final key = e.uri.pathSegments.last.replaceAll('.json', '');
+    for (final MapEntry(:key, :value) in stored.entries) {
+      bytes += value;
       final parts = key.split('-');
       final m = await _month(DateTime(int.parse(parts[0]), int.parse(parts[1])));
       if (m.days != null) months++;
@@ -85,8 +73,7 @@ class HistoryCache {
 
   Future<void> clear() async {
     _months.clear();
-    final d = dir;
-    if (d != null && await d.exists()) await d.delete(recursive: true);
+    await store?.clear();
   }
 }
 

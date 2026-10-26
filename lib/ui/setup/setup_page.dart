@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/credentials.dart';
@@ -122,6 +123,9 @@ class _SetupPageState extends State<SetupPage> {
     final s = e.toString();
     if (s.contains('RSCP password wrong')) return 'keine Antwort auf die Anmeldung. Stimmt das RSCP-Passwort?';
     if (s.contains('login rejected')) return 'Anmeldung abgelehnt. Stimmen Portal-Benutzer und Passwort?';
+    if (s.contains('rejected credentials')) {
+      return 'Anmeldung abgelehnt. Stimmen Portal-Benutzer, Passwort und Seriennummer?';
+    }
     if (s.contains('SocketException') || s.contains('Connection refused') || s.contains('timed out')) {
       return 'Hauskraftwerk nicht erreichbar. Stimmt die IP-Adresse, und ist das Gerät im selben Netz?';
     }
@@ -172,8 +176,12 @@ class _SetupPageState extends State<SetupPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
               child: Text(
-                'Wattbury verbindet sich direkt mit deinem Hauskraftwerk: zu Hause im WLAN, unterwegs über das E3/DC-Portal. '
-                'Die Zugangsdaten bleiben im Schlüsselbund dieses Geräts.',
+                kIsWeb
+                    // Browsers cannot open TCP sockets, so the web version only knows the portal tunnel.
+                    ? 'Wattbury verbindet sich über das E3/DC-Portal mit deinem Hauskraftwerk. '
+                          'Die Zugangsdaten bleiben verschlüsselt in diesem Browser.'
+                    : 'Wattbury verbindet sich direkt mit deinem Hauskraftwerk: zu Hause im WLAN, unterwegs über das E3/DC-Portal. '
+                          'Die Zugangsdaten bleiben im Schlüsselbund dieses Geräts.',
                 style: TextStyle(fontSize: 13, color: c.muted),
               ),
             ),
@@ -188,7 +196,9 @@ class _SetupPageState extends State<SetupPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  hint('Wie im Portal und in der E3/DC-App. Wird für beide Verbindungsarten gebraucht.'),
+                  hint(
+                    'Wie im Portal und in der E3/DC-App.${kIsWeb ? '' : ' Wird für beide Verbindungsarten gebraucht.'}',
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _user,
@@ -213,34 +223,38 @@ class _SetupPageState extends State<SetupPage> {
                 ],
               ),
             ),
-            gap,
-            WhiteCard(
-              title: 'Zu Hause im WLAN',
-              trailing: 'empfohlen',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  hint('Direkt per RSCP, jede Sekunde neue Werte, ohne E3/DC-Server. Liest auch die Seriennummer aus.'),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _host,
-                    decoration: deco('IP-Adresse des Hauskraftwerks', hint: '192.168.178.40'),
-                    keyboardType: TextInputType.url,
-                  ),
-                  gap,
-                  TextField(controller: _rscp, obscureText: _hide, decoration: deco('RSCP-Passwort')),
-                  hint('Am Display des Hauskraftwerks unter Personalisieren › Benutzerprofil festlegen.'),
-                ],
+            if (!kIsWeb) ...[
+              gap,
+              WhiteCard(
+                title: 'Zu Hause im WLAN',
+                trailing: 'empfohlen',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    hint(
+                      'Direkt per RSCP, jede Sekunde neue Werte, ohne E3/DC-Server. Liest auch die Seriennummer aus.',
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _host,
+                      decoration: deco('IP-Adresse des Hauskraftwerks', hint: '192.168.178.40'),
+                      keyboardType: TextInputType.url,
+                    ),
+                    gap,
+                    TextField(controller: _rscp, obscureText: _hide, decoration: deco('RSCP-Passwort')),
+                    hint('Am Display des Hauskraftwerks unter Personalisieren › Benutzerprofil festlegen.'),
+                  ],
+                ),
               ),
-            ),
+            ],
             gap,
             WhiteCard(
-              title: 'Unterwegs über das Portal',
+              title: kIsWeb ? 'Über das Portal' : 'Unterwegs über das Portal',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   hint(
-                    'Funktioniert überall. Braucht die Seriennummer, die mit der lokalen Verbindung automatisch kommt.',
+                    kIsWeb ? 'Funktioniert überall. Braucht die Seriennummer des Hauskraftwerks.' : 'Funktioniert überall. Braucht die Seriennummer, die mit der lokalen Verbindung automatisch kommt.',
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -249,8 +263,8 @@ class _SetupPageState extends State<SetupPage> {
                     onSubmitted: (_) => _connect(),
                   ),
                   hint(
-                    'Steht im Portal my.e3dc.com, im Display des Hauskraftwerks und auf dem Typenschild. '
-                    'Leer lassen, wenn oben die lokale Verbindung eingetragen ist.',
+                    'Steht im Portal my.e3dc.com, im Display des Hauskraftwerks und auf dem Typenschild.'
+                    '${kIsWeb ? '' : ' Leer lassen, wenn oben die lokale Verbindung eingetragen ist.'}',
                   ),
                 ],
               ),

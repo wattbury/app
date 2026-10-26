@@ -12,6 +12,7 @@ import 'data/live_controller.dart';
 import 'theme/tokens.dart';
 import 'ui/setup/setup_page.dart';
 import 'ui/shell.dart';
+import 'ui/web/web_chrome.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -141,6 +142,7 @@ class _WattburyAppState extends State<WattburyApp> {
         theme: buildTheme(Brightness.light),
         darkTheme: buildTheme(Brightness.dark),
         themeMode: widget.settings.themeMode,
+        builder: (context, child) => WebChrome(child: child!),
         home: _live == null || _editing
             ? SetupPage(
                 onConnected: _connected,

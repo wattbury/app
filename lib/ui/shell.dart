@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../data/app_settings.dart';
@@ -142,27 +143,25 @@ class _ShellState extends State<Shell> {
             ],
           ),
         ),
-        bottomNavigationBar: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: Container(
-              decoration: BoxDecoration(
-                color: c.card.withValues(alpha: .92),
-                border: Border(top: BorderSide(color: c.sep)),
-              ),
-              child: SafeArea(
-                top: false,
-                minimum: const EdgeInsets.only(bottom: 8),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-                  child: Row(
-                    children: [
-                      for (var i = 0; i < _tabs.length; i++)
-                        Expanded(
-                          child: _TabButton(tab: _tabs[i], selected: i == _tab, onTap: () => setState(() => _tab = i)),
-                        ),
-                    ],
-                  ),
+        bottomNavigationBar: _blurred(
+          Container(
+            decoration: BoxDecoration(
+              // Without blur (web) the bar is opaque, so content does not show through unblurred.
+              color: kIsWeb ? c.card : c.card.withValues(alpha: .92),
+              border: Border(top: BorderSide(color: c.sep)),
+            ),
+            child: SafeArea(
+              top: false,
+              minimum: const EdgeInsets.only(bottom: 8),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < _tabs.length; i++)
+                      Expanded(
+                        child: _TabButton(tab: _tabs[i], selected: i == _tab, onTap: () => setState(() => _tab = i)),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -172,6 +171,14 @@ class _ShellState extends State<Shell> {
     );
   }
 }
+
+/// Frosted bar on native platforms. In the browser the blur is redrawn on every scroll frame and
+/// makes scrolling stutter, so the web gets a plain bar.
+Widget _blurred(Widget child) => kIsWeb
+    ? child
+    : ClipRect(
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14), child: child),
+      );
 
 class _TabButton extends StatelessWidget {
   final _Tab tab;
@@ -196,15 +203,18 @@ class _TabButton extends StatelessWidget {
             children: [
               Icon(tab.icon, size: 24, color: selected ? c.solar : c.muted),
               const SizedBox(height: 3),
-              Text(
-                tab.label,
-                maxLines: 1,
-                overflow: TextOverflow.visible,
-                softWrap: false,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: selected ? c.fg : c.muted,
+              // Shrinks instead of running into the neighbour on narrow screens or with larger text.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  tab.label,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: selected ? c.fg : c.muted,
+                  ),
                 ),
               ),
             ],

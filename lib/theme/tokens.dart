@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Colour world "Signal" (RAL signal and traffic colours), taken from design/clickdummy.html.
 /// Light and dark are separate selections, not an automatic inversion.
@@ -146,6 +147,10 @@ TextStyle sora(double size, {double weight = 600, Color? color, double? letterSp
   fontFeatures: const [FontFeature.tabularFigures()],
 );
 
+/// Status bar in the app's own background colour; on the web this becomes the browser's theme-color.
+SystemUiOverlayStyle overlayStyle(WbColors c, Brightness b) =>
+    (b == Brightness.dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark).copyWith(statusBarColor: c.appBg);
+
 ThemeData buildTheme(Brightness b) {
   final c = b == Brightness.dark ? WbColors.dark : WbColors.light;
   final scheme = ColorScheme.fromSeed(
@@ -159,5 +164,6 @@ ThemeData buildTheme(Brightness b) {
     extensions: [c],
     dividerColor: c.sep,
     splashFactory: NoSplash.splashFactory,
+    appBarTheme: AppBarTheme(systemOverlayStyle: overlayStyle(c, b)),
   );
 }

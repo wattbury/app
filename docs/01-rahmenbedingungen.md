@@ -20,7 +20,7 @@ Stand: 24.10.2026
 | Details | PVI je String, BAT je Modul (SOH, Temp, Zyklen), PM je Phase, EMS-Status, Notstrom, Wallbox | Leistung je Tracker/Phase, SOC, Wallbox-Leistung, Stammdaten (`systemProperties`), Einspeisebegrenzung |
 | Steuerung | Lade-/Entladeleistung, Sperrzeiten, Notstromreserve, Wallbox (Sonnen-/Mischmodus, Phasen, Strom, Start/Stop), manuelles Laden | keine |
 | Erreichbarkeit | nur im selben Subnetz (VPN nötig für unterwegs) | überall |
-| Verlässlichkeit | stabil seit 2015, mehrere Open-Source-Implementierungen | undokumentiert („Cloud2Cloud“-Schnittstelle), Auth 2024 still geändert, my4E meldet Oktober 2026 unzuverlässige Datendienste |
+| Verlässlichkeit | stabil seit 2015, mehrere Open-Source-Implementierungen | undokumentiert („Cloud2Cloud“-Schnittstelle), Auth 2024 still geändert (Test 26.10.2026: `POST /api/auth` mit Portal-Login + MD5 liefert 403, daher auch keine `systemList` zum automatischen Auslesen der Seriennummer, siehe `tools/cloud_systemlist_test.dart`), my4E meldet Oktober 2026 unzuverlässige Datendienste |
 | Verschlüsselung | Rijndael **256-Bit-Block** (kein Standard-AES), Key = RSCP-Passwort mit 0xFF auf 32 Byte aufgefüllt | TLS |
 
 Die Swagger-Spezifikation der Cloud-API liegt unter [`reference/e3dc-cloud-api-swagger.json`](reference/e3dc-cloud-api-swagger.json).

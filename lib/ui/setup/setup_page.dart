@@ -147,8 +147,16 @@ class _SetupPageState extends State<SetupPage> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: _serial,
-                    decoration: deco('Seriennummer', hint: 'S10-… (Typenschild oder my.e3dc.com)'),
+                    decoration: deco('Seriennummer', hint: 'S10-…'),
                     onSubmitted: (_) => _connect(),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+                    child: Text(
+                      'Steht im Portal my.e3dc.com, im Display des Hauskraftwerks und auf dem Typenschild. '
+                      'Mit der lokalen Verbindung liest Wattbury sie später selbst aus.',
+                      style: TextStyle(fontSize: 12, color: c.muted),
+                    ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 10),

@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:openrscp/openrscp.dart';
 
 import 'energy_source.dart';
@@ -230,17 +233,34 @@ class HistoryRepository {
   }
 
   /// Turns raw buckets into Wh per bar. The unit's bucket values are either energy per interval
-  /// or average power; the scale is taken from the sum container, which is always in Wh.
+  /// or average power; the sum container, which is always in Wh, tells which.
   static List<HistoryPoint> toPoints(DbHistory h, List<DateTime> steps) {
     final b = h.buckets.take(steps.length).toList();
     double total(double Function(DbBucket) f) => b.fold(0, (a, x) => a + f(x));
-    double scale = 1;
+    double ratio = 1;
     for (final (sumWh, raw) in [(h.sum.solarWh, total((x) => x.solar)), (h.sum.houseWh, total((x) => x.house))]) {
       if (sumWh > 0 && raw > 0) {
-        scale = sumWh / raw;
+        ratio = sumWh / raw;
         break;
       }
     }
+    final hours = steps.length >= 2 ? steps[1].difference(steps[0]).inSeconds / 3600 : 1.0;
+    return _scaled(b, steps, snapScale(ratio, hours));
+  }
+
+  /// The sum covers the period up to now, the buckets may lag behind (the running interval is
+  /// missing or partial). Taken as is, the ratio then inflates the whole day: in the morning, when
+  /// the sum is still small, by half or more. Only two scales are physically possible, 1 (Wh per
+  /// bucket) and the bucket length in hours (average W), so the ratio only picks between them.
+  /// Far from both (unknown format), the ratio is used unchanged.
+  @visibleForTesting
+  static double snapScale(double ratio, double bucketHours) {
+    double off(double c) => (math.log(ratio / c)).abs();
+    final best = off(1) <= off(bucketHours) ? 1.0 : bucketHours;
+    return off(best) <= math.ln2 ? best : ratio;
+  }
+
+  static List<HistoryPoint> _scaled(List<DbBucket> b, List<DateTime> steps, double scale) {
     return [
       for (var i = 0; i < steps.length; i++)
         i < b.length

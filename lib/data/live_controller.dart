@@ -100,12 +100,14 @@ class LiveController extends ChangeNotifier {
     }
   }
 
+  /// Today's finished quarter hours. The running one is left out: the database has it only partly
+  /// or not at all, and the sum over the requested span must cover exactly the same buckets.
   Future<List<HistoryPoint>> _loadCurve(DateTime now) async {
-    final start = DateTime(now.year, now.month, now.day), end = DateTime(now.year, now.month, now.day + 1);
+    final start = DateTime(now.year, now.month, now.day);
     const step = Duration(minutes: 15);
-    final steps = [for (var t = start; t.isBefore(now); t = t.add(step)) t];
+    final steps = [for (var t = start; !t.add(step).isAfter(now); t = t.add(step)) t];
     if (steps.isEmpty) return const [];
-    final h = await source.history(start, step, end.difference(start));
+    final h = await source.history(start, step, step * steps.length);
     return HistoryRepository.toPoints(h, steps);
   }
 

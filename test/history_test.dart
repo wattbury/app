@@ -62,6 +62,29 @@ void main() {
     expect(p.map((x) => x.solar), [100, 200]);
   });
 
+  test('a lagging last bucket does not inflate the day', () {
+    // Morning, 15-minute buckets in average W: 1 kW, 2 kW, then the running quarter hour is not in
+    // the database yet, while the sum already counts 0.5 kWh of it.
+    final steps = [for (var i = 0; i < 3; i++) DateTime(2026, 10, 27, 9).add(Duration(minutes: 15 * i))];
+    final h = DbHistory(
+      start: steps.first,
+      interval: const Duration(minutes: 15),
+      span: const Duration(minutes: 45),
+      sum: _sum(250 + 500 + 500, 0),
+      buckets: [_b(1000, 0), _b(2000, 0), _b(0, 0)],
+    );
+    final p = HistoryRepository.toPoints(h, steps);
+    // Ratio 1250 / 3000 = 0.42 would make the 2 kW quarter 833 Wh (a 3.3 kW peak); snapped to 0.25 it stays 500 Wh.
+    expect(p.map((x) => x.solar), [250, 500, 0]);
+  });
+
+  test('scale snaps to Wh or average W, other formats keep the ratio', () {
+    expect(HistoryRepository.snapScale(0.42, 0.25), 0.25);
+    expect(HistoryRepository.snapScale(1.6, 0.25), 1);
+    expect(HistoryRepository.snapScale(30, 24), 24);
+    expect(HistoryRepository.snapScale(5, 0.25), 5);
+  });
+
   // In Germany 25 bars; the test also holds on machines running in UTC.
   test('a day with a clock change gets one bar per real hour', () async {
     final repo = HistoryRepository(DemoSource(clock: () => DateTime(2026, 11, 1)));

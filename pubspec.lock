@@ -357,7 +357,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: "6fa62c4935318002b3b5217650d652dc8f627a86"
+      resolved-ref: ab1c9a071883f4d84a11fe41bf08ff95dbdef674
       url: "https://github.com/wattbury/openrscp.git"
     source: git
     version: "0.1.0"

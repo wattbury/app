@@ -5,6 +5,7 @@ import '../../data/notification_service.dart';
 import '../../data/notifications.dart';
 import '../../format.dart';
 import '../../theme/tokens.dart';
+import 'settings_rows.dart';
 
 /// Einstellungen › Benachrichtigungen: the rules with a switch each, an editor and the last alerts.
 class RulesSection extends StatelessWidget {
@@ -78,56 +79,27 @@ class RulesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final r in rules)
-          InkWell(
-            onTap: () => _edit(context, r),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(r.title, style: TextStyle(fontSize: 15, color: c.fg)),
-                        Text(r.detail, style: TextStyle(fontSize: 12, color: c.muted)),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: r.enabled,
-                    activeTrackColor: c.accent,
-                    onChanged: (v) => _save([for (final x in rules) x.id == r.id ? x.copyWith(enabled: v) : x]),
-                  ),
-                ],
-              ),
+        ...withDividers(context, [
+          for (final r in rules)
+            SettingsSwitchRow(
+              label: r.title,
+              sub: r.detail,
+              value: r.enabled,
+              onChanged: (v) => _save([for (final x in rules) x.id == r.id ? x.copyWith(enabled: v) : x]),
+              onTap: () => _edit(context, r),
             ),
-          ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => _add(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Regel hinzufügen'),
-          ),
-        ),
+          SettingsActionRow(label: 'Regel hinzufügen', icon: Icons.add, onTap: () => _add(context)),
+        ]),
         if (last != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Text(
-              'Zuletzt: ${last.title} · ${last.at.hour.toString().padLeft(2, '0')}:${last.at.minute.toString().padLeft(2, '0')}',
-              style: TextStyle(fontSize: 12, color: c.fg),
-            ),
+          SettingsNote(
+            'Zuletzt: ${last.title} · ${last.at.hour.toString().padLeft(2, '0')}:${last.at.minute.toString().padLeft(2, '0')}',
+            color: c.fg,
           ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            [
-              'Hinweise kommen, solange die App läuft${service?.systemAvailable ?? false ? ', auch als Systembenachrichtigung' : ', als Banner in der App'}.',
-              'Im Hintergrund braucht es die Bridge, die später folgt; iOS lässt Apps nicht dauerhaft im Hintergrund abfragen.',
-            ].join(' '),
-            style: TextStyle(fontSize: 12, color: c.muted),
-          ),
+        SettingsNote(
+          [
+            'Hinweise kommen, solange die App läuft${service?.systemAvailable ?? false ? ', auch als Systembenachrichtigung' : ', als Banner in der App'}.',
+            'Im Hintergrund braucht es die Bridge, die später folgt; iOS lässt Apps nicht dauerhaft im Hintergrund abfragen.',
+          ].join(' '),
         ),
       ],
     );

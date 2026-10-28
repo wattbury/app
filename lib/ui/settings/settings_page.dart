@@ -12,6 +12,7 @@ import '../../theme/tokens.dart';
 import '../forecast/forecast_page.dart';
 import '../plant/plant_page.dart';
 import 'rules_section.dart';
+import 'settings_rows.dart';
 
 class SettingsPage extends StatelessWidget {
   final LiveController live;
@@ -69,16 +70,18 @@ class SettingsPage extends StatelessWidget {
     final c = context.wb;
     final sys = live.system;
     final online = live.state == ConnState.online;
+    void openForecast() =>
+        Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ForecastPage(service: forecast!)));
     return ListView(
       padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
       children: [
         _Section(
           title: 'Verbindung',
           children: [
-            _Row(
+            SettingsRow(
               label: online ? 'Verbunden über ${live.source.label}' : 'Nicht verbunden',
               sub: credentials == null ? 'Beispieldaten, keine echte Anlage' : credentials!.username,
-              trailing: Container(
+              indicator: Container(
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(color: online ? c.good : c.crit, shape: BoxShape.circle),
@@ -86,7 +89,7 @@ class SettingsPage extends StatelessWidget {
             ),
             if (credentials != null) ...[
               if (!kIsWeb)
-                _Row(
+                SettingsRow(
                   label: 'Zu Hause im WLAN',
                   sub: credentials!.hasLocal ? 'Wird bevorzugt, wenn erreichbar' : null,
                   value: credentials!.hasLocal ? credentials!.local!.host : 'nicht eingerichtet',
@@ -100,8 +103,8 @@ class SettingsPage extends StatelessWidget {
                     live.intervalChanged();
                   },
                 ),
-              _Row(
-                label: 'Unterwegs über das Portal',
+              SettingsRow(
+                label: kIsWeb ? 'Über das Portal' : 'Unterwegs über das Portal',
                 value: credentials!.hasPortal ? credentials!.serial! : 'nicht eingerichtet',
               ),
               if (credentials!.hasPortal)
@@ -114,22 +117,23 @@ class SettingsPage extends StatelessWidget {
                     live.intervalChanged();
                   },
                 ),
-              _Row(
-                label: 'Verbindung ändern',
-                trailing: TextButton(onPressed: onEditConnection, child: const Text('Bearbeiten')),
-              ),
+              SettingsRow(label: 'Verbindung ändern', onTap: onEditConnection),
             ],
-            _Row(
-              label: credentials == null ? 'Echte Anlage verbinden' : 'Abmelden',
-              sub: credentials == null ? null : 'Löscht die Zugangsdaten von diesem Gerät',
-              trailing: TextButton(onPressed: onSignOut, child: Text(credentials == null ? 'Einrichten' : 'Abmelden')),
-            ),
+            if (credentials == null)
+              SettingsRow(label: 'Echte Anlage verbinden', onTap: onSignOut)
+            else
+              SettingsActionRow(
+                label: 'Abmelden',
+                sub: 'Löscht die Zugangsdaten von diesem Gerät',
+                destructive: true,
+                onTap: onSignOut,
+              ),
           ],
         ),
         _Section(
           title: 'Geräte am Hauskraftwerk',
           children: [
-            _Row(
+            SettingsRow(
               label: 'Wallbox',
               sub: switch (settings.wallboxMode) {
                 WallboxMode.auto =>
@@ -177,19 +181,20 @@ class SettingsPage extends StatelessWidget {
           _Section(
             title: 'Anlage',
             children: [
-              _Row(label: 'PV-Leistung', sub: 'aus dem S10', value: '${fmt(sys.installedPeakPowerW / 1000, 2)} kWp'),
-              _Row(label: 'Firmware', value: sys.swRelease),
-              _Row(label: 'Tracker', sub: 'mit Messwerten', value: '${live.trackers.length}'),
-              _Row(
+              SettingsRow(
+                label: 'PV-Leistung',
+                sub: 'aus dem S10',
+                value: '${fmt(sys.installedPeakPowerW / 1000, 2)} kWp',
+              ),
+              SettingsRow(label: 'Firmware', value: sys.swRelease),
+              SettingsRow(label: 'Tracker', sub: 'mit Messwerten', value: '${live.trackers.length}'),
+              SettingsRow(
                 label: 'Ausrichtung',
                 sub: settings.plant.complete ? 'Dachflächen je Tracker' : 'Für die Prognose nötig',
                 value: settings.plant.complete
                     ? settings.plant.trackers.map((t) => '${t.direction} ${t.tilt}°').join(' · ')
                     : 'nicht eingerichtet',
-              ),
-              _Row(
-                label: 'Anlage einrichten',
-                trailing: TextButton(onPressed: () => _openPlant(context), child: const Text('Öffnen')),
+                onTap: () => _openPlant(context),
               ),
             ],
           ),
@@ -205,23 +210,16 @@ class SettingsPage extends StatelessWidget {
         _Section(
           title: 'Tarif & Kosten',
           children: [
-            _Row(
+            SettingsRow(
               label: 'Strompreis',
               sub: 'für Netzbezug und die Ersparnis',
               value: settings.priceCt == null ? 'nicht eingetragen' : '${fmt(settings.priceCt!, 2)} ct/kWh',
-              trailing: TextButton(
-                onPressed: () => _editCt(context, 'Strompreis', settings.priceCt, (v) => settings.priceCt = v),
-                child: const Text('Ändern'),
-              ),
+              onTap: () => _editCt(context, 'Strompreis', settings.priceCt, (v) => settings.priceCt = v),
             ),
-            _Row(
+            SettingsRow(
               label: 'Einspeisevergütung',
               value: settings.feedInCt == null ? 'nicht eingetragen' : '${fmt(settings.feedInCt!, 2)} ct/kWh',
-              trailing: TextButton(
-                onPressed: () =>
-                    _editCt(context, 'Einspeisevergütung', settings.feedInCt, (v) => settings.feedInCt = v),
-                child: const Text('Ändern'),
-              ),
+              onTap: () => _editCt(context, 'Einspeisevergütung', settings.feedInCt, (v) => settings.feedInCt = v),
             ),
           ],
         ),
@@ -229,40 +227,34 @@ class SettingsPage extends StatelessWidget {
           _Section(
             title: 'Prognose',
             children: [
-              _Row(
+              SettingsRow(
                 label: 'Anbieter',
-                value: settings.forecastProvider == 'sc' ? 'Solcast · eigener API-Key' : 'Open-Meteo · ohne Konto',
+                sub: settings.forecastProvider == 'sc' ? 'mit eigenem API-Key' : 'ohne Konto',
+                value: settings.forecastProvider == 'sc' ? 'Solcast' : 'Open-Meteo',
+                onTap: openForecast,
               ),
-              _Row(
+              SettingsRow(
                 label: 'Korrekturfaktor',
-                sub: 'aus den Messwerten des S10 gelernt',
+                sub: 'aus Messwerten gelernt',
                 value: !settings.correctionEnabled
                     ? 'aus'
                     : forecast!.correction.ready
                     ? '${fmt(forecast!.correction.overall, 2)} · ${forecast!.correction.days} Tage'
                     : 'lernt · ${forecast!.correction.days} von 7 Tagen',
+                onTap: openForecast,
               ),
               if (forecast!.correction.rawError != null)
-                _Row(
+                SettingsRow(
                   label: 'Genauigkeit Tagesertrag',
                   value:
                       '± ${fmt(forecast!.correction.correctedError! * 100, 0)} % statt ± ${fmt(forecast!.correction.rawError! * 100, 0)} %',
                 ),
-              _Row(
-                label: 'Prognose einstellen',
-                trailing: TextButton(
-                  onPressed: () =>
-                      Navigator.of(context)
-                          .push(MaterialPageRoute<void>(builder: (_) => ForecastPage(service: forecast!))),
-                  child: const Text('Öffnen'),
-                ),
-              ),
             ],
           ),
         Padding(
           padding: const EdgeInsets.only(top: 12),
           child: Text(
-            'Wattbury 0.1 · Open Source · Zugangsdaten nur im Schlüsselbund',
+            'Wattbury 0.1 · Open Source · Zugangsdaten nur ${kIsWeb ? 'in diesem Browser' : 'im Schlüsselbund'}',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11, color: c.muted),
           ),
@@ -363,11 +355,7 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.wb;
-    final rows = <Widget>[];
-    for (var i = 0; i < children.length; i++) {
-      if (i > 0 && children[i] is _Row && children[i - 1] is _Row) rows.add(Divider(height: 1, color: c.sep));
-      rows.add(children[i]);
-    }
+    final rows = withDividers(context, children);
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
@@ -375,49 +363,14 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.fg),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              title,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: c.fg),
+            ),
           ),
           ...rows,
-        ],
-      ),
-    );
-  }
-}
-
-class _Row extends StatelessWidget {
-  final String label;
-  final String? sub, value;
-  final Widget? trailing;
-  const _Row({required this.label, this.sub, this.value, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.wb;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: TextStyle(fontSize: 15, color: c.fg)),
-                if (sub != null) Text(sub!, style: TextStyle(fontSize: 12, color: c.muted)),
-              ],
-            ),
-          ),
-          // Long values wrap instead of pushing the row off screen (large text, narrow phones).
-          if (value != null)
-            Flexible(
-              child: Text(
-                value!,
-                textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 14, color: c.muted, fontFeatures: const [FontFeature.tabularFigures()]),
-              ),
-            ),
-          ?trailing,
         ],
       ),
     );
@@ -514,72 +467,52 @@ class _HistoryPreloadState extends State<_HistoryPreload> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Row(
-          label: 'Gespeichert',
-          sub: 'Abgeschlossene Zeiträume, bleiben auf dem Gerät',
-          value: st == null ? '…' : '${st.months} Monate · ${st.days} Tage · $size',
-        ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Expanded(
-              child: Text('Vorladen', style: TextStyle(fontSize: 15, color: c.fg)),
-            ),
-            DropdownButton<int>(
-              value: _months,
-              underline: const SizedBox(),
-              items: [
-                for (final m in const [3, 6, 12, 24, 36]) DropdownMenuItem(value: m, child: Text('letzte $m Monate')),
-              ],
-              onChanged: _running ? null : (v) => setState(() => _months = v!),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Mit Stundenwerten', style: TextStyle(fontSize: 15, color: c.fg)),
-                  Text(
-                    'Für die Tagesansicht; eine Abfrage je Tag, dauert länger',
-                    style: TextStyle(fontSize: 12, color: c.muted),
-                  ),
-                ],
-              ),
-            ),
-            Switch(
-              value: _hours,
-              activeTrackColor: c.accent,
-              onChanged: _running ? null : (v) => setState(() => _hours = v),
-            ),
-          ],
-        ),
+        ...withDividers(context, [
+          SettingsRow(
+            label: 'Gespeichert',
+            sub: 'Abgeschlossene Zeiträume, bleiben auf dem Gerät',
+            value: st == null ? '…' : '${st.months} Monate · ${st.days} Tage · $size',
+          ),
+          SettingsRow(
+            label: 'Vorladen',
+            value: 'letzte $_months Monate',
+            onTap: _running
+                ? null
+                : () async {
+                    final m = await pickOption(context, 'Vorladen', {
+                      for (final m in const [3, 6, 12, 24, 36]) m: 'letzte $m Monate',
+                    }, _months);
+                    if (m != null) setState(() => _months = m);
+                  },
+          ),
+          SettingsSwitchRow(
+            label: 'Mit Stundenwerten',
+            sub: 'Für die Tagesansicht; eine Abfrage je Tag, dauert länger',
+            value: _hours,
+            onChanged: _running ? null : (v) => setState(() => _hours = v),
+          ),
+          SettingsActionRow(
+            label: _running ? 'Abbrechen' : 'Jetzt laden',
+            icon: _running ? Icons.stop_circle_outlined : Icons.download_outlined,
+            onTap: _running ? () => setState(() => _cancel = true) : _run,
+          ),
+        ]),
         if (_running) ...[
-          const SizedBox(height: 8),
           LinearProgressIndicator(value: _total == 0 ? null : _done / _total, color: c.accent, backgroundColor: c.sep),
           const SizedBox(height: 4),
           Text('$_done von $_total geladen', style: TextStyle(fontSize: 12, color: c.muted)),
         ],
-        if (_error != null) Text(_error!, style: TextStyle(fontSize: 12, color: c.crit)),
-        Row(
-          children: [
-            TextButton(
-              onPressed: _running ? () => setState(() => _cancel = true) : _run,
-              child: Text(_running ? 'Abbrechen' : 'Jetzt laden'),
-            ),
-            const Spacer(),
-            TextButton(onPressed: _running ? null : _clear, child: const Text('Löschen')),
-          ],
+        if (_error != null) SettingsNote(_error!, color: c.crit),
+        const SettingsNote(
+          'Bereits geladene Zeiträume fragt die App nie wieder ab. Vorladen füllt den Speicher im Voraus, '
+          'damit Wochen-, Monats- und Jahresansichten sofort erscheinen.',
         ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            'Bereits geladene Zeiträume fragt die App nie wieder ab. Vorladen füllt den Speicher im Voraus, '
-            'damit Wochen-, Monats- und Jahresansichten sofort erscheinen.',
-            style: TextStyle(fontSize: 12, color: c.muted),
-          ),
+        Divider(height: 1, color: c.sep),
+        SettingsActionRow(
+          label: 'Zwischenspeicher löschen',
+          icon: Icons.delete_outline,
+          destructive: true,
+          onTap: _running ? null : _clear,
         ),
       ],
     );

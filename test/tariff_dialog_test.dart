@@ -35,7 +35,9 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Ändern').first);
+    // The whole row opens the dialog.
+    await tester.ensureVisible(find.text('Strompreis'));
+    await tester.tap(find.text('Strompreis'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '31,2');
     await tester.tap(find.text('Übernehmen'));

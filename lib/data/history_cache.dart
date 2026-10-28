@@ -109,13 +109,19 @@ class _MonthFile {
   ];
 
   Map<String, Object?> toJson() => {
-    'v': 1,
+    'v': _version,
     'days': days == null ? null : _enc(days!),
     'hours': {for (final e in hours.entries) e.key: _enc(e.value)},
   };
 
-  static _MonthFile fromJson(Map<String, dynamic> j) => _MonthFile(
-    days: j['days'] == null ? null : _dec(j['days'] as List),
-    hours: {for (final e in (j['hours'] as Map<String, dynamic>).entries) e.key: _dec(e.value as List)},
-  );
+  /// 2: values up to openrscp 95a9820 were one hour late (the unit reads query times as
+  /// wall-clock time); older months are dropped and fetched again.
+  static const _version = 2;
+
+  static _MonthFile fromJson(Map<String, dynamic> j) => j['v'] != _version
+      ? _MonthFile()
+      : _MonthFile(
+          days: j['days'] == null ? null : _dec(j['days'] as List),
+          hours: {for (final e in (j['hours'] as Map<String, dynamic>).entries) e.key: _dec(e.value as List)},
+        );
 }

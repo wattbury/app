@@ -62,7 +62,7 @@ void main() {
     expect(p.map((x) => x.solar), [100, 200]);
   });
 
-  test('a lagging last bucket does not inflate the day', () {
+  test('a bucket still being written does not skew the scale', () {
     // Morning, 15-minute buckets in average W: 1 kW, 2 kW, then the running quarter hour is not in
     // the database yet, while the sum already counts 0.5 kWh of it.
     final steps = [for (var i = 0; i < 3; i++) DateTime(2026, 10, 27, 9).add(Duration(minutes: 15 * i))];

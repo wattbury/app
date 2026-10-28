@@ -34,9 +34,6 @@ class LiveController extends ChangeNotifier {
   bool _busy = false, _disposed = false;
   DateTime _trackersAt = DateTime(0), _todayAt = DateTime(0), _curveAt = DateTime(0);
 
-  /// Bucket scale of the 15-minute series, measured on yesterday (see [_loadCurve]).
-  double? _curveScale;
-  DateTime? _curveScaleDay;
   int _failures = 0;
 
   Future<void> start() => _connect();
@@ -104,23 +101,16 @@ class LiveController extends ChangeNotifier {
     }
   }
 
-  /// Today's finished quarter hours. The day is always asked for as a whole: a request ending at
-  /// the current time came back with wrong values. The scale from bucket values to Wh comes from
-  /// yesterday, where sum and buckets cover the same finished day; today's sum runs ahead of the
-  /// buckets and inflated the curve.
+  /// Today's finished quarter hours. The running one is left out: in its first seconds it is
+  /// practically a momentary value and can jump above the plant's rating.
   Future<List<HistoryPoint>> _loadCurve(DateTime now) async {
     final start = DateTime(now.year, now.month, now.day), end = DateTime(now.year, now.month, now.day + 1);
     const step = Duration(minutes: 15);
     final steps = [for (var t = start; !t.add(step).isAfter(now); t = t.add(step)) t];
     if (steps.isEmpty) return const [];
-    if (_curveScaleDay != start) {
-      final y = DateTime(now.year, now.month, now.day - 1);
-      final h = await source.history(y, step, start.difference(y));
-      _curveScale = h.sum.solarWh > 0 || h.sum.houseWh > 0 ? HistoryRepository.measuredScale(h, h.buckets, 0.25) : null;
-      _curveScaleDay = start;
-    }
     final h = await source.history(start, step, end.difference(start));
-    return HistoryRepository.toPoints(h, steps, scale: _curveScale);
+    // Sum and buckets of the response cover the same time, so all buckets give the scale.
+    return HistoryRepository.toPoints(h, steps, scale: HistoryRepository.measuredScale(h, h.buckets, 0.25));
   }
 
   void _fail(Object e) {

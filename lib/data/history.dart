@@ -254,11 +254,10 @@ class HistoryRepository {
     return snapScale(ratio, bucketHours);
   }
 
-  /// The sum covers the period up to now, the buckets may lag behind (the running interval is
-  /// missing or partial). Taken as is, the ratio then inflates the whole day: in the morning, when
-  /// the sum is still small, by half or more. Only two scales are physically possible, 1 (Wh per
-  /// bucket) and the bucket length in hours (average W), so the ratio only picks between them.
-  /// Far from both (unknown format), the ratio is used unchanged.
+  /// Only two scales are physically possible, 1 (Wh per bucket) and the bucket length in hours
+  /// (average W; an S10E reports this), so a measured ratio only picks between them and small
+  /// deviations (a bucket still being written) do not leak into every value. Far from both
+  /// (unknown format), the ratio is used unchanged.
   @visibleForTesting
   static double snapScale(double ratio, double bucketHours) {
     double off(double c) => (math.log(ratio / c)).abs();

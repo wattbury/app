@@ -116,4 +116,10 @@ void main() {
     expect(await PrefsHistoryStore(prefs, 'history/a/').list(), isEmpty);
     expect(await other.list(), {'2026-01': 2});
   });
+
+  test('months from before the time fix are dropped', () async {
+    final store = FileHistoryStore(dir);
+    await store.write('2026-09', '{"v":1,"days":[["2026-09-01T00:00:00.000",1,2,3,4,5,6]],"hours":{}}');
+    expect(await HistoryCache(store).days(DateTime(2026, 9)), isNull);
+  });
 }

@@ -209,7 +209,10 @@ class ForecastService extends ChangeNotifier {
   static const _solcastEvery = Duration(hours: 3);
   String get _cacheKey => 'fcCache.$_id';
   String get _archiveKey => 'fcArchive.$_id';
-  String get _recordsKey => 'fcRecords.$_id';
+  // Version 2: records up to openrscp 95a9820 compared the forecast with database values that were
+  // one hour late (the unit reads query times as wall-clock time). The archive of forecasts is
+  // kept, so the days are learned again from correct values.
+  String get _recordsKey => 'fcRecords2.$_id';
 
   ForecastService(
     this.settings, {
@@ -367,6 +370,7 @@ class ForecastService extends ChangeNotifier {
     try {
       final t = now ?? DateTime.now();
       final today = DateTime(t.year, t.month, t.day);
+      await settings.removeRaw('fcRecords.$_id');
       final archive = _readArchive();
       final records = _records();
       final known = {for (final r in records) _date(r.day)};

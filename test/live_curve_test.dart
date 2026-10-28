@@ -16,21 +16,17 @@ DbBucket _b(double solar) => DbBucket(
   socPct: 0,
 );
 
-/// Unit whose database reports 15-minute buckets as average W, 1 kW all day. Today's sum runs
-/// ahead of the buckets (the running quarter hour is counted, but not yet a bucket).
-class LaggingSource extends DemoSource {
+/// Unit whose database reports 15-minute buckets as average W, as an S10E does: 1 kW in every
+/// finished quarter hour, a momentary 11 kW in the one still running.
+class RunningBucketSource extends DemoSource {
   final requests = <(DateTime, Duration)>[];
 
   @override
   Future<DbHistory> history(DateTime start, Duration interval, Duration span) async {
     requests.add((start, span));
-    final n = (span.inSeconds / interval.inSeconds).round();
-    final now = DateTime.now();
-    final today = start.day == now.day;
-    // Today only the finished quarter hours have values.
-    final filled = today ? now.difference(start).inMinutes ~/ 15 : n;
-    final buckets = [for (var i = 0; i < n; i++) _b(i < filled ? 1000 : 0)];
-    final sumWh = filled * 250.0 + (today ? 900 : 0);
+    final finished = DateTime.now().difference(start).inMinutes ~/ 15;
+    final buckets = [for (var i = 0; i < finished; i++) _b(1000), _b(11000)];
+    final sumWh = buckets.fold<double>(0, (a, b) => a + b.solar) / 4;
     return DbHistory(
       start: start,
       interval: interval,
@@ -54,20 +50,17 @@ class LaggingSource extends DemoSource {
 }
 
 void main() {
-  test('today\'s curve uses the scale of yesterday and asks for whole days', () async {
+  test('today\'s curve asks for the whole day and shows only finished quarter hours', () async {
     final now = DateTime.now();
     if (now.hour == 0 && now.minute < 20) return; // no finished quarter hour yet
-    final src = LaggingSource();
+    final src = RunningBucketSource();
     final live = LiveController(src);
     await live.start();
-    final midnight = DateTime(now.year, now.month, now.day);
-    // Yesterday for the scale, then today, both as whole days.
-    expect(src.requests.map((r) => r.$1), [DateTime(now.year, now.month, now.day - 1), midnight]);
-    expect(src.requests.every((r) => r.$2.inHours >= 23), isTrue);
-    // 1 kW for a quarter hour is 250 Wh, not inflated by the sum running ahead.
+    expect(src.requests.single.$1, DateTime(now.year, now.month, now.day));
+    expect(src.requests.single.$2.inHours, greaterThanOrEqualTo(23));
+    // 1 kW for a quarter hour is 250 Wh; the running bucket's 11 kW is not part of the curve.
     expect(live.todayCurve, isNotEmpty);
     expect(live.todayCurve.map((p) => p.solar).toSet(), {250});
-    // Only finished quarter hours.
     expect(live.todayCurve.last.start.add(const Duration(minutes: 15)).isAfter(DateTime.now()), isFalse);
     live.dispose();
   });

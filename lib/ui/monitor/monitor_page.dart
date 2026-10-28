@@ -417,14 +417,6 @@ class _CurvePainter extends CustomPainter {
           canvas.drawLine(Offset.lerp(a, b, d / len)!, Offset.lerp(a, b, math.min(d + 3, len) / len)!, dash);
         }
       }
-      final p = TextPainter(
-        text: TextSpan(
-          text: 'Prognose',
-          style: base.copyWith(fontSize: 9.5, color: const Color(0xD9FFFFFF)),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      p.paint(canvas, Offset(size.width - p.width, size.height * top));
     }
     canvas.drawLine(Offset(lastX, size.height * top), Offset(lastX, y(0)), Paint()..color = const Color(0x80FFFFFF));
     canvas.drawCircle(
@@ -442,7 +434,20 @@ class _CurvePainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    label.paint(canvas, Offset(math.min(lastX + 6, size.width - label.width), size.height * top));
+    final labelX = math.min(lastX + 6, size.width - label.width);
+    label.paint(canvas, Offset(labelX, size.height * top));
+    if (ahead.isNotEmpty) {
+      final p = TextPainter(
+        text: TextSpan(
+          text: 'Prognose',
+          style: base.copyWith(fontSize: 9.5, color: const Color(0xD9FFFFFF)),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      // In the evening "jetzt" moves to the right edge; then the forecast label gives way.
+      final px = size.width - p.width;
+      if (labelX + label.width + 8 <= px && lastX + 6 <= px) p.paint(canvas, Offset(px, size.height * top));
+    }
     for (var h = (from / 4).ceil() * 4; h <= to; h += 4) {
       final tp = TextPainter(
         text: TextSpan(

@@ -234,9 +234,16 @@ class HistoryRepository {
 
   /// Turns raw buckets into Wh per bar. The unit's bucket values are either energy per interval
   /// or average power; the sum container, which is always in Wh, tells which.
-  static List<HistoryPoint> toPoints(DbHistory h, List<DateTime> steps) {
+  static List<HistoryPoint> toPoints(DbHistory h, List<DateTime> steps, {double? scale}) {
     final b = h.buckets.take(steps.length).toList();
-    double total(double Function(DbBucket) f) => b.fold(0, (a, x) => a + f(x));
+    final hours = steps.length >= 2 ? steps[1].difference(steps[0]).inSeconds / 3600 : 1.0;
+    return _scaled(b, steps, scale ?? measuredScale(h, b, hours));
+  }
+
+  /// Scale from bucket values to Wh: the sum container (always Wh) over the buckets' total, snapped
+  /// to a possible format. Reliable only when both cover the same, finished period.
+  static double measuredScale(DbHistory h, List<DbBucket> buckets, double bucketHours) {
+    double total(double Function(DbBucket) f) => buckets.fold(0, (a, x) => a + f(x));
     double ratio = 1;
     for (final (sumWh, raw) in [(h.sum.solarWh, total((x) => x.solar)), (h.sum.houseWh, total((x) => x.house))]) {
       if (sumWh > 0 && raw > 0) {
@@ -244,8 +251,7 @@ class HistoryRepository {
         break;
       }
     }
-    final hours = steps.length >= 2 ? steps[1].difference(steps[0]).inSeconds / 3600 : 1.0;
-    return _scaled(b, steps, snapScale(ratio, hours));
+    return snapScale(ratio, bucketHours);
   }
 
   /// The sum covers the period up to now, the buckets may lag behind (the running interval is

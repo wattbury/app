@@ -57,7 +57,7 @@ jobs:
       # Without the CDN, CanvasKit and fonts come from wattbury.de itself instead of Google's servers.
       # --wasm adds the WebAssembly build (skwasm renderer, smoother scrolling); browsers without
       # WasmGC get the JavaScript build automatically.
-      - run: flutter build web --release --wasm --no-web-resources-cdn
+      - run: flutter build web --release --wasm --no-web-resources-cdn --dart-define=BUILD=${GITHUB_SHA::7}
 
       # flutter build skips dot files in web/.
       - run: cp web/.htaccess build/web/.htaccess

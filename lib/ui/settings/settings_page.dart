@@ -14,6 +14,9 @@ import '../plant/plant_page.dart';
 import 'rules_section.dart';
 import 'settings_rows.dart';
 
+/// Commit the build was made from (set by the deploy workflow), to tell which version is running.
+const _build = String.fromEnvironment('BUILD', defaultValue: 'dev');
+
 class SettingsPage extends StatelessWidget {
   final LiveController live;
   final AppSettings settings;
@@ -254,7 +257,7 @@ class SettingsPage extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 12),
           child: Text(
-            'Wattbury 0.1 · Open Source · Zugangsdaten nur ${kIsWeb ? 'in diesem Browser' : 'im Schlüsselbund'}',
+            'Wattbury 0.1 ($_build) · Open Source · Zugangsdaten nur ${kIsWeb ? 'in diesem Browser' : 'im Schlüsselbund'}',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 11, color: c.muted),
           ),
